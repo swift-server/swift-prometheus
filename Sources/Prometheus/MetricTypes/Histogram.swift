@@ -55,8 +55,6 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
             output.append("\(name)_bucket\(labelsString) \(acc)")
         }
         
-        // TODO: Fancy encoding, excluding `le`
-        labels.le = ""
         let labelsString = encodeLabels(labels, ["le"])
         output.append("\(name)_count\(labelsString) \(acc)")
         
