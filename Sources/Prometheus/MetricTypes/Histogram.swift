@@ -50,7 +50,7 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         var acc: NumType = 0
         for (i, bound) in self.upperBounds.enumerated() {
             acc += buckets[i].get()
-            labels.le = "\(bound)".replacingOccurrences(of: "\(Double.greatestFiniteMagnitude)", with: "+Inf")
+            labels.le = bound.description
             let labelsString = encodeLabels(labels)
             output.append("\(name)_bucket\(labelsString) \(acc)")
         }

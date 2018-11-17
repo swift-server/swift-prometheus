@@ -15,6 +15,18 @@ public func encodeLabels<Labels: MetricLabels>(_ labels: Labels) -> String {
     }
 }
 
+extension Double {
+    var description: String {
+        if self == Double.greatestFiniteMagnitude {
+            return "+Inf"
+        } else if self == Double.leastNormalMagnitude {
+            return "-Inf"
+        } else {
+            return "\(self)"
+        }
+    }
+}
+
 //: Numbers that can be represented as Double instances
 public protocol DoubleRepresentable: Numeric {
     var doubleValue: Double {get}

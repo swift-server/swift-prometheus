@@ -41,16 +41,16 @@ let codable2 = MyCodable("Thing2")
 //
 //print(gauge.getMetric())
 
-//struct HistogramCodable: HistogramLabels {
-//    var le: String = ""
-//}
-//
-//let histogram = Histogram<Int, HistogramCodable>("my_histogram", "Just a histogram")
-//
-//histogram.observe(6)
-//histogram.observe(6)
-//histogram.observe(1)
-//histogram.observe(4)
-//
-//print(histogram.getMetric())
+struct HistogramCodable: HistogramLabels {
+    var le: String = ""
+}
+
+let histogram = Histogram<Int, HistogramCodable>("my_histogram", "Just a histogram")
+
+histogram.observe(6)
+histogram.observe(6)
+histogram.observe(1)
+histogram.observe(4)
+
+print(histogram.getMetric())
 
