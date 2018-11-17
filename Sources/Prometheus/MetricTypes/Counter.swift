@@ -1,6 +1,6 @@
 public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric {
-    public internal(set) var name: String
-    public internal(set) var help: String?
+    public let name: String
+    public let help: String?
     
     internal var value: NumType
 
@@ -10,10 +10,6 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric {
         self.name = name
         self.help = help
         self.value = initialValue
-    }
-    
-    internal func getMetrics(_ hideType: Bool = true) -> String {
-        return self.getMetric().replacingOccurrences(of: "# TYPE \(name) counter\n", with: "")
     }
     
     public func getMetric() -> String {

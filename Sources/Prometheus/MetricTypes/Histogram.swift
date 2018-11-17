@@ -12,17 +12,17 @@ extension HistogramLabels {
 }
 
 public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: Metric {
-    public var name: String
+    public let name: String
     
-    public var help: String?
+    public let help: String?
     
     private var buckets: [Counter<NumType, EmptyCodable>] = []
     
     private var upperBounds: [Double]
     
-    public var labels: Labels
+    private var labels: Labels
     
-    private var total: Counter<NumType, EmptyCodable>
+    private let total: Counter<NumType, EmptyCodable>
     
     internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = defaultBuckets) {
         self.name = name

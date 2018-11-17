@@ -1,10 +1,10 @@
 public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric {
-    public internal(set) var name: String
-    public internal(set) var help: String?
+    public let name: String
+    public let help: String?
     
-    internal var value: NumType
+    private var value: NumType
     
-    internal var metrics: [Labels: NumType] = [:]
+    private var metrics: [Labels: NumType] = [:]
     
     public init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0) {
         self.name = name

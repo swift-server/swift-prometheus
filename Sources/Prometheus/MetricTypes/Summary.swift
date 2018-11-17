@@ -12,21 +12,21 @@ extension SummaryLabels {
 }
 
 public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metric {
-    public var name: String
+    public let name: String
     
-    public var help: String?
+    public let help: String?
     
-    public var labels: Labels
+    private var labels: Labels
     
-    private var sum: Counter<NumType, EmptyCodable>
+    private let sum: Counter<NumType, EmptyCodable>
     
-    private var count: Counter<NumType, EmptyCodable>
+    private let count: Counter<NumType, EmptyCodable>
     
     private var values: [NumType] = []
     
     private var quantiles: [Double]
     
-    public init(_ name: String, _ help: String? = nil, _ quantiles: [Double] = defaultQuantiles, _ labels: Labels = Labels()) {
+    internal init(_ name: String, _ help: String? = nil, _ quantiles: [Double] = defaultQuantiles, _ labels: Labels = Labels()) {
         self.name = name
         self.help = help
         
