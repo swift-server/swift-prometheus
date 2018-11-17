@@ -1,65 +1,18 @@
 import Prometheus
 
 struct MyCodable: MetricLabels {
-    var thing: String
-    
-    init() {
-        self.thing = "*"
-    }
-    
-    init(_ thing: String) {
-        self.thing = thing
-    }
+    var thing: String = "*"
 }
 
-let codable1 = MyCodable("Thing1")
-let codable2 = MyCodable("Thing2")
+let codable1 = MyCodable(thing: "Thing1")
+let codable2 = MyCodable(thing: "Thing2")
 
-//let counter = Counter<Int, MyCodable>("some_test_value", "This value holds just a random imcrementer :)", 0)
-//
-//counter.inc(5, codable1)
-//
-//counter.inc(5, codable2)
-//
-//counter.inc(5)
-//
-//counter.inc(5, codable1)
-//
-//print(counter.getMetric())
-//
-//let gauge = Gauge<Int, MyCodable>("some_test_value", "This value holds a random Gauge :)")
-//
-//gauge.inc(codable2)
-//
-//gauge.dec()
-//
-//gauge.inc(1, codable1)
-//
-//let arr = [1, 2, 3, 4]
-//
-//gauge.set(arr.count)
-//
-//print(gauge.getMetric())
-//
-//struct HistogramCodable: HistogramLabels {
-//    var le: String = ""
-//}
-//
-//let histogram = Histogram<Int, HistogramCodable>("my_histogram", "Just a histogram")
-//
-//histogram.observe(6)
-//histogram.observe(6)
-//histogram.observe(1)
-//histogram.observe(4)
-//
-//print(histogram.getMetric())
+let counter = Prometheus.shared.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", initialValue: 12)
 
-//struct SummaryCodable: SummaryLabels {
-//    var quantile: String = ""
-//}
-//
-//let summary = Summary<Int, SummaryCodable>("my_summary", "Just a summary")
-//
-//summary.observe(Int.random(in: 1...10000))
-//
-//print(summary.getMetric())
+counter.inc(5)
+
+let gauge = Prometheus.shared.createGauge(forType: Int.self, named: "my_gauge", helpText: "Just a gauge", initialValue: 0)
+
+gauge.set(123)
+
+print(Prometheus.shared.getMetrics())
