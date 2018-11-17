@@ -1,4 +1,4 @@
-public var defaultBuckets = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, Double.greatestFiniteMagnitude]
+private var defaultBuckets = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, Double.greatestFiniteMagnitude]
 
 public protocol HistogramLabels: MetricLabels {
     var le: String { get set }
@@ -24,7 +24,7 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     
     private var total: Counter<NumType, EmptyCodable>
     
-    public init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = defaultBuckets) {
+    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = defaultBuckets) {
         self.name = name
         self.help = help
         

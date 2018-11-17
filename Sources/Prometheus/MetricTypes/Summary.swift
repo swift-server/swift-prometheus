@@ -1,3 +1,5 @@
+public var defaultQuantiles = [0.01, 0.05, 0.5, 0.9, 0.95, 0.99, 0.999]
+
 public protocol SummaryLabels: MetricLabels {
     var quantile: String { get set }
 }
@@ -22,13 +24,17 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     
     private var values: [NumType] = []
     
-    public init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels()) {
+    private var quantiles: [Double]
+    
+    public init(_ name: String, _ help: String? = nil, _ quantiles: [Double] = defaultQuantiles, _ labels: Labels = Labels()) {
         self.name = name
         self.help = help
         
         self.sum = .init("\(self.name)_sum")
         
         self.count = .init("\(self.name)_count")
+        
+        self.quantiles = quantiles
         
         self.labels = labels
     }
@@ -41,9 +47,7 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
         }
         output.append("# TYPE \(name) summary")
         
-        let quantiles = [0.5, 0.9, 0.99]
-        
-        calculateQuantiles(quantiles: quantiles, values: values.map { $0.doubleValue }).forEach { (arg) in
+        calculateQuantiles(quantiles: quantiles, values: values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
             let (q, v) = arg
             self.labels.quantile = "\(q)"
             let labelsString = encodeLabels(self.labels)

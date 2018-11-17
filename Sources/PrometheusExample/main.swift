@@ -60,11 +60,6 @@ let codable2 = MyCodable("Thing2")
 //
 //let summary = Summary<Int, SummaryCodable>("my_summary", "Just a summary")
 //
-//summary.observe(4)
-//summary.observe(3)
-//summary.observe(1)
-//summary.observe(3)
-//summary.observe(9)
-//summary.observe(5)
+//summary.observe(Int.random(in: 1...10000))
 //
 //print(summary.getMetric())
