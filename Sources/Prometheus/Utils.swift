@@ -24,6 +24,34 @@ public func encodeLabels<Labels: MetricLabels>(_ labels: Labels, _ excludingKeys
     }
 }
 
+func calculateQuantiles(quantiles: [Double], values: [Double]) -> [Double: Double] {
+    let values = values.sorted()
+    var quantilesMap: [Double: Double] = [:]
+    quantiles.forEach { (q) in
+        quantilesMap[q] = quantile(q, values)
+    }
+    return quantilesMap
+}
+
+func quantile(_ q: Double, _ values: [Double]) -> Double {
+    if values.count == 1 {
+        return values[0]
+    }
+    
+    let n = Double(values.count)
+    if let pos = Int(exactly: n*q) {
+        if pos < 2 {
+            return values[0]
+        } else if pos == values.count {
+            return values[pos - 1]
+        }
+        return (values[pos - 1] + values[pos]) / 2.0
+    } else {
+        let pos = Int((n*q).rounded(.up))
+        return values[pos - 1]
+    }
+}
+
 extension Double {
     var description: String {
         if self == Double.greatestFiniteMagnitude {
