@@ -6,7 +6,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric {
     
     internal var metrics: [Labels: NumType] = [:]
     
-    internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0) {
+    public init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0) {
         self.name = name
         self.help = help
         self.value = initialValue

@@ -15,31 +15,31 @@ struct MyCodable: MetricLabels {
 let codable1 = MyCodable("Thing1")
 let codable2 = MyCodable("Thing2")
 
-//let counter = Counter<Int, MyCodable>("some_test_value", "This value holds just a random imcrementer :)", 0)
-//
-//counter.inc(5, codable1)
-//
-//counter.inc(5, codable2)
-//
-//counter.inc(5)
-//
-//counter.inc(5, codable1)
-//
-//print(counter.getMetric())
+let counter = Counter<Int, MyCodable>("some_test_value", "This value holds just a random imcrementer :)", 0)
 
-//let gauge = Gauge<Int, MyCodable>("some_test_value", "This value holds a random Gauge :)")
-//
-//gauge.inc(codable2)
-//
-//gauge.dec()
-//
-//gauge.inc(1, codable1)
-//
-//let arr = [1, 2, 3, 4]
-//
-//gauge.set(arr.count)
-//
-//print(gauge.getMetric())
+counter.inc(5, codable1)
+
+counter.inc(5, codable2)
+
+counter.inc(5)
+
+counter.inc(5, codable1)
+
+print(counter.getMetric())
+
+let gauge = Gauge<Int, MyCodable>("some_test_value", "This value holds a random Gauge :)")
+
+gauge.inc(codable2)
+
+gauge.dec()
+
+gauge.inc(1, codable1)
+
+let arr = [1, 2, 3, 4]
+
+gauge.set(arr.count)
+
+print(gauge.getMetric())
 
 struct HistogramCodable: HistogramLabels {
     var le: String = ""

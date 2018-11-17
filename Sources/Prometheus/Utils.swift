@@ -4,12 +4,21 @@ public struct EmptyCodable: MetricLabels {
     public init() { }
 }
 
-public func encodeLabels<Labels: MetricLabels>(_ labels: Labels) -> String {
-    let encoder = JSONEncoder()
+public func encodeLabels<Labels: MetricLabels>(_ labels: Labels, _ excludingKeys: [String] = []) -> String {
+    // TODO: Fix this up to a custom decoder or something
     do {
-        let data = try encoder.encode(labels)
-        let encodedString = String(data: data, encoding: .utf8)?.replacingOccurrences(of: "{\"", with: "{").replacingOccurrences(of: "\":", with: "=") ?? ""
-        return encodedString
+        let data = try JSONEncoder().encode(labels)
+        guard var dictionary = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any] else {
+            return ""
+        }
+        excludingKeys.forEach { (key) in
+            dictionary[key] = nil
+        }
+        var output = [String]()
+        dictionary.forEach { (key, value) in
+            output.append("\(key)=\"\(value)\"")
+        }
+        return output.isEmpty ? "" : "{\(output.joined(separator: ", "))}"
     } catch {
         return ""
     }

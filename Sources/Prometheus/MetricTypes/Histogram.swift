@@ -57,7 +57,7 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         
         // TODO: Fancy encoding, excluding `le`
         labels.le = ""
-        let labelsString = encodeLabels(labels).replacingOccurrences(of: "le=\"\"", with: "").replacingOccurrences(of: "{}", with: "")
+        let labelsString = encodeLabels(labels, ["le"])
         output.append("\(name)_count\(labelsString) \(acc)")
         
         output.append("\(name)_sum\(labelsString) \(total.get())")
