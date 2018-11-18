@@ -7,13 +7,17 @@ struct MyCodable: MetricLabels {
 let codable1 = MyCodable(thing: "Thing1")
 let codable2 = MyCodable(thing: "Thing2")
 
-//let counter = Prometheus.shared.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", initialValue: 12)
-//
-//counter.inc(5)
-//
-//let gauge = Prometheus.shared.createGauge(forType: Int.self, named: "my_gauge", helpText: "Just a gauge", initialValue: 0)
-//
-//gauge.set(123)
+let counter = Prometheus.shared.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", initialValue: 12, withLabelType: MyCodable.self)
+
+counter.inc(5)
+counter.inc(Int.random(in: 0...100), codable2)
+counter.inc(Int.random(in: 0...100), codable1)
+
+let gauge = Prometheus.shared.createGauge(forType: Int.self, named: "my_gauge", helpText: "Just a gauge", initialValue: 12, withLabelType: MyCodable.self)
+
+gauge.inc(100)
+gauge.inc(Int.random(in: 0...100), codable2)
+gauge.inc(Int.random(in: 0...100), codable1)
 
 struct HistogramThing: HistogramLabels {
     var le: String = ""

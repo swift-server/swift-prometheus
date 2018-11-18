@@ -5,12 +5,15 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     public let help: String?
     
     private var value: NumType
+
+    private var initialValue: NumType
     
     private var metrics: [Labels: NumType] = [:]
     
     internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: Prometheus) {
         self.name = name
         self.help = help
+        self.initialValue = initialValue
         self.value = initialValue
         self.prometheus = p
     }
@@ -47,7 +50,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     @discardableResult
     public func inc(_ amount: NumType, _ labels: Labels? = nil) -> NumType {
         if let labels = labels {
-            var val = self.metrics[labels] ?? 0
+            var val = self.metrics[labels] ?? initialValue
             val += amount
             self.metrics[labels] = val
             return val
@@ -65,7 +68,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     @discardableResult
     public func dec(_ amount: NumType, _ labels: Labels? = nil) -> NumType {
         if let labels = labels {
-            var val = self.metrics[labels] ?? 0
+            var val = self.metrics[labels] ?? initialValue
             val -= amount
             self.metrics[labels] = val
             return val
@@ -82,7 +85,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
 
     public func get(_ labels: Labels? = nil) -> NumType {
         if let labels = labels {
-            return self.metrics[labels] ?? 0
+            return self.metrics[labels] ?? initialValue
         } else {
             return self.value
         }
