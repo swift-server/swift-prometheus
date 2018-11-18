@@ -27,7 +27,7 @@ public class Prometheus {
         initialValue: T = 0,
         withLabelType labelType: U.Type) -> Counter<T, U>
     {
-        let counter = Counter<T, U>(name, helpText, initialValue)
+        let counter = Counter<T, U>(name, helpText, initialValue, self)
         self.metrics.append(counter)
         return counter
     }
@@ -69,7 +69,7 @@ public class Prometheus {
         initialValue: T = 0,
         withLabelType labelType: U.Type) -> Gauge<T, U>
     {
-        let gauge = Gauge<T, U>(name, helpText, initialValue)
+        let gauge = Gauge<T, U>(name, helpText, initialValue, self)
         self.metrics.append(gauge)
         return gauge
     }
@@ -111,7 +111,7 @@ public class Prometheus {
         buckets: [Double] = defaultBuckets,
         labels: U) -> Histogram<T, U>
     {
-        let histogram = Histogram<T, U>(name, helpText, labels, buckets)
+        let histogram = Histogram<T, U>(name, helpText, labels, buckets, self)
         self.metrics.append(histogram)
         return histogram
     }
@@ -143,7 +143,7 @@ public class Prometheus {
         quantiles: [Double] = defaultQuantiles,
         labels: U) -> Summary<T, U>
     {
-        let summary = Summary<T, U>(name, helpText, quantiles, labels)
+        let summary = Summary<T, U>(name, helpText, quantiles, labels, self)
         metrics.append(summary)
         return summary
     }

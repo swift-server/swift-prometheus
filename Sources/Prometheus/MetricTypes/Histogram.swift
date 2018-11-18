@@ -11,9 +11,10 @@ extension HistogramLabels {
     }
 }
 
-public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: Metric {
-    public let name: String
+public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: Metric, PrometheusHandled {
+    internal let prometheus: Prometheus
     
+    public let name: String
     public let help: String?
     
     private var buckets: [Counter<NumType, EmptyCodable>] = []
@@ -24,18 +25,20 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     
     private let total: Counter<NumType, EmptyCodable>
     
-    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = defaultBuckets) {
+    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = defaultBuckets, _ p: Prometheus) {
         self.name = name
         self.help = help
         
-        self.total = .init("\(self.name)_sum")
+        self.prometheus = p
+        
+        self.total = .init("\(self.name)_sum", nil, 0, p)
         
         self.labels = labels
         
         self.upperBounds = buckets
         
         buckets.forEach { _ in
-            self.buckets.append(.init("\(name)_bucket", nil, 0))
+            self.buckets.append(.init("\(name)_bucket", nil, 0, p))
         }
     }
     

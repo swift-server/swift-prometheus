@@ -11,9 +11,10 @@ extension SummaryLabels {
     }
 }
 
-public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metric {
-    public let name: String
+public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metric, PrometheusHandled {
+    internal let prometheus: Prometheus
     
+    public let name: String
     public let help: String?
     
     private var labels: Labels
@@ -26,13 +27,15 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     
     private var quantiles: [Double]
     
-    internal init(_ name: String, _ help: String? = nil, _ quantiles: [Double] = defaultQuantiles, _ labels: Labels = Labels()) {
+    internal init(_ name: String, _ help: String? = nil, _ quantiles: [Double] = defaultQuantiles, _ labels: Labels = Labels(), _ p: Prometheus) {
         self.name = name
         self.help = help
         
-        self.sum = .init("\(self.name)_sum")
+        self.prometheus = p
         
-        self.count = .init("\(self.name)_count")
+        self.sum = .init("\(self.name)_sum", nil, 0, p)
+        
+        self.count = .init("\(self.name)_count", nil, 0, p)
         
         self.quantiles = quantiles
         

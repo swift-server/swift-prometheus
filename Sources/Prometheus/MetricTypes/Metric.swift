@@ -5,6 +5,10 @@ public protocol Metric {
     func getMetric() -> String
 }
 
+internal protocol PrometheusHandled {
+    var prometheus: Prometheus { get }
+}
+
 public protocol MetricLabels: Codable, Hashable {
     init()
 }

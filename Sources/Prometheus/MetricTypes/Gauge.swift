@@ -1,4 +1,6 @@
-public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric {
+public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled {
+    internal let prometheus: Prometheus
+    
     public let name: String
     public let help: String?
     
@@ -6,10 +8,11 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric {
     
     private var metrics: [Labels: NumType] = [:]
     
-    public init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0) {
+    internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: Prometheus) {
         self.name = name
         self.help = help
         self.value = initialValue
+        self.prometheus = p
     }
     
     public func getMetric() -> String {
