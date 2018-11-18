@@ -15,4 +15,16 @@ let gauge = Prometheus.shared.createGauge(forType: Int.self, named: "my_gauge", 
 
 gauge.set(123)
 
+let histogram = Prometheus.shared.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Just a histogram")
+
+for _ in 0...Int.random(in: 10...50) {
+    histogram.observe(Double.random(in: 0...1))
+}
+
+let summary = Prometheus.shared.createSummary(forType: Double.self, named: "my_summary", helpText: "Just a summary")
+
+for _ in 0...Int.random(in: 100...1000) {
+    summary.observe(Double.random(in: 0...10000))
+}
+
 print(Prometheus.shared.getMetrics())

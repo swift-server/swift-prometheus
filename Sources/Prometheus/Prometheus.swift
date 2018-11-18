@@ -42,12 +42,12 @@ public class Prometheus {
     ///
     /// - Returns: Counter instance
     public func createCounter<T: Numeric>(
-        forType: T.Type,
+        forType type: T.Type,
         named name: String,
         helpText: String? = nil,
         initialValue: T = 0) -> Counter<T, EmptyCodable>
     {
-        return self.createCounter(forType: T.self, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyCodable.self)
+        return self.createCounter(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyCodable.self)
     }
     
     // MARK: - Gauge
@@ -84,12 +84,77 @@ public class Prometheus {
     ///
     /// - Returns: Gauge instance
     public func createGauge<T: Numeric>(
-        forType: T.Type,
+        forType type: T.Type,
         named name: String,
         helpText: String? = nil,
         initialValue: T = 0) -> Gauge<T, EmptyCodable>
     {
-        return self.createGauge(forType: T.self, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyCodable.self)
+        return self.createGauge(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyCodable.self)
+    }
+    
+    // MARK: - Histogram
+    
+    /// Creates a histogram with the given values
+    ///
+    /// - Parameters:
+    ///     - type: The type the histogram will observe
+    ///     - name: Name of the histogram
+    ///     - helpText: Help text for the histogram. Usually a short description
+    ///     - buckets: Buckets to divide values over
+    ///     - labels: Labels to give this Histogram. Can be left out to default to no labels
+    ///
+    /// - Returns: Histogram instance
+    public func createHistogram<T: Numeric, U: HistogramLabels>(
+        forType type: T.Type,
+        named name: String,
+        helpText: String? = nil,
+        buckets: [Double] = defaultBuckets,
+        labels: U) -> Histogram<T, U>
+    {
+        let histogram = Histogram<T, U>(name, helpText, labels, buckets)
+        self.metrics.append(histogram)
+        return histogram
+    }
+    
+    /// Creates a histogram with the given values
+    ///
+    /// - Parameters:
+    ///     - type: The type the histogram will observe
+    ///     - name: Name of the histogram
+    ///     - helpText: Help text for the histogram. Usually a short description
+    ///     - buckets: Buckets to divide values over
+    ///
+    /// - Returns: Histogram instance
+    public func createHistogram<T: Numeric>(
+        forType type: T.Type,
+        named name: String,
+        helpText: String? = nil,
+        buckets: [Double] = defaultBuckets) -> Histogram<T, EmptyHistogramCodable>
+    {
+        return self.createHistogram(forType: type, named: name, helpText: helpText, buckets: buckets, labels: EmptyHistogramCodable())
+    }
+    
+    // MARK: - Summary
+    
+    public func createSummary<T: Numeric, U: SummaryLabels>(
+        forType type: T.Type,
+        named name: String,
+        helpText: String? = nil,
+        quantiles: [Double] = defaultQuantiles,
+        labels: U) -> Summary<T, U>
+    {
+        let summary = Summary<T, U>(name, helpText, quantiles, labels)
+        metrics.append(summary)
+        return summary
+    }
+    
+    public func createSummary<T: Numeric>(
+        forType type: T.Type,
+        named name: String,
+        helpText: String? = nil,
+        quantiles: [Double] = defaultQuantiles) -> Summary<T, EmptySummaryCodable>
+    {
+        return self.createSummary(forType: type, named: name, helpText: helpText, quantiles: quantiles, labels: EmptySummaryCodable())
     }
     
     /// Creates prometheus formatted metrics
