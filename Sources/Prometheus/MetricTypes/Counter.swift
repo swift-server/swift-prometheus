@@ -4,6 +4,8 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     public let name: String
     public let help: String?
     
+    public var _type: MetricType = .counter
+    
     internal var value: NumType
 
     private var initialValue: NumType
@@ -21,11 +23,8 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     public func getMetric() -> String {
         var output = [String]()
         
-        if let help = help {
-            output.append("# HELP \(name) \(help)")
-        }
+        output.append(headers)
         
-        output.append("# TYPE \(name) counter")
         output.append("\(name) \(value)")
 
         metrics.forEach { (labels, value) in

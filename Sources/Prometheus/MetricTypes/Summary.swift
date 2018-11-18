@@ -16,6 +16,8 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     
     public let name: String
     public let help: String?
+
+    public var _type: MetricType = .summary
     
     internal private(set) var labels: Labels
     
@@ -46,12 +48,9 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     
     public func getMetric() -> String {
         var output = [String]()
-        
-        if let help = help {
-            output.append("# HELP \(name) \(help)")
-        }
-        output.append("# TYPE \(name) summary")
-        
+
+        output.append(headers)
+
         calculateQuantiles(quantiles: quantiles, values: values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
             let (q, v) = arg
             self.labels.quantile = "\(q)"

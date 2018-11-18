@@ -17,6 +17,8 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     public let name: String
     public let help: String?
     
+    public var _type: MetricType = .histogram
+    
     private var buckets: [Counter<NumType, EmptyCodable>] = []
     
     internal let upperBounds: [Double]
@@ -48,10 +50,7 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         var output = [String]()
         
         
-        if let help = help {
-            output.append("# HELP \(name) \(help)")
-        }
-        output.append("# TYPE \(name) histogram")
+        output.append(headers)
 
         var acc: NumType = 0
         for (i, bound) in self.upperBounds.enumerated() {
@@ -85,7 +84,7 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     }
     
     public func observe(_ value: NumType, _ labels: Labels? = nil) {
-        if let labels = labels {
+        if let labels = labels, type(of: labels) != type(of: EmptySummaryCodable()) {
             let his = prometheus.getOrCreateHistogram(with: labels, for: self)
             his.observe(value)
             return

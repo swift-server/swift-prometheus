@@ -4,6 +4,8 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     public let name: String
     public let help: String?
     
+    public var _type: MetricType = .gauge
+    
     private var value: NumType
 
     private var initialValue: NumType
@@ -21,11 +23,8 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     public func getMetric() -> String {
         var output = [String]()
         
-        if let help = help {
-            output.append("# HELP \(name) \(help)")
-        }
-        
-        output.append("# TYPE \(name) gauge")
+        output.append(headers)
+
         output.append("\(name) \(value)")
         
         metrics.forEach { (labels, value) in
