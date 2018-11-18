@@ -27,6 +27,8 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     
     internal let quantiles: [Double]
     
+    fileprivate var subSummaries: [Summary<NumType, Labels>] = []
+    
     internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ quantiles: [Double] = defaultQuantiles, _ p: Prometheus) {
         self.name = name
         self.help = help
@@ -45,12 +47,10 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     public func getMetric() -> String {
         var output = [String]()
         
-        if self.labels == Labels() {
-            if let help = help {
-                output.append("# HELP \(name) \(help)")
-            }
-            output.append("# TYPE \(name) summary")
+        if let help = help {
+            output.append("# HELP \(name) \(help)")
         }
+        output.append("# TYPE \(name) summary")
         
         calculateQuantiles(quantiles: quantiles, values: values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
             let (q, v) = arg
@@ -62,6 +62,19 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
         let labelsString = encodeLabels(self.labels, ["quantile"])
         output.append("\(name)_count\(labelsString) \(count.get())")
         output.append("\(name)_sum\(labelsString) \(sum.get())")
+        
+        self.subSummaries.forEach { subSum in
+            calculateQuantiles(quantiles: quantiles, values: subSum.values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
+                let (q, v) = arg
+                subSum.labels.quantile = "\(q)"
+                let labelsString = encodeLabels(subSum.labels)
+                output.append("\(subSum.name)\(labelsString) \(v)")
+            }
+            
+            let labelsString = encodeLabels(subSum.labels, ["quantile"])
+            output.append("\(subSum.name)_count\(labelsString) \(subSum.count.get())")
+            output.append("\(subSum.name)_sum\(labelsString) \(subSum.sum.get())")
+        }
         
         self.labels.quantile = ""
         
@@ -82,17 +95,16 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
 
 extension Prometheus {
     fileprivate func getOrCreateSummary<T: Numeric, U: SummaryLabels>(withLabels labels: U, forSummary sum: Summary<T, U>) -> Summary<T, U> {
-        let summaries = metrics.filter { (metric) -> Bool in
-            guard let metric = metric as? Summary<T, U> else { return false }
+        let summaries = sum.subSummaries.filter { (metric) -> Bool in
             guard metric.name == sum.name, metric.help == sum.help, metric.labels == labels else { return false }
             return true
-        } as? [Summary<T, U>] ?? []
+        }
         if summaries.count > 2 { fatalError("Somehow got 2 summaries with the same data type") }
         if let summary = summaries.first {
             return summary
         } else {
             let summary = Summary<T, U>(sum.name, sum.help, labels, sum.quantiles, self)
-            self.metrics.append(summary)
+            sum.subSummaries.append(summary)
             return summary
         }
     }

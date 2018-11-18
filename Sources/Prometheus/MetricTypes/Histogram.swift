@@ -23,6 +23,8 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     
     internal private(set) var labels: Labels
     
+    fileprivate var subHistograms: [Histogram<NumType, Labels>] = []
+    
     private let total: Counter<NumType, EmptyCodable>
     
     internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = defaultBuckets, _ p: Prometheus) {
@@ -46,12 +48,10 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         var output = [String]()
         
         
-        if self.labels == Labels() {
-            if let help = help {
-                output.append("# HELP \(name) \(help)")
-            }
-            output.append("# TYPE \(name) histogram")
+        if let help = help {
+            output.append("# HELP \(name) \(help)")
         }
+        output.append("# TYPE \(name) histogram")
 
         var acc: NumType = 0
         for (i, bound) in self.upperBounds.enumerated() {
@@ -65,6 +65,21 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         output.append("\(name)_count\(labelsString) \(acc)")
         
         output.append("\(name)_sum\(labelsString) \(total.get())")
+        
+        subHistograms.forEach { subHistogram in
+            var acc: NumType = 0
+            for (i, bound) in subHistogram.upperBounds.enumerated() {
+                acc += subHistogram.buckets[i].get()
+                subHistogram.labels.le = bound.description
+                let labelsString = encodeLabels(subHistogram.labels)
+                output.append("\(subHistogram.name)_bucket\(labelsString) \(acc)")
+            }
+            
+            let labelsString = encodeLabels(subHistogram.labels, ["le"])
+            output.append("\(subHistogram.name)_count\(labelsString) \(acc)")
+            
+            output.append("\(subHistogram.name)_sum\(labelsString) \(subHistogram.total.get())")
+        }
         
         return output.joined(separator: "\n")
     }
@@ -88,17 +103,16 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
 
 extension Prometheus {
     fileprivate func getOrCreateHistogram<T: Numeric, U: HistogramLabels>(with labels: U, for his: Histogram<T, U>) -> Histogram<T, U> {
-        let summaries = metrics.filter { (metric) -> Bool in
-            guard let metric = metric as? Histogram<T, U> else { return false }
+        let histograms = his.subHistograms.filter { (metric) -> Bool in
             guard metric.name == his.name, metric.help == his.help, metric.labels == labels else { return false }
             return true
-            } as? [Histogram<T, U>] ?? []
-        if summaries.count > 2 { fatalError("Somehow got 2 summaries with the same data type") }
-        if let summary = summaries.first {
-            return summary
+            }
+        if histograms.count > 2 { fatalError("Somehow got 2 summaries with the same data type") }
+        if let histogram = histograms.first {
+            return histogram
         } else {
             let histogram = Histogram<T, U>(his.name, his.help, labels, his.upperBounds, self)
-            self.metrics.append(histogram)
+            his.subHistograms.append(histogram)
             return histogram
         }
     }
