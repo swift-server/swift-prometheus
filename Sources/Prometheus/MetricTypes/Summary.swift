@@ -17,7 +17,7 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     public let name: String
     public let help: String?
 
-    public var _type: MetricType = .summary
+    public let _type: MetricType = .summary
     
     internal private(set) var labels: Labels
     

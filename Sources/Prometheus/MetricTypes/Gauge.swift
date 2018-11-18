@@ -4,7 +4,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     public let name: String
     public let help: String?
     
-    public var _type: MetricType = .gauge
+    public let _type: MetricType = .gauge
     
     private var value: NumType
 

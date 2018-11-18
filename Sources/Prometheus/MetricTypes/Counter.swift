@@ -4,7 +4,7 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     public let name: String
     public let help: String?
     
-    public var _type: MetricType = .counter
+    public let _type: MetricType = .counter
     
     internal var value: NumType
 

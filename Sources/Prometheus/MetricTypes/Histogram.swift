@@ -17,7 +17,7 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     public let name: String
     public let help: String?
     
-    public var _type: MetricType = .histogram
+    public let _type: MetricType = .histogram
     
     private var buckets: [Counter<NumType, EmptyCodable>] = []
     
