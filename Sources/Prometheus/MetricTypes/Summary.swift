@@ -27,7 +27,7 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     
     internal let quantiles: [Double]
     
-    internal init(_ name: String, _ help: String? = nil, _ quantiles: [Double] = defaultQuantiles, _ labels: Labels = Labels(), _ p: Prometheus) {
+    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ quantiles: [Double] = defaultQuantiles, _ p: Prometheus) {
         self.name = name
         self.help = help
         
@@ -82,16 +82,18 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
 
 extension Prometheus {
     fileprivate func getOrCreateSummary<T: Numeric, U: SummaryLabels>(withLabels labels: U, forSummary sum: Summary<T, U>) -> Summary<T, U> {
-        let summary = metrics.filter { (metric) -> Bool in
+        let summaries = metrics.filter { (metric) -> Bool in
             guard let metric = metric as? Summary<T, U> else { return false }
             guard metric.name == sum.name, metric.help == sum.help, metric.labels == labels else { return false }
             return true
         } as? [Summary<T, U>] ?? []
-        if summary.count > 2 { fatalError("Somehow got 2 summaries with the same data type") }
-        if let summary = summary.first {
+        if summaries.count > 2 { fatalError("Somehow got 2 summaries with the same data type") }
+        if let summary = summaries.first {
             return summary
         } else {
-            return createSummary(forType: T.self, named: sum.name, helpText: sum.help, quantiles: sum.quantiles, labels: labels)
+            let summary = Summary<T, U>(sum.name, sum.help, labels, sum.quantiles, self)
+            self.metrics.append(summary)
+            return summary
         }
     }
 }

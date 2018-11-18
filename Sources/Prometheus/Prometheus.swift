@@ -109,9 +109,9 @@ public class Prometheus {
         named name: String,
         helpText: String? = nil,
         buckets: [Double] = defaultBuckets,
-        labels: U) -> Histogram<T, U>
+        labels: U.Type) -> Histogram<T, U>
     {
-        let histogram = Histogram<T, U>(name, helpText, labels, buckets, self)
+        let histogram = Histogram<T, U>(name, helpText, U(), buckets, self)
         self.metrics.append(histogram)
         return histogram
     }
@@ -131,7 +131,7 @@ public class Prometheus {
         helpText: String? = nil,
         buckets: [Double] = defaultBuckets) -> Histogram<T, EmptyHistogramCodable>
     {
-        return self.createHistogram(forType: type, named: name, helpText: helpText, buckets: buckets, labels: EmptyHistogramCodable())
+        return self.createHistogram(forType: type, named: name, helpText: helpText, buckets: buckets, labels: EmptyHistogramCodable.self)
     }
     
     // MARK: - Summary
@@ -141,9 +141,9 @@ public class Prometheus {
         named name: String,
         helpText: String? = nil,
         quantiles: [Double] = defaultQuantiles,
-        labels: U) -> Summary<T, U>
+        labels: U.Type) -> Summary<T, U>
     {
-        let summary = Summary<T, U>(name, helpText, quantiles, labels, self)
+        let summary = Summary<T, U>(name, helpText, U(), quantiles, self)
         metrics.append(summary)
         return summary
     }
@@ -154,13 +154,13 @@ public class Prometheus {
         helpText: String? = nil,
         quantiles: [Double] = defaultQuantiles) -> Summary<T, EmptySummaryCodable>
     {
-        return self.createSummary(forType: type, named: name, helpText: helpText, quantiles: quantiles, labels: EmptySummaryCodable())
+        return self.createSummary(forType: type, named: name, helpText: helpText, quantiles: quantiles, labels: EmptySummaryCodable.self)
     }
     
     /// Creates prometheus formatted metrics
     ///
     /// - Returns: Newline seperated string with metrics for all Metric Trackers of this Prometheus instance
     public func getMetrics() -> String {
-        return metrics.map { $0.getMetric() }.joined(separator: "\n\n")
+        return metrics.map { $0.getMetric() }.joined(separator: "\n")
     }
 }

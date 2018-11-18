@@ -19,9 +19,9 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     
     private var buckets: [Counter<NumType, EmptyCodable>] = []
     
-    private var upperBounds: [Double]
+    internal let upperBounds: [Double]
     
-    private var labels: Labels
+    internal private(set) var labels: Labels
     
     private let total: Counter<NumType, EmptyCodable>
     
@@ -45,10 +45,13 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     public func getMetric() -> String {
         var output = [String]()
         
-        if let help = help {
-            output.append("# HELP \(name) \(help)")
+        
+        if self.labels == Labels() {
+            if let help = help {
+                output.append("# HELP \(name) \(help)")
+            }
+            output.append("# TYPE \(name) histogram")
         }
-        output.append("# TYPE \(name) histogram")
 
         var acc: NumType = 0
         for (i, bound) in self.upperBounds.enumerated() {
@@ -66,7 +69,12 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         return output.joined(separator: "\n")
     }
     
-    public func observe(_ value: NumType) {
+    public func observe(_ value: NumType, _ labels: Labels? = nil) {
+        if let labels = labels {
+            let his = prometheus.getOrCreateHistogram(with: labels, for: self)
+            his.observe(value)
+            return
+        }
         self.total.inc(value)
         
         for (i, bound) in self.upperBounds.enumerated() {
@@ -74,6 +82,24 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
                 buckets[i].inc()
                 return
             }
+        }
+    }
+}
+
+extension Prometheus {
+    fileprivate func getOrCreateHistogram<T: Numeric, U: HistogramLabels>(with labels: U, for his: Histogram<T, U>) -> Histogram<T, U> {
+        let summaries = metrics.filter { (metric) -> Bool in
+            guard let metric = metric as? Histogram<T, U> else { return false }
+            guard metric.name == his.name, metric.help == his.help, metric.labels == labels else { return false }
+            return true
+            } as? [Histogram<T, U>] ?? []
+        if summaries.count > 2 { fatalError("Somehow got 2 summaries with the same data type") }
+        if let summary = summaries.first {
+            return summary
+        } else {
+            let histogram = Histogram<T, U>(his.name, his.help, labels, his.upperBounds, self)
+            self.metrics.append(histogram)
+            return histogram
         }
     }
 }
