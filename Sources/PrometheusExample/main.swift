@@ -21,10 +21,27 @@ for _ in 0...Int.random(in: 10...50) {
     histogram.observe(Double.random(in: 0...1))
 }
 
-let summary = Prometheus.shared.createSummary(forType: Double.self, named: "my_summary", helpText: "Just a summary")
+struct SummaryThing: SummaryLabels {
+    var quantile: String = ""
+    let route: String
+
+    init() {
+        self.route = "*"
+    }
+    
+    init(_ route: String) {
+        self.route = route
+    }
+}
+
+let summary = Prometheus.shared.createSummary(forType: Double.self, named: "my_summary", helpText: "Just a summary", labels: SummaryThing())
 
 for _ in 0...Int.random(in: 100...1000) {
     summary.observe(Double.random(in: 0...10000))
+}
+
+for _ in 0...Int.random(in: 100...1000) {
+    summary.observe(Double.random(in: 0...10000), SummaryThing("/test"))
 }
 
 print(Prometheus.shared.getMetrics())

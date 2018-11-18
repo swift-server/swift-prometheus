@@ -17,7 +17,7 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     public let name: String
     public let help: String?
     
-    private var labels: Labels
+    internal private(set) var labels: Labels
     
     private let sum: Counter<NumType, EmptyCodable>
     
@@ -25,7 +25,7 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     
     private var values: [NumType] = []
     
-    private var quantiles: [Double]
+    internal let quantiles: [Double]
     
     internal init(_ name: String, _ help: String? = nil, _ quantiles: [Double] = defaultQuantiles, _ labels: Labels = Labels(), _ p: Prometheus) {
         self.name = name
@@ -45,10 +45,12 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     public func getMetric() -> String {
         var output = [String]()
         
-        if let help = help {
-            output.append("# HELP \(name) \(help)")
+        if self.labels == Labels() {
+            if let help = help {
+                output.append("# HELP \(name) \(help)")
+            }
+            output.append("# TYPE \(name) summary")
         }
-        output.append("# TYPE \(name) summary")
         
         calculateQuantiles(quantiles: quantiles, values: values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
             let (q, v) = arg
@@ -60,14 +62,37 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
         let labelsString = encodeLabels(self.labels, ["quantile"])
         output.append("\(name)_count\(labelsString) \(count.get())")
         output.append("\(name)_sum\(labelsString) \(sum.get())")
-
+        
+        self.labels.quantile = ""
+        
         return output.joined(separator: "\n")
     }
     
-    public func observe(_ value: NumType) {
+    public func observe(_ value: NumType, _ labels: Labels? = nil) {
+        if let labels = labels, type(of: labels) != type(of: EmptySummaryCodable()) {
+            let sum = self.prometheus.getOrCreateSummary(withLabels: labels, forSummary: self)
+            sum.observe(value)
+            return
+        }
         self.count.inc(1)
         self.sum.inc(value)
         self.values.append(value)
+    }
+}
+
+extension Prometheus {
+    fileprivate func getOrCreateSummary<T: Numeric, U: SummaryLabels>(withLabels labels: U, forSummary sum: Summary<T, U>) -> Summary<T, U> {
+        let summary = metrics.filter { (metric) -> Bool in
+            guard let metric = metric as? Summary<T, U> else { return false }
+            guard metric.name == sum.name, metric.help == sum.help, metric.labels == labels else { return false }
+            return true
+        } as? [Summary<T, U>] ?? []
+        if summary.count > 2 { fatalError("Somehow got 2 summaries with the same data type") }
+        if let summary = summary.first {
+            return summary
+        } else {
+            return createSummary(forType: T.self, named: sum.name, helpText: sum.help, quantiles: sum.quantiles, labels: labels)
+        }
     }
 }
 
@@ -81,6 +106,9 @@ func calculateQuantiles(quantiles: [Double], values: [Double]) -> [Double: Doubl
 }
 
 func quantile(_ q: Double, _ values: [Double]) -> Double {
+    if values.count == 0 {
+        return 0
+    }
     if values.count == 1 {
         return values[0]
     }
