@@ -101,7 +101,7 @@ public class Prometheus {
     ///     - name: Name of the histogram
     ///     - helpText: Help text for the histogram. Usually a short description
     ///     - buckets: Buckets to divide values over
-    ///     - labels: Labels to give this Histogram. Can be left out to default to no labels
+    ///     - labels: Labels to give this histogram. Can be left out to default to no labels
     ///
     /// - Returns: Histogram instance
     public func createHistogram<T: Numeric, U: HistogramLabels>(
@@ -136,6 +136,16 @@ public class Prometheus {
     
     // MARK: - Summary
     
+    /// Creates a summary with the given values
+    ///
+    /// - Parameters:
+    ///     - type: The type the summary will observe
+    ///     - name: Name of the summary
+    ///     - helpText: Help text for the summary. Usually a short description
+    ///     - quantiles: Quantiles to caluculate
+    ///     - labels: Labels to give this summary. Can be left out to default to no labels
+    ///
+    /// - Returns: Summary instance
     public func createSummary<T: Numeric, U: SummaryLabels>(
         forType type: T.Type,
         named name: String,
@@ -148,6 +158,15 @@ public class Prometheus {
         return summary
     }
     
+    /// Creates a summary with the given values
+    ///
+    /// - Parameters:
+    ///     - type: The type the summary will observe
+    ///     - name: Name of the summary
+    ///     - helpText: Help text for the summary. Usually a short description
+    ///     - quantiles: Quantiles to caluculate
+    ///
+    /// - Returns: Summary instance
     public func createSummary<T: Numeric>(
         forType type: T.Type,
         named name: String,
@@ -155,6 +174,26 @@ public class Prometheus {
         quantiles: [Double] = defaultQuantiles) -> Summary<T, EmptySummaryCodable>
     {
         return self.createSummary(forType: type, named: name, helpText: helpText, quantiles: quantiles, labels: EmptySummaryCodable.self)
+    }
+    
+    // MARK: - Info
+    
+    /// Creates an Info metric with the given values
+    ///
+    /// - Parameters
+    ///     - name: Name of the info
+    ///     - helpText: Help text for the info. Usually a short description
+    ///     - labelType: Type of labels this Info can use
+    ///
+    /// - Returns Info instance
+    public func createInfo<U: MetricLabels>(
+        named name: String,
+        helpText: String? = nil,
+        labelType: U.Type) -> Info<U>
+    {
+        let info = Info<U>(name, helpText, self)
+        self.metrics.append(info)
+        return info
     }
     
     /// Creates prometheus formatted metrics
