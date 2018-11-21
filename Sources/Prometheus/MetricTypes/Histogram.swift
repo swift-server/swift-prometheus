@@ -91,7 +91,6 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         if let labels = labels, type(of: labels) != type(of: EmptySummaryCodable()) {
             let his = prometheus.getOrCreateHistogram(with: labels, for: self)
             his.observe(value)
-            return
         }
         self.total.inc(value)
         

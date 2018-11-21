@@ -85,7 +85,6 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
         if let labels = labels, type(of: labels) != type(of: EmptySummaryCodable()) {
             let sum = self.prometheus.getOrCreateSummary(withLabels: labels, forSummary: self)
             sum.observe(value)
-            return
         }
         self.count.inc(1)
         self.sum.inc(value)
