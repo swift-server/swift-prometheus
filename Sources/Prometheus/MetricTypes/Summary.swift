@@ -73,6 +73,7 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
             let labelsString = encodeLabels(subSum.labels, ["quantile"])
             output.append("\(subSum.name)_count\(labelsString) \(subSum.count.get())")
             output.append("\(subSum.name)_sum\(labelsString) \(subSum.sum.get())")
+            subSum.labels.quantile = ""
         }
         
         self.labels.quantile = ""

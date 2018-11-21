@@ -78,7 +78,11 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
             output.append("\(subHistogram.name)_count\(labelsString) \(acc)")
             
             output.append("\(subHistogram.name)_sum\(labelsString) \(subHistogram.total.get())")
+            
+            subHistogram.labels.le = ""
         }
+        
+        self.labels.le = ""
         
         return output.joined(separator: "\n")
     }
