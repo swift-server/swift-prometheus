@@ -25,7 +25,9 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
         
         output.append(headers)
         
-        output.append("\(name) \(value)")
+        if value != initialValue && initialValue == 0 {
+            output.append("\(name) \(value)")
+        }
 
         metrics.forEach { (labels, value) in
             let labelsString = encodeLabels(labels)
