@@ -1,34 +1,57 @@
+/// Default buckets used by Histograms
 public var defaultBuckets = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, Double.greatestFiniteMagnitude]
 
+/// Label type Histograms can use
 public protocol HistogramLabels: MetricLabels {
     var le: String { get set }
 }
 
 extension HistogramLabels {
+    /// Creates empty HistogramLabels
     init() {
         self.init()
         self.le = ""
     }
 }
 
+/// Prometheus Counter metric
+///
+/// See https://prometheus.io/docs/concepts/metric_types/#Histogram
 public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: Metric, PrometheusHandled {
+    /// Prometheus instance that created this Histogram
     internal let prometheus: Prometheus
     
+    /// Name of this Histogram, required
     public let name: String
+    /// Help text of this Histogram, optional
     public let help: String?
     
+    /// Type of the metric, used for formatting
     public let _type: MetricType = .histogram
     
-    private var buckets: [Counter<NumType, EmptyCodable>] = []
+    /// Bucketed values for this Histogram
+    private var buckets: [Counter<NumType, EmptyLabels>] = []
     
+    /// Buckets used by this Histogram
     internal let upperBounds: [Double]
     
+    /// Labels for this Histogram
     internal private(set) var labels: Labels
     
+    /// Sub Histograms for this Histogram
     fileprivate var subHistograms: [Histogram<NumType, Labels>] = []
     
-    private let total: Counter<NumType, EmptyCodable>
+    /// Total value of the Histogram
+    private let total: Counter<NumType, EmptyLabels>
     
+    /// Creates a new Histogram
+    ///
+    /// - Parameters:
+    ///     - name: Name of the Histogram
+    ///     - help: Help text of the Histogram
+    ///     - labels: Labels for the Histogram
+    ///     - buckets: Buckets to use for the Histogram
+    ///     - p: Prometheus instance creating this Histogram
     internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = defaultBuckets, _ p: Prometheus) {
         self.name = name
         self.help = help
@@ -46,9 +69,12 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         }
     }
     
+    /// Gets the metric string for this Histogram
+    ///
+    /// - Returns:
+    ///     Newline seperated Prometheus formatted metric string
     public func getMetric() -> String {
         var output = [String]()
-        
         
         output.append(headers)
 
@@ -87,8 +113,13 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         return output.joined(separator: "\n")
     }
     
+    /// Observe a value
+    ///
+    /// - Parameters:
+    ///     - value: Value to observe
+    ///     - labels: Labels to attach to the observed value
     public func observe(_ value: NumType, _ labels: Labels? = nil) {
-        if let labels = labels, type(of: labels) != type(of: EmptySummaryCodable()) {
+        if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
             let his = prometheus.getOrCreateHistogram(with: labels, for: self)
             his.observe(value)
         }
@@ -109,7 +140,7 @@ extension Prometheus {
             guard metric.name == his.name, metric.help == his.help, metric.labels == labels else { return false }
             return true
             }
-        if histograms.count > 2 { fatalError("Somehow got 2 summaries with the same data type") }
+        if histograms.count > 2 { fatalError("Somehow got 2 histograms with the same data type") }
         if let histogram = histograms.first {
             return histogram
         } else {

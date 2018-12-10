@@ -1,36 +1,60 @@
+/// Default quantiles used by Summaries
 public var defaultQuantiles = [0.01, 0.05, 0.5, 0.9, 0.95, 0.99, 0.999]
 
+/// Label type Summaries can use
 public protocol SummaryLabels: MetricLabels {
     var quantile: String { get set }
 }
 
 extension SummaryLabels {
+    /// Creates empty SummaryLabels
     init() {
         self.init()
         self.quantile = ""
     }
 }
 
+/// Prometheus Counter metric
+///
+/// See https://prometheus.io/docs/concepts/metric_types/#summary
 public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metric, PrometheusHandled {
+    /// Prometheus instance that created this Summary
     internal let prometheus: Prometheus
     
+    /// Name of this Summary, required
     public let name: String
+    /// Help text of this Summary, optional
     public let help: String?
 
+    /// Type of the metric, used for formatting
     public let _type: MetricType = .summary
     
+    /// Labels for this Summary
     internal private(set) var labels: Labels
     
-    private let sum: Counter<NumType, EmptyCodable>
+    /// Sum of the values in this Summary
+    private let sum: Counter<NumType, EmptyLabels>
     
-    private let count: Counter<NumType, EmptyCodable>
+    /// Amount of values in this Summary
+    private let count: Counter<NumType, EmptyLabels>
     
+    /// Values in this Summary
     private var values: [NumType] = []
     
+    /// Quantiles used by this Summary
     internal let quantiles: [Double]
     
+    /// Sub Summaries for this Summary
     fileprivate var subSummaries: [Summary<NumType, Labels>] = []
     
+    /// Creates a new Summary
+    ///
+    /// - Parameters:
+    ///     - name: Name of the Summary
+    ///     - help: Help text of the Summary
+    ///     - labels: Labels for the Summary
+    ///     - quantiles: Quantiles to use for the Summary
+    ///     - p: Prometheus instance creating this Summary
     internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ quantiles: [Double] = defaultQuantiles, _ p: Prometheus) {
         self.name = name
         self.help = help
@@ -46,6 +70,10 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
         self.labels = labels
     }
     
+    /// Gets the metric string for this Summary
+    ///
+    /// - Returns:
+    ///     Newline seperated Prometheus formatted metric string
     public func getMetric() -> String {
         var output = [String]()
 
@@ -81,8 +109,13 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
         return output.joined(separator: "\n")
     }
     
+    /// Observe a value
+    ///
+    /// - Parameters:
+    ///     - value: Value to observe
+    ///     - labels: Labels to attach to the observed value
     public func observe(_ value: NumType, _ labels: Labels? = nil) {
-        if let labels = labels, type(of: labels) != type(of: EmptySummaryCodable()) {
+        if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
             let sum = self.prometheus.getOrCreateSummary(withLabels: labels, forSummary: self)
             sum.observe(value)
         }
@@ -109,6 +142,13 @@ extension Prometheus {
     }
 }
 
+/// Calculates values per quantile
+///
+/// - Parameters:
+///     - quantiles: Quantiles to divide values over
+///     - values: Values to divide over quantiles
+///
+/// - Returns: Dictionary of type [Quantile: Value]
 func calculateQuantiles(quantiles: [Double], values: [Double]) -> [Double: Double] {
     let values = values.sorted()
     var quantilesMap: [Double: Double] = [:]
@@ -118,6 +158,13 @@ func calculateQuantiles(quantiles: [Double], values: [Double]) -> [Double: Doubl
     return quantilesMap
 }
 
+/// Calculates value for quantile
+///
+/// - Parameters:
+///     - q: Quantile to calculate value for
+///     - values: Values to calculate quantile from
+///
+/// - Returns: Calculated quantile
 func quantile(_ q: Double, _ values: [Double]) -> Double {
     if values.count == 0 {
         return 0

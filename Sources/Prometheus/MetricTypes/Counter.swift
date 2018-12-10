@@ -1,17 +1,34 @@
+/// Prometheus Counter metric
+///
+/// See https://prometheus.io/docs/concepts/metric_types/#counter
 public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled {
+    /// Prometheus instance that created this Counter
     internal let prometheus: Prometheus
     
+    /// Name of the Counter, required
     public let name: String
+    /// Help text of the Counter, optional
     public let help: String?
     
+    /// Type of the metric, used for formatting
     public let _type: MetricType = .counter
     
+    /// Current value of the counter
     internal var value: NumType
 
+    /// Initial value of the counter
     private var initialValue: NumType
 
+    /// Storage of values that have labels attached
     internal var metrics: [Labels: NumType] = [:]
     
+    /// Creates a new instance of a Counter
+    ///
+    /// - Parameters:
+    ///     - name: Name of the Counter
+    ///     - help: Helpt text of the Counter
+    ///     - initialValue: Initial value to set the counter to
+    ///     - p: Prometheus instance that created this counter
     internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: Prometheus) {
         self.name = name
         self.help = help
@@ -20,14 +37,16 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
         self.prometheus = p
     }
     
+    /// Gets the metric string for this counter
+    ///
+    /// - Returns:
+    ///     Newline seperated Prometheus formatted metric string
     public func getMetric() -> String {
         var output = [String]()
         
         output.append(headers)
         
-        if value != initialValue && initialValue == 0 {
-            output.append("\(name) \(value)")
-        }
+        output.append("\(name) \(value)")
 
         metrics.forEach { (labels, value) in
             let labelsString = encodeLabels(labels)
@@ -37,6 +56,13 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
         return output.joined(separator: "\n")
     }
     
+    /// Increments the Counter
+    ///
+    /// - Parameters:
+    ///     - amount: Amount to increment the counter with
+    ///     - labels: Labels to attach to the value
+    ///
+    /// - Returns: The new value
     @discardableResult
     public func inc(_ amount: NumType = 1, _ labels: Labels? = nil) -> NumType {
         if let labels = labels {
@@ -50,6 +76,12 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
         }
     }
     
+    /// Gets the value of the Counter
+    ///
+    /// - Parameters:
+    ///     - labels: Labels to get the value for
+    ///
+    /// - Returns: The value of the Counter attached to the provided labels
     public func get(_ labels: Labels? = nil) -> NumType {
         if let labels = labels {
             return self.metrics[labels] ?? initialValue

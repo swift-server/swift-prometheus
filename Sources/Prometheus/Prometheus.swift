@@ -1,3 +1,6 @@
+/// Prometheus class
+///
+/// See https://prometheus.io/docs/introduction/overview/
 public class Prometheus {
     /// Singleton instance
     ///
@@ -7,6 +10,14 @@ public class Prometheus {
     
     /// Metrics tracked by this Prometheus instance
     internal var metrics: [Metric] = []
+    
+    
+    /// Creates prometheus formatted metrics
+    ///
+    /// - Returns: Newline seperated string with metrics for all Metric Trackers of this Prometheus instance
+    public func getMetrics() -> String {
+        return metrics.map { $0.getMetric() }.joined(separator: "\n")
+    }
     
     // MARK: - Counter
     
@@ -45,9 +56,9 @@ public class Prometheus {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        initialValue: T = 0) -> Counter<T, EmptyCodable>
+        initialValue: T = 0) -> Counter<T, EmptyLabels>
     {
-        return self.createCounter(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyCodable.self)
+        return self.createCounter(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyLabels.self)
     }
     
     // MARK: - Gauge
@@ -87,9 +98,9 @@ public class Prometheus {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        initialValue: T = 0) -> Gauge<T, EmptyCodable>
+        initialValue: T = 0) -> Gauge<T, EmptyLabels>
     {
-        return self.createGauge(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyCodable.self)
+        return self.createGauge(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyLabels.self)
     }
     
     // MARK: - Histogram
@@ -129,9 +140,9 @@ public class Prometheus {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        buckets: [Double] = defaultBuckets) -> Histogram<T, EmptyHistogramCodable>
+        buckets: [Double] = defaultBuckets) -> Histogram<T, EmptyHistogramLabels>
     {
-        return self.createHistogram(forType: type, named: name, helpText: helpText, buckets: buckets, labels: EmptyHistogramCodable.self)
+        return self.createHistogram(forType: type, named: name, helpText: helpText, buckets: buckets, labels: EmptyHistogramLabels.self)
     }
     
     // MARK: - Summary
@@ -171,16 +182,16 @@ public class Prometheus {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        quantiles: [Double] = defaultQuantiles) -> Summary<T, EmptySummaryCodable>
+        quantiles: [Double] = defaultQuantiles) -> Summary<T, EmptySummaryLabels>
     {
-        return self.createSummary(forType: type, named: name, helpText: helpText, quantiles: quantiles, labels: EmptySummaryCodable.self)
+        return self.createSummary(forType: type, named: name, helpText: helpText, quantiles: quantiles, labels: EmptySummaryLabels.self)
     }
     
     // MARK: - Info
     
     /// Creates an Info metric with the given values
     ///
-    /// - Parameters
+    /// - Parameters:
     ///     - name: Name of the info
     ///     - helpText: Help text for the info. Usually a short description
     ///     - labelType: Type of labels this Info can use
@@ -194,12 +205,5 @@ public class Prometheus {
         let info = Info<U>(name, helpText, self)
         self.metrics.append(info)
         return info
-    }
-    
-    /// Creates prometheus formatted metrics
-    ///
-    /// - Returns: Newline seperated string with metrics for all Metric Trackers of this Prometheus instance
-    public func getMetrics() -> String {
-        return metrics.map { $0.getMetric() }.joined(separator: "\n")
     }
 }
