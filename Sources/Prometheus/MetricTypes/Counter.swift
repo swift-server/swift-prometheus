@@ -49,7 +49,7 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
                 output.append("# HELP \(self.name) \(help)")
             }
             output.append("# TYPE \(self.name) \(self._type)")
-
+            
             output.append("\(self.name) \(self.value)")
             
             self.metrics.forEach { (labels, value) in
@@ -67,17 +67,17 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     ///     - amount: Amount to increment the counter with
     ///     - labels: Labels to attach to the value
     ///
-    /// - Returns: The new value
-    @discardableResult
-    public func inc(_ amount: NumType = 1, _ labels: Labels? = nil) -> NumType {
-        if let labels = labels {
-            var val = self.metrics[labels] ?? initialValue
-            val += amount
-            self.metrics[labels] = val
-            return val
-        } else {
-            self.value += amount
-            return self.value
+    public func inc(_ amount: NumType = 1, _ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
+        prometheusQueue.async(flags: .barrier) {
+            if let labels = labels {
+                var val = self.metrics[labels] ?? self.initialValue
+                val += amount
+                self.metrics[labels] = val
+                done(val)
+            } else {
+                self.value += amount
+                done(self.value)
+            }
         }
     }
     
