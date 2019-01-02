@@ -1,4 +1,9 @@
 import Prometheus
+import Foundation
+
+let group = DispatchGroup()
+
+let myProm = PrometheusClient()
 
 struct MyCodable: MetricLabels {
    var thing: String = "*"
@@ -7,13 +12,13 @@ struct MyCodable: MetricLabels {
 let codable1 = MyCodable(thing: "Thing1")
 let codable2 = MyCodable(thing: "Thing2")
 
-let counter = Prometheus.shared.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", initialValue: 12, withLabelType: MyCodable.self)
+let counter = myProm.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", initialValue: 12, withLabelType: MyCodable.self)
 
 counter.inc(5)
 counter.inc(Int.random(in: 0...100), codable2)
 counter.inc(Int.random(in: 0...100), codable1)
 
-let gauge = Prometheus.shared.createGauge(forType: Int.self, named: "my_gauge", helpText: "Just a gauge", initialValue: 12, withLabelType: MyCodable.self)
+let gauge = myProm.createGauge(forType: Int.self, named: "my_gauge", helpText: "Just a gauge", initialValue: 12, withLabelType: MyCodable.self)
 
 gauge.inc(100)
 gauge.inc(Int.random(in: 0...100), codable2)
@@ -32,7 +37,7 @@ struct HistogramThing: HistogramLabels {
    }
 }
 
-let histogram = Prometheus.shared.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Just a histogram", labels: HistogramThing.self)
+let histogram = myProm.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Just a histogram", labels: HistogramThing.self)
 
 for _ in 0...Int.random(in: 10...50) {
    histogram.observe(Double.random(in: 0...1))
@@ -55,7 +60,7 @@ struct SummaryThing: SummaryLabels {
    }
 }
 
-let summary = Prometheus.shared.createSummary(forType: Double.self, named: "my_summary", helpText: "Just a summary", labels: SummaryThing.self)
+let summary = myProm.createSummary(forType: Double.self, named: "my_summary", helpText: "Just a summary", labels: SummaryThing.self)
 
 for _ in 0...Int.random(in: 100...1000) {
    summary.observe(Double.random(in: 0...10000))
@@ -80,8 +85,19 @@ struct MyInfoStruct: MetricLabels {
    }
 }
 
-let info = Prometheus.shared.createInfo(named: "my_info", helpText: "Just some info", labelType: MyInfoStruct.self)
+let info = myProm.createInfo(named: "my_info", helpText: "Just some info", labelType: MyInfoStruct.self)
 
 info.info(MyInfoStruct("2.0.0", "2"))
 
-print(Prometheus.shared.getMetrics())
+group.enter()
+
+myProm.getMetrics {
+    print($0)
+    group.leave()
+}
+
+group.notify(queue: .main) {
+    exit(EXIT_SUCCESS)
+}
+
+dispatchMain()

@@ -1,5 +1,8 @@
 import Foundation
 
+/// Prometheus global dispatch queue
+internal let prometheusQueue = DispatchQueue(label: "prometheus.internal", attributes: .concurrent)
+
 /// Empty labels class
 public struct EmptyLabels: MetricLabels {
     public init() { }

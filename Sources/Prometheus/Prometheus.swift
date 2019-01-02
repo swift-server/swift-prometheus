@@ -1,12 +1,10 @@
 /// Prometheus class
 ///
 /// See https://prometheus.io/docs/introduction/overview/
-public class Prometheus {
-    /// Singleton instance
-    ///
-    /// Use this to create Metric trackers and retrieve your data,
-    /// so you don't have to keep track of an instance.
-    public static let shared = Prometheus()
+public class PrometheusClient {
+    
+    /// Create a PrometheusClient instance
+    public init() { }
     
     /// Metrics tracked by this Prometheus instance
     internal var metrics: [Metric] = []
@@ -15,8 +13,19 @@ public class Prometheus {
     /// Creates prometheus formatted metrics
     ///
     /// - Returns: Newline seperated string with metrics for all Metric Trackers of this Prometheus instance
-    public func getMetrics() -> String {
-        return metrics.map { $0.getMetric() }.joined(separator: "\n")
+    public func getMetrics(_ done: @escaping (String) -> Void) {
+//        prometheusQueue.async(flags: .barrier) {
+            var list = [String]()
+            self.metrics.forEach { metric in
+                metric.getMetric { str in
+                    list.append(str)
+                    
+                    if list.count == self.metrics.count {
+                        done(list.joined(separator: "\n"))
+                    }
+                }
+            }
+//        }
     }
     
     // MARK: - Counter

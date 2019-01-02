@@ -11,7 +11,7 @@ public protocol Metric {
     var help: String? { get }
     var _type: MetricType { get }
     
-    func getMetric() -> String
+    func getMetric(_ done: @escaping (String) -> Void)
 }
 
 extension Metric {
@@ -29,7 +29,7 @@ extension Metric {
 /// Adding a prometheus instance to all
 /// metrics
 internal protocol PrometheusHandled {
-    var prometheus: Prometheus { get }
+    var prometheus: PrometheusClient { get }
 }
 
 /// Base MetricLabels protocol

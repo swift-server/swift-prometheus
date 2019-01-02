@@ -3,7 +3,7 @@
 /// See https://prometheus.io/docs/concepts/metric_types/#counter
 public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled {
     /// Prometheus instance that created this Counter
-    internal let prometheus: Prometheus
+    internal let prometheus: PrometheusClient
     
     /// Name of the Counter, required
     public let name: String
@@ -15,10 +15,10 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     
     /// Current value of the counter
     internal var value: NumType
-
+    
     /// Initial value of the counter
     private var initialValue: NumType
-
+    
     /// Storage of values that have labels attached
     internal var metrics: [Labels: NumType] = [:]
     
@@ -29,7 +29,7 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     ///     - help: Helpt text of the Counter
     ///     - initialValue: Initial value to set the counter to
     ///     - p: Prometheus instance that created this counter
-    internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: Prometheus) {
+    internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         self.initialValue = initialValue
@@ -41,19 +41,21 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric() -> String {
-        var output = [String]()
-        
-        output.append(headers)
-        
-        output.append("\(name) \(value)")
-
-        metrics.forEach { (labels, value) in
-            let labelsString = encodeLabels(labels)
-            output.append("\(name)\(labelsString) \(value)")
+    public func getMetric(_ done: @escaping (String) -> Void) {
+        prometheusQueue.async(flags: .barrier) {
+            var output = [String]()
+            
+            output.append(self.headers)
+            
+            output.append("\(self.name) \(self.value)")
+            
+            self.metrics.forEach { (labels, value) in
+                let labelsString = encodeLabels(labels)
+                output.append("\(self.name)\(labelsString) \(value)")
+            }
+            
+            done(output.joined(separator: "\n"))
         }
-        
-        return output.joined(separator: "\n")
     }
     
     /// Increments the Counter

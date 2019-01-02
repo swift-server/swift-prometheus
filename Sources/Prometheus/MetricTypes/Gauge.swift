@@ -3,7 +3,7 @@
 /// See https://prometheus.io/docs/concepts/metric_types/#gauge
 public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled {
     /// Prometheus instance that created this Gauge
-    internal let prometheus: Prometheus
+    internal let prometheus: PrometheusClient
     
     /// Name of the Gauge, required
     public let name: String
@@ -15,7 +15,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     
     /// Current value of the counter
     private var value: NumType
-
+    
     /// Initial value of the Gauge
     private var initialValue: NumType
     
@@ -29,7 +29,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - help: Helpt text of the Gauge
     ///     - initialValue: Initial value to set the Gauge to
     ///     - p: Prometheus instance that created this Gauge
-    internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: Prometheus) {
+    internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         self.initialValue = initialValue
@@ -41,19 +41,21 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric() -> String {
-        var output = [String]()
-        
-        output.append(headers)
-
-        output.append("\(name) \(value)")
-        
-        metrics.forEach { (labels, value) in
-            let labelsString = encodeLabels(labels)
-            output.append("\(name)\(labelsString) \(value)")
+    public func getMetric(_ done: @escaping (String) -> Void) {
+        prometheusQueue.async(flags: .barrier) {
+            var output = [String]()
+            
+            output.append(self.headers)
+            
+            output.append("\(self.name) \(self.value)")
+            
+            self.metrics.forEach { (labels, value) in
+                let labelsString = encodeLabels(labels)
+                output.append("\(self.name)\(labelsString) \(value)")
+            }
+            
+            done(output.joined(separator: "\n"))
         }
-        
-        return output.joined(separator: "\n")
     }
     
     /// Sets the Gauge
@@ -104,7 +106,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     public func inc(_ labels: Labels? = nil) -> NumType {
         return self.inc(1, labels)
     }
-
+    
     /// Decrements the Gauge
     ///
     /// - Parameters:
@@ -135,7 +137,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     public func dec(_ labels: Labels? = nil) -> NumType {
         return self.dec(1, labels)
     }
-
+    
     /// Gets the value of the Gauge
     ///
     /// - Parameters:

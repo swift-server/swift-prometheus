@@ -19,13 +19,13 @@ extension SummaryLabels {
 /// See https://prometheus.io/docs/concepts/metric_types/#summary
 public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metric, PrometheusHandled {
     /// Prometheus instance that created this Summary
-    internal let prometheus: Prometheus
+    internal let prometheus: PrometheusClient
     
     /// Name of this Summary, required
     public let name: String
     /// Help text of this Summary, optional
     public let help: String?
-
+    
     /// Type of the metric, used for formatting
     public let _type: MetricType = .summary
     
@@ -55,7 +55,7 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     ///     - labels: Labels for the Summary
     ///     - quantiles: Quantiles to use for the Summary
     ///     - p: Prometheus instance creating this Summary
-    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ quantiles: [Double] = defaultQuantiles, _ p: Prometheus) {
+    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ quantiles: [Double] = defaultQuantiles, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         
@@ -74,39 +74,41 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric() -> String {
-        var output = [String]()
-
-        output.append(headers)
-
-        calculateQuantiles(quantiles: quantiles, values: values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
-            let (q, v) = arg
-            self.labels.quantile = "\(q)"
-            let labelsString = encodeLabels(self.labels)
-            output.append("\(name)\(labelsString) \(v)")
-        }
-        
-        let labelsString = encodeLabels(self.labels, ["quantile"])
-        output.append("\(name)_count\(labelsString) \(count.get())")
-        output.append("\(name)_sum\(labelsString) \(sum.get())")
-        
-        self.subSummaries.forEach { subSum in
-            calculateQuantiles(quantiles: quantiles, values: subSum.values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
+    public func getMetric(_ done: @escaping (String) -> Void) {
+        prometheusQueue.async(flags: .barrier) {
+            var output = [String]()
+            
+            output.append(self.headers)
+            
+            calculateQuantiles(quantiles: self.quantiles, values: self.values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
                 let (q, v) = arg
-                subSum.labels.quantile = "\(q)"
-                let labelsString = encodeLabels(subSum.labels)
-                output.append("\(subSum.name)\(labelsString) \(v)")
+                self.labels.quantile = "\(q)"
+                let labelsString = encodeLabels(self.labels)
+                output.append("\(self.name)\(labelsString) \(v)")
             }
             
-            let labelsString = encodeLabels(subSum.labels, ["quantile"])
-            output.append("\(subSum.name)_count\(labelsString) \(subSum.count.get())")
-            output.append("\(subSum.name)_sum\(labelsString) \(subSum.sum.get())")
-            subSum.labels.quantile = ""
+            let labelsString = encodeLabels(self.labels, ["quantile"])
+            output.append("\(self.name)_count\(labelsString) \(self.count.get())")
+            output.append("\(self.name)_sum\(labelsString) \(self.sum.get())")
+            
+            self.subSummaries.forEach { subSum in
+                calculateQuantiles(quantiles: self.quantiles, values: subSum.values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
+                    let (q, v) = arg
+                    subSum.labels.quantile = "\(q)"
+                    let labelsString = encodeLabels(subSum.labels)
+                    output.append("\(subSum.name)\(labelsString) \(v)")
+                }
+                
+                let labelsString = encodeLabels(subSum.labels, ["quantile"])
+                output.append("\(subSum.name)_count\(labelsString) \(subSum.count.get())")
+                output.append("\(subSum.name)_sum\(labelsString) \(subSum.sum.get())")
+                subSum.labels.quantile = ""
+            }
+            
+            self.labels.quantile = ""
+            
+            done(output.joined(separator: "\n"))
         }
-        
-        self.labels.quantile = ""
-        
-        return output.joined(separator: "\n")
     }
     
     /// Observe a value
@@ -115,17 +117,19 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
     public func observe(_ value: NumType, _ labels: Labels? = nil) {
-        if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
-            let sum = self.prometheus.getOrCreateSummary(withLabels: labels, forSummary: self)
-            sum.observe(value)
+        prometheusQueue.async(flags: .barrier) {
+            if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
+                let sum = self.prometheus.getOrCreateSummary(withLabels: labels, forSummary: self)
+                sum.observe(value)
+            }
+            self.count.inc(1)
+            self.sum.inc(value)
+            self.values.append(value)
         }
-        self.count.inc(1)
-        self.sum.inc(value)
-        self.values.append(value)
     }
 }
 
-extension Prometheus {
+extension PrometheusClient {
     fileprivate func getOrCreateSummary<T: Numeric, U: SummaryLabels>(withLabels labels: U, forSummary sum: Summary<T, U>) -> Summary<T, U> {
         let summaries = sum.subSummaries.filter { (metric) -> Bool in
             guard metric.name == sum.name, metric.help == sum.help, metric.labels == labels else { return false }

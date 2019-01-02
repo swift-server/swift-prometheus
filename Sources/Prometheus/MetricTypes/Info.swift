@@ -3,7 +3,7 @@
 /// Info tracks key-value information, usually about a whole target
 public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
     /// Prometheus instance that created this Info
-    internal let prometheus: Prometheus
+    internal let prometheus: PrometheusClient
     
     /// Name of the Info, required
     public let name: String
@@ -23,7 +23,7 @@ public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
     ///     - name: Name of the Info
     ///     - help: Help text of the Info
     ///     - p: Prometheus instance handling this Info
-    internal init(_ name: String, _ help: String? = nil, _ p: Prometheus) {
+    internal init(_ name: String, _ help: String? = nil, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         self.prometheus = p
@@ -41,14 +41,16 @@ public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
     ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric() -> String {
-        var output = [String]()
-        
-        output.append(headers)
-        
-        let labelsString = encodeLabels(labels)
-        output.append("\(name)\(labelsString) 1.0")
-        
-        return output.joined(separator: "\n")
+    public func getMetric(_ done: @escaping (String) -> Void) {
+        prometheusQueue.async(flags: .barrier) {
+            var output = [String]()
+            
+            output.append(self.headers)
+            
+            let labelsString = encodeLabels(self.labels)
+            output.append("\(self.name)\(labelsString) 1.0")
+            
+            done(output.joined(separator: "\n"))
+        }
     }
 }
