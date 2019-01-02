@@ -77,8 +77,11 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         prometheusQueue.async(flags: .barrier) {
             var output = [String]()
             
-            output.append(self.headers)
-            
+            if let help = self.help {
+                output.append("# HELP \(self.name) \(help)")
+            }
+            output.append("# TYPE \(self.name) \(self._type)")
+
             var acc: NumType = 0
             for (i, bound) in self.upperBounds.enumerated() {
                 acc += self.buckets[i].get()

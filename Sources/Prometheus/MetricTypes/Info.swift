@@ -45,7 +45,10 @@ public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
         prometheusQueue.async(flags: .barrier) {
             var output = [String]()
             
-            output.append(self.headers)
+            if let help = self.help {
+                output.append("# HELP \(self.name) \(help)")
+            }
+            output.append("# TYPE \(self.name) \(self._type)")
             
             let labelsString = encodeLabels(self.labels)
             output.append("\(self.name)\(labelsString) 1.0")

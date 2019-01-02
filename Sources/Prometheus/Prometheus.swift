@@ -14,7 +14,7 @@ public class PrometheusClient {
     ///
     /// - Returns: Newline seperated string with metrics for all Metric Trackers of this Prometheus instance
     public func getMetrics(_ done: @escaping (String) -> Void) {
-//        prometheusQueue.async(flags: .barrier) {
+        prometheusQueue.async(flags: .barrier) {
             var list = [String]()
             self.metrics.forEach { metric in
                 metric.getMetric { str in
@@ -25,7 +25,7 @@ public class PrometheusClient {
                     }
                 }
             }
-//        }
+        }
     }
     
     // MARK: - Counter
@@ -48,7 +48,9 @@ public class PrometheusClient {
         withLabelType labelType: U.Type) -> Counter<T, U>
     {
         let counter = Counter<T, U>(name, helpText, initialValue, self)
-        self.metrics.append(counter)
+        prometheusQueue.async(flags: .barrier) {
+            self.metrics.append(counter)
+        }
         return counter
     }
     
@@ -90,7 +92,9 @@ public class PrometheusClient {
         withLabelType labelType: U.Type) -> Gauge<T, U>
     {
         let gauge = Gauge<T, U>(name, helpText, initialValue, self)
-        self.metrics.append(gauge)
+        prometheusQueue.async(flags: .barrier) {
+            self.metrics.append(gauge)
+        }
         return gauge
     }
     
@@ -132,7 +136,9 @@ public class PrometheusClient {
         labels: U.Type) -> Histogram<T, U>
     {
         let histogram = Histogram<T, U>(name, helpText, U(), buckets, self)
-        self.metrics.append(histogram)
+        prometheusQueue.async(flags: .barrier) {
+            self.metrics.append(histogram)
+        }
         return histogram
     }
     
@@ -174,7 +180,9 @@ public class PrometheusClient {
         labels: U.Type) -> Summary<T, U>
     {
         let summary = Summary<T, U>(name, helpText, U(), quantiles, self)
-        metrics.append(summary)
+        prometheusQueue.async(flags: .barrier) {
+            self.metrics.append(summary)
+        }
         return summary
     }
     
@@ -212,7 +220,9 @@ public class PrometheusClient {
         labelType: U.Type) -> Info<U>
     {
         let info = Info<U>(name, helpText, self)
-        self.metrics.append(info)
+        prometheusQueue.async(flags: .barrier) {
+            self.metrics.append(info)
+        }
         return info
     }
 }

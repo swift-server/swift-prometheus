@@ -78,8 +78,11 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
         prometheusQueue.async(flags: .barrier) {
             var output = [String]()
             
-            output.append(self.headers)
-            
+            if let help = self.help {
+                output.append("# HELP \(self.name) \(help)")
+            }
+            output.append("# TYPE \(self.name) \(self._type)")
+
             calculateQuantiles(quantiles: self.quantiles, values: self.values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
                 let (q, v) = arg
                 self.labels.quantile = "\(q)"

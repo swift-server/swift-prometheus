@@ -14,17 +14,13 @@ public protocol Metric {
     func getMetric(_ done: @escaping (String) -> Void)
 }
 
-extension Metric {
-    /// Default headers for a metric
-    var headers: String {
-        var output = [String]()
-        if let help = help {
-            output.append("# HELP \(name) \(help)")
-        }
-        output.append("# TYPE \(name) \(_type)")
-        return output.joined(separator: "\n")
-    }
-}
+//extension Metric {
+//    /// Default headers for a metric
+//    var headers: String {
+//        var output = [String]()
+//        return output.joined(separator: "\n")
+//    }
+//}
 
 /// Adding a prometheus instance to all
 /// metrics
