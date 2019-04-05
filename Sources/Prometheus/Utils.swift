@@ -62,9 +62,9 @@ public protocol DoubleRepresentable: Numeric {
 /// Numbers that convert to other types
 public protocol ConvertibleNumberType: DoubleRepresentable {}
 public extension ConvertibleNumberType {
-    public var floatValue: Float {get {return Float(doubleValue)}}
-    public var intValue: Int {get {return lrint(doubleValue)}}
-    public var CGFloatValue: CGFloat {get {return CGFloat(doubleValue)}}
+    var floatValue: Float {get {return Float(doubleValue)}}
+    var intValue: Int {get {return lrint(doubleValue)}}
+    var CGFloatValue: CGFloat {get {return CGFloat(doubleValue)}}
 }
 
 /// Double Representable Conformance

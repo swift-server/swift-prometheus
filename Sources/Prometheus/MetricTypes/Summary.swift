@@ -72,9 +72,13 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     
     /// Gets the metric string for this Summary
     ///
+    /// - Parameters:
+    ///     - done: Completion handler
+    ///     - metric: String value in prom-format
+    ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric(_ done: @escaping (String) -> Void) {
+    public func getMetric(_ done: @escaping (_ metric: String) -> Void) {
         prometheusQueue.async(flags: .barrier) {
             var output = [String]()
             
@@ -109,7 +113,7 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
             }
             
             self.labels.quantile = ""
-            
+
             done(output.joined(separator: "\n"))
         }
     }
@@ -119,15 +123,22 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     /// - Parameters:
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
-    public func observe(_ value: NumType, _ labels: Labels? = nil) {
+    ///     - done: Completion handler
+    ///     - observedValue: Value written to the summary
+    public func observe(_ value: NumType, _ labels: Labels? = nil, _ done: @escaping (_ observedValue: NumType) -> Void = { _ in }) {
         prometheusQueue.async(flags: .barrier) {
             if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
                 let sum = self.prometheus.getOrCreateSummary(withLabels: labels, forSummary: self)
-                sum.observe(value)
+                sum.observe(value, nil, done)
             }
             self.count.inc(1)
             self.sum.inc(value)
             self.values.append(value)
+
+            // Only run the callback once; not on both the label and without labels
+            if labels == nil {
+                done(value)
+            }
         }
     }
 }
