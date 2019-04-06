@@ -17,7 +17,7 @@ extension HistogramLabels {
 /// Prometheus Counter metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#Histogram
-public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: Metric, PrometheusHandled {
+public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: Metric, PrometheusHandled, RecorderHandler {
     /// Prometheus instance that created this Histogram
     internal let prometheus: PrometheusClient
     
@@ -44,6 +44,8 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     /// Total value of the Histogram
     private let total: Counter<NumType, EmptyLabels>
     
+    private let lock: NSLock
+    
     /// Creates a new Histogram
     ///
     /// - Parameters:
@@ -64,6 +66,8 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         
         self.upperBounds = buckets
         
+        self.lock = NSLock()
+        
         buckets.forEach { _ in
             self.buckets.append(.init("\(name)_bucket", nil, 0, p))
         }
@@ -73,8 +77,8 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric(_ done: @escaping (String) -> Void) {
-        prometheusQueue.async(flags: .barrier) {
+    public func getMetric() -> String {
+        return self.lock.withLock {
             var output = [String]()
             
             if let help = self.help {
@@ -114,8 +118,17 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
             
             self.labels.le = ""
             
-            done(output.joined(separator: "\n"))
+            return output.joined(separator: "\n")
         }
+    }
+    
+    public func record(_ value: Int64) {
+        self.record(Double(value))
+    }
+    
+    public func record(_ value: Double) {
+        guard let v = value as? NumType else { return }
+        self.observe(v)
     }
     
     /// Observe a value
@@ -124,7 +137,7 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
     public func observe(_ value: NumType, _ labels: Labels? = nil) {
-        prometheusQueue.async(flags: .barrier) {
+        self.lock.withLock {
             if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
                 let his = self.prometheus.getOrCreateHistogram(with: labels, for: self)
                 his.observe(value)

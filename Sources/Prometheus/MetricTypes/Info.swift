@@ -17,6 +17,8 @@ public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
     /// For Info metrics, these are the actual values the metric is exposing
     internal var labels = Labels()
     
+    private let lock: NSLock
+    
     /// Creates a new Info
     ///
     /// - Parameters:
@@ -27,6 +29,7 @@ public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
         self.name = name
         self.help = help
         self.prometheus = p
+        self.lock = NSLock()
     }
     
     /// Set the info
@@ -41,8 +44,8 @@ public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
     ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric(_ done: @escaping (String) -> Void) {
-        prometheusQueue.async(flags: .barrier) {
+    public func getMetric() -> String {
+        return self.lock.withLock {
             var output = [String]()
             
             if let help = self.help {
@@ -53,7 +56,7 @@ public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
             let labelsString = encodeLabels(self.labels)
             output.append("\(self.name)\(labelsString) 1.0")
             
-            done(output.joined(separator: "\n"))
+            return output.joined(separator: "\n")
         }
     }
 }

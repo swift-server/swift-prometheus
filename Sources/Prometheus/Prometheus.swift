@@ -1,30 +1,40 @@
 /// Prometheus class
 ///
 /// See https://prometheus.io/docs/introduction/overview/
-public class PrometheusClient {
+public class PrometheusClient: MetricsFactory {
+    public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
+        return self.createCounter(forType: Int64.self, named: label)
+    }
     
-    /// Create a PrometheusClient instance
-    public init() { }
+    public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
+        if aggregate {
+            return self.createHistogram(forType: Double.self, named: label)
+        } else {
+            return self.createGauge(forType: Double.self, named: label)
+        }
+    }
+    
+    public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
+        return self.createSummary(forType: Double.self, named: label)
+    }
     
     /// Metrics tracked by this Prometheus instance
-    internal var metrics: [Metric] = []
+    internal var metrics: [Metric]
     
+    private let lock: NSLock
+    
+    /// Create a PrometheusClient instance
+    public init() {
+        self.metrics = []
+        self.lock = NSLock()
+    }
     
     /// Creates prometheus formatted metrics
     ///
     /// - Returns: Newline seperated string with metrics for all Metric Trackers of this Prometheus instance
-    public func getMetrics(_ done: @escaping (String) -> Void) {
-        prometheusQueue.async(flags: .barrier) {
-            var list = [String]()
-            self.metrics.forEach { metric in
-                metric.getMetric { str in
-                    list.append(str)
-                    
-                    if list.count == self.metrics.count {
-                        done(list.joined(separator: "\n"))
-                    }
-                }
-            }
+    public func getMetrics() -> String {
+        return self.lock.withLock {
+            return self.metrics.map { $0.getMetric() }.joined(separator: "\n")
         }
     }
     
@@ -47,11 +57,11 @@ public class PrometheusClient {
         initialValue: T = 0,
         withLabelType labelType: U.Type) -> Counter<T, U>
     {
-        let counter = Counter<T, U>(name, helpText, initialValue, self)
-        prometheusQueue.async(flags: .barrier) {
+        return self.lock.withLock {
+            let counter = Counter<T, U>(name, helpText, initialValue, self)
             self.metrics.append(counter)
+            return counter
         }
-        return counter
     }
     
     /// Creates a counter with the given values
@@ -91,11 +101,11 @@ public class PrometheusClient {
         initialValue: T = 0,
         withLabelType labelType: U.Type) -> Gauge<T, U>
     {
-        let gauge = Gauge<T, U>(name, helpText, initialValue, self)
-        prometheusQueue.async(flags: .barrier) {
+        return self.lock.withLock {
+            let gauge = Gauge<T, U>(name, helpText, initialValue, self)
             self.metrics.append(gauge)
+            return gauge
         }
-        return gauge
     }
     
     /// Creates a gauge with the given values
@@ -135,11 +145,11 @@ public class PrometheusClient {
         buckets: [Double] = defaultBuckets,
         labels: U.Type) -> Histogram<T, U>
     {
-        let histogram = Histogram<T, U>(name, helpText, U(), buckets, self)
-        prometheusQueue.async(flags: .barrier) {
+        return self.lock.withLock {
+            let histogram = Histogram<T, U>(name, helpText, U(), buckets, self)
             self.metrics.append(histogram)
+            return histogram
         }
-        return histogram
     }
     
     /// Creates a histogram with the given values
@@ -179,11 +189,11 @@ public class PrometheusClient {
         quantiles: [Double] = defaultQuantiles,
         labels: U.Type) -> Summary<T, U>
     {
-        let summary = Summary<T, U>(name, helpText, U(), quantiles, self)
-        prometheusQueue.async(flags: .barrier) {
+        return self.lock.withLock {
+            let summary = Summary<T, U>(name, helpText, U(), quantiles, self)
             self.metrics.append(summary)
+            return summary
         }
-        return summary
     }
     
     /// Creates a summary with the given values
@@ -219,10 +229,23 @@ public class PrometheusClient {
         helpText: String? = nil,
         labelType: U.Type) -> Info<U>
     {
-        let info = Info<U>(name, helpText, self)
-        prometheusQueue.async(flags: .barrier) {
+        return self.lock.withLock {
+            let info = Info<U>(name, helpText, self)
             self.metrics.append(info)
+            return info
         }
-        return info
+    }
+}
+
+enum PrometheusError: Error {
+    case PrometheusFactoryNotBootstrapped
+}
+
+public extension MetricsSystem {
+    static func prometheus() throws -> PrometheusClient {
+        guard let prom = self.factory as? PrometheusClient else {
+            throw PrometheusError.PrometheusFactoryNotBootstrapped
+        }
+        return prom
     }
 }

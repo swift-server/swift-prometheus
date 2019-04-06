@@ -17,7 +17,7 @@ extension SummaryLabels {
 /// Prometheus Counter metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#summary
-public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metric, PrometheusHandled {
+public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metric, PrometheusHandled, TimerHandler {
     /// Prometheus instance that created this Summary
     internal let prometheus: PrometheusClient
     
@@ -47,6 +47,8 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     /// Sub Summaries for this Summary
     fileprivate var subSummaries: [Summary<NumType, Labels>] = []
     
+    private let lock: NSLock
+    
     /// Creates a new Summary
     ///
     /// - Parameters:
@@ -68,14 +70,16 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
         self.quantiles = quantiles
         
         self.labels = labels
+        
+        self.lock = NSLock()
     }
     
     /// Gets the metric string for this Summary
     ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric(_ done: @escaping (String) -> Void) {
-        prometheusQueue.async(flags: .barrier) {
+    public func getMetric() -> String {
+        return self.lock.withLock {
             var output = [String]()
             
             if let help = self.help {
@@ -110,8 +114,13 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
             
             self.labels.quantile = ""
             
-            done(output.joined(separator: "\n"))
+            return output.joined(separator: "\n")
         }
+    }
+    
+    public func recordNanoseconds(_ duration: Int64) {
+        guard let v = NumType.init(exactly: duration) else { return }
+        self.observe(v)
     }
     
     /// Observe a value
@@ -120,7 +129,7 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
     public func observe(_ value: NumType, _ labels: Labels? = nil) {
-        prometheusQueue.async(flags: .barrier) {
+        self.lock.withLock {
             if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
                 let sum = self.prometheus.getOrCreateSummary(withLabels: labels, forSummary: self)
                 sum.observe(value)

@@ -42,10 +42,10 @@ final class SwiftPrometheusTests: XCTestCase {
     }
 
     
-    var prom: Prometheus!
+    var prom: PrometheusClient!
     
     override func setUp() {
-        self.prom = Prometheus()
+        self.prom = PrometheusClient()
     }
     
     override func tearDown() {

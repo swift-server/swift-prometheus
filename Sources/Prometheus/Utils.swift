@@ -1,8 +1,5 @@
 import Foundation
 
-/// Prometheus global dispatch queue
-internal let prometheusQueue = DispatchQueue(label: "prometheus.internal", attributes: .concurrent)
-
 /// Empty labels class
 public struct EmptyLabels: MetricLabels {
     public init() { }
@@ -18,6 +15,16 @@ public struct EmptyHistogramLabels: HistogramLabels {
 public struct EmptySummaryLabels: SummaryLabels {
     public var quantile: String = ""
     public init() { }
+}
+
+internal extension Foundation.NSLock {
+    func withLock<T>(_ body: () -> T) -> T {
+        self.lock()
+        defer {
+            self.unlock()
+        }
+        return body()
+    }
 }
 
 /// Creates a Prometheus String representation of a `MetricLabels` instance
@@ -62,9 +69,9 @@ public protocol DoubleRepresentable: Numeric {
 /// Numbers that convert to other types
 public protocol ConvertibleNumberType: DoubleRepresentable {}
 public extension ConvertibleNumberType {
-    public var floatValue: Float {get {return Float(doubleValue)}}
-    public var intValue: Int {get {return lrint(doubleValue)}}
-    public var CGFloatValue: CGFloat {get {return CGFloat(doubleValue)}}
+    var floatValue: Float {get {return Float(doubleValue)}}
+    var intValue: Int {get {return lrint(doubleValue)}}
+    var CGFloatValue: CGFloat {get {return CGFloat(doubleValue)}}
 }
 
 /// Double Representable Conformance
