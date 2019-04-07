@@ -29,6 +29,6 @@ internal protocol PrometheusHandled {
 }
 
 /// Base MetricLabels protocol
-public protocol MetricLabels: Codable, Hashable {
+public protocol MetricLabels: Encodable, Hashable {
     init()
 }

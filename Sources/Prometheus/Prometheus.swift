@@ -8,7 +8,7 @@ public class PrometheusClient: MetricsFactory {
         }).first as? CounterHandler {
             return counter
         }
-        return self.createCounter(forType: Int64.self, named: label)
+        return self.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self)
     }
     
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
