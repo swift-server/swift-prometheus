@@ -39,8 +39,9 @@ public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
     
     /// Gets the metric string for this Info
     ///
-    /// - Returns:
-    ///     Newline seperated Prometheus formatted metric string
+    /// - Parameters:
+    ///     - done: Callback passing a newline separated Prometheus-formatted metric string
+    ///
     public func getMetric(_ done: @escaping (String) -> Void) {
         prometheusQueue.async(flags: .barrier) {
             var output = [String]()

@@ -57,15 +57,17 @@ final class SwiftPrometheusTests: XCTestCase {
         
         let counter = prom.createCounter(forType: Int.self, named: "my_counter", helpText: "Counter for testing", initialValue: 10, withLabelType: BaseLabels.self)
         XCTAssertEqual(counter.get(), 10)
-        counter.inc(10) { int in
-            XCTAssertEqual(counter.get(), 20)
-            XCTAssertEqual(int, 20)
-        }
-        counter.inc(10, BaseLabels(myValue: "labels")) { int in
-            XCTAssertEqual(counter.get(), 20)
+        counter.inc(10) {
             semaphore.signal()
         }
         semaphore.wait()
+        XCTAssertEqual(counter.get(), 20)
+
+        counter.inc(10, BaseLabels(myValue: "labels")) {
+            semaphore.signal()
+        }
+        semaphore.wait()
+        XCTAssertEqual(counter.get(), 20)
         XCTAssertEqual(counter.get(BaseLabels(myValue: "labels")), 20)
         
         counter.getMetric { metric in
@@ -80,24 +82,24 @@ final class SwiftPrometheusTests: XCTestCase {
         
         let gauge = prom.createGauge(forType: Int.self, named: "my_gauge", helpText: "Gauge for testing", initialValue: 10, withLabelType: BaseLabels.self)
         XCTAssertEqual(gauge.get(), 10)
-        gauge.inc(10) { _ in
+        gauge.inc(10) {
             semaphore.signal()
         }
         semaphore.wait()
 
         XCTAssertEqual(gauge.get(), 20)
-        gauge.dec(12) { _ in
+        gauge.dec(12) {
             semaphore.signal()
         }
         semaphore.wait()
 
         XCTAssertEqual(gauge.get(), 8)
-        gauge.set(20) { _ in
+        gauge.set(20) {
             semaphore.signal()
         }
         semaphore.wait()
 
-        gauge.inc(10, BaseLabels(myValue: "labels")) { _ in
+        gauge.inc(10, BaseLabels(myValue: "labels")) {
             semaphore.signal()
         }
         semaphore.wait()
@@ -116,25 +118,23 @@ final class SwiftPrometheusTests: XCTestCase {
         let semaphore = DispatchSemaphore(value: 0)
 
         let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude], labels: BaseHistogramLabels.self)
-        histogram.observe(1) { _ in
+        histogram.observe(1) {
+            semaphore.signal()
+        }
+        semaphore.wait()
+        histogram.observe(2) {
+            semaphore.signal()
+        }
+        semaphore.wait()
+        histogram.observe(3) {
+            semaphore.signal()
+        }
+        semaphore.wait()
+        histogram.observe(3, .init(myValue: "labels")) {
             semaphore.signal()
         }
         semaphore.wait()
 
-        histogram.observe(2) { _ in
-            semaphore.signal()
-        }
-        semaphore.wait()
-
-        histogram.observe(3) { _ in
-            semaphore.signal()
-        }
-        semaphore.wait()
-        
-        histogram.observe(3, .init(myValue: "labels")) { _ in
-            semaphore.signal()
-        }
-        semaphore.wait()
         var metricOutput = ""
         histogram.getMetric { metric in
             metricOutput = metric
@@ -158,34 +158,30 @@ final class SwiftPrometheusTests: XCTestCase {
     }
     
     func testSummary() {
-        let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99], labels: BaseSummaryLabels.self)
         let semaphore = DispatchSemaphore(value: 0)
-        
-        summary.observe(1) { _ in
+
+        let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99], labels: BaseSummaryLabels.self)
+        summary.observe(1) {
+            semaphore.signal()
+        }
+        semaphore.wait()
+        summary.observe(2) {
+            semaphore.signal()
+        }
+        semaphore.wait()
+        summary.observe(4) {
+            semaphore.signal()
+        }
+        semaphore.wait()
+        summary.observe(10000) {
+            semaphore.signal()
+        }
+        semaphore.wait()
+        summary.observe(123, .init(myValue: "labels")) {
             semaphore.signal()
         }
         semaphore.wait()
 
-        summary.observe(2) { _ in
-            semaphore.signal()
-        }
-        semaphore.wait()
-
-        summary.observe(4) { _ in
-            semaphore.signal()
-        }
-        semaphore.wait()
-
-        summary.observe(10000) { _ in
-            semaphore.signal()
-        }
-        semaphore.wait()
-        
-        summary.observe(123, .init(myValue: "labels")) { _ in
-            semaphore.signal()
-        }
-        semaphore.wait()
-        
         var outputMetric = ""
         summary.getMetric { metric in
             outputMetric = metric

@@ -101,7 +101,7 @@ To keep SwiftPrometheus as clean and lightweight as possible, there is no way of
 
 This could look something like this:
 ```swift
-router.get("/metrics") { request -> String in
+router.get("/metrics") { request -> Future<String> in
     let promise = req.eventLoop.newPromise(String.self)
     prom.getMetrics {
         promise.succeed(result: $0)

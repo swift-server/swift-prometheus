@@ -14,7 +14,7 @@ extension HistogramLabels {
     }
 }
 
-/// Prometheus Counter metric
+/// Prometheus Histogram metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#Histogram
 public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: Metric, PrometheusHandled {
@@ -71,8 +71,8 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     
     /// Gets the metric string for this Histogram
     ///
-    /// - Returns:
-    ///     Newline seperated Prometheus formatted metric string
+    /// - Parameters:
+    ///     - done: Newline separated Prometheus-formatted metric string
     public func getMetric(_ done: @escaping (String) -> Void) {
         prometheusQueue.async(flags: .barrier) {
             var output = [String]()
@@ -124,12 +124,11 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
     ///     - done: Completion handler
-    ///     - observedValue: Value written to the histogram
     public func observe(_ value: NumType, _ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
         prometheusQueue.async(flags: .barrier) {
             if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
                 let his = self.prometheus.getOrCreateHistogram(with: labels, for: self)
-                his.observe(value, nil, done)
+                his.observe(value)
             }
             self.total.inc(value)
             
@@ -139,11 +138,7 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
                     break
                 }
             }
-            
-            // Only run the callback once; not on both the label and without labels
-            if labels == nil {
-                done(value)
-            }
+            done()
         }
     }
 }

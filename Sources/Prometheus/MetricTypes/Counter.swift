@@ -67,17 +67,16 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     ///     - amount: Amount to increment the counter with
     ///     - labels: Labels to attach to the value
     ///
-    public func inc(_ amount: NumType = 1, _ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
+    public func inc(_ amount: NumType = 1, _ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
         prometheusQueue.async(flags: .barrier) {
             if let labels = labels {
                 var val = self.metrics[labels] ?? self.initialValue
                 val += amount
                 self.metrics[labels] = val
-                done(val)
             } else {
                 self.value += amount
-                done(self.value)
             }
+            done()
         }
     }
     
