@@ -1,15 +1,15 @@
 import Prometheus
 import Foundation
-import Metrics
-
-let group = DispatchGroup()
+//import Metrics
 
 let myProm = PrometheusClient()
 
 MetricsSystem.bootstrap(PrometheusClient())
 
-let c = Counter(label: "test")
-c.increment()
+for _ in 0...Int.random(in: 10...100) {
+    let c = Metrics.Counter(label: "test")
+    c.increment()
+}
 
 let r = Recorder(label: "recorder")
 for _ in 0...Int.random(in: 100...500_000) {

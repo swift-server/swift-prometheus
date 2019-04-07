@@ -48,12 +48,115 @@ public func encodeLabels<Labels: MetricLabels>(_ labels: Labels, _ excludingKeys
     }
 }
 
+/// A generic `String` based `CodingKey` implementation.
+fileprivate struct StringCodingKey: CodingKey {
+    /// `CodingKey` conformance.
+    public var stringValue: String
+    
+    /// `CodingKey` conformance.
+    public var intValue: Int? {
+        return Int(self.stringValue)
+    }
+    
+    /// Creates a new `StringCodingKey`.
+    public init(_ string: String) {
+        self.stringValue = string
+    }
+    
+    /// `CodingKey` conformance.
+    public init(stringValue: String) {
+        self.stringValue = stringValue
+    }
+    
+    /// `CodingKey` conformance.
+    public init(intValue: Int) {
+        self.stringValue = intValue.description
+    }
+}
+
+internal struct DimensionLabels: MetricLabels {
+    let dimensions: [(String, String)]
+    
+    init() {
+        self.dimensions = []
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: StringCodingKey.self)
+        try self.dimensions.forEach {
+            try container.encode($0.1, forKey: .init($0.0))
+        }
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
+    }
+    
+    static func == (lhs: DimensionLabels, rhs: DimensionLabels) -> Bool {
+        return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"}
+    }
+}
+
+internal struct DimensionHistogramLabels: HistogramLabels {
+    var le: String
+    let dimensions: [(String, String)]
+    
+    init() {
+        self.le = ""
+        self.dimensions = []
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: StringCodingKey.self)
+        try self.dimensions.forEach {
+            try container.encode($0.1, forKey: .init($0.0))
+        }
+        try container.encode(le, forKey: .init("le"))
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
+        hasher.combine(le)
+    }
+    
+    static func == (lhs: DimensionHistogramLabels, rhs: DimensionHistogramLabels) -> Bool {
+        return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"} && rhs.le == lhs.le
+    }
+}
+
+internal struct DimensionSummaryLabels: SummaryLabels {
+    var quantile: String
+    let dimensions: [(String, String)]
+    
+    init() {
+        self.quantile = ""
+        self.dimensions = []
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: StringCodingKey.self)
+        try self.dimensions.forEach {
+            try container.encode($0.1, forKey: .init($0.0))
+        }
+        try container.encode(quantile, forKey: .init("quantile"))
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
+        hasher.combine(quantile)
+    }
+    
+    static func == (lhs: DimensionSummaryLabels, rhs: DimensionSummaryLabels) -> Bool {
+        return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"} && rhs.quantile == lhs.quantile
+    }
+}
+
 extension Double {
     /// Overwrite for use by Histogram bucketing
     var description: String {
         if self == Double.greatestFiniteMagnitude {
             return "+Inf"
-        } else if self == Double.leastNormalMagnitude {
+        } else if self == Double.leastNonzeroMagnitude {
             return "-Inf"
         } else {
             return "\(self)"
