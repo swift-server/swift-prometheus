@@ -3,10 +3,20 @@
 /// See https://prometheus.io/docs/introduction/overview/
 public class PrometheusClient: MetricsFactory {
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
+        if let counter = self.metrics.filter({ (m) -> Bool in
+            return m._type == .counter && m.name == label
+        }).first as? CounterHandler {
+            return counter
+        }
         return self.createCounter(forType: Int64.self, named: label)
     }
     
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
+        if let recorder = self.metrics.filter({ (m) -> Bool in
+            return m._type == (aggregate ? .histogram : .gauge) && m.name == label
+        }).first as? RecorderHandler {
+            return recorder
+        }
         if aggregate {
             return self.createHistogram(forType: Double.self, named: label)
         } else {
@@ -15,6 +25,11 @@ public class PrometheusClient: MetricsFactory {
     }
     
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
+        if let timer = self.metrics.filter({ (m) -> Bool in
+            return m._type == .summary && m.name == label
+        }).first as? TimerHandler {
+            return timer
+        }
         return self.createSummary(forType: Double.self, named: label)
     }
     
