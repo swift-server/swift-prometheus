@@ -128,7 +128,18 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
         prometheusQueue.async(flags: .barrier) {
             if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
                 let his = self.prometheus.getOrCreateHistogram(with: labels, for: self)
-                his.observe(value)
+                his.observe(value) {
+                    self.total.inc(value)
+                    
+                    for (i, bound) in self.upperBounds.enumerated() {
+                        if bound >= value.doubleValue {
+                            self.buckets[i].inc()
+                            break
+                        }
+                    }
+                    done()
+                }
+                return
             }
             self.total.inc(value)
             

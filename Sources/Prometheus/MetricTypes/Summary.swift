@@ -1,3 +1,5 @@
+import Dispatch
+
 /// Default quantiles used by Summaries
 public var defaultQuantiles = [0.01, 0.05, 0.5, 0.9, 0.95, 0.99, 0.999]
 
@@ -127,12 +129,19 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
         prometheusQueue.async(flags: .barrier) {
             if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
                 let sum = self.prometheus.getOrCreateSummary(withLabels: labels, forSummary: self)
-                sum.observe(value)
+                sum.observe(value) {
+                    self.count.inc(1)
+                    self.sum.inc(value)
+                    self.values.append(value)
+                    done()
+                }
+                return
+            } else {
+                self.count.inc(1)
+                self.sum.inc(value)
+                self.values.append(value)
+                done()
             }
-            self.count.inc(1)
-            self.sum.inc(value)
-            self.values.append(value)
-            done()
         }
     }
 }
