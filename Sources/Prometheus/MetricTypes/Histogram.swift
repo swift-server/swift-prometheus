@@ -125,7 +125,7 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     ///     - labels: Labels to attach to the observed value
     ///     - done: Completion handler
     ///     - observedValue: Value written to the histogram
-    public func observe(_ value: NumType, _ labels: Labels? = nil, _ done: @escaping (_ observedValue: NumType) -> Void = { _ in }) {
+    public func observe(_ value: NumType, _ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
         prometheusQueue.async(flags: .barrier) {
             if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
                 let his = self.prometheus.getOrCreateHistogram(with: labels, for: self)
