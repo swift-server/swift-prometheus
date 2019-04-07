@@ -89,7 +89,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - done: Completion handler
     ///     - observedValue: Value written to the Gauge
     ///
-    public func inc(_ amount: NumType, _ labels: Labels? = nil, _ done: @escaping (_ observedValue: NumType) -> Void = { _ in }) {
+    public func inc(_ amount: NumType, _ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
         prometheusQueue.async(flags: .barrier) {
             if let labels = labels {
                 var val = self.metrics[labels] ?? self.initialValue
