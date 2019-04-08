@@ -1,9 +1,9 @@
-/// Prometheus Counter metric
+/// Prometheus Gauge metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#gauge
-public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled, RecorderHandler {
+public class PromGauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled, RecorderHandler {
     /// Prometheus instance that created this Gauge
-    internal let prometheus: PrometheusClient
+    internal weak var prometheus: PrometheusClient?
     
     /// Name of the Gauge, required
     public let name: String
@@ -17,11 +17,12 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     private var value: NumType
     
     /// Initial value of the Gauge
-    private var initialValue: NumType
+    private let initialValue: NumType
     
     /// Storage of values that have labels attached
     private var metrics: [Labels: NumType] = [:]
     
+    /// Lock used for thread safety
     private let lock: NSLock
     
     /// Creates a new instance of a Gauge
@@ -65,10 +66,18 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
         }
     }
     
+    /// Record a value
+    ///
+    /// - Parameters:
+    ///     - value: Value to record
     public func record(_ value: Int64) {
         self.record(Double(value))
     }
     
+    /// Record a value
+    ///
+    /// - Parameters:
+    ///     - value: Value to record
     public func record(_ value: Double) {
         guard let v = value as? NumType else { return }
         self.set(v)

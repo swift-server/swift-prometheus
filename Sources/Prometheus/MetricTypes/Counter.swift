@@ -1,9 +1,9 @@
 /// Prometheus Counter metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#counter
-public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled, CounterHandler {
+public class PromCounter<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled, CounterHandler {
     /// Prometheus instance that created this Counter
-    internal let prometheus: PrometheusClient
+    internal weak var prometheus: PrometheusClient?
     
     /// Name of the Counter, required
     public let name: String
@@ -17,11 +17,12 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     internal var value: NumType
     
     /// Initial value of the counter
-    private var initialValue: NumType
+    private let initialValue: NumType
     
     /// Storage of values that have labels attached
     internal var metrics: [Labels: NumType] = [:]
     
+    /// Lock used for thread safety
     internal let lock: NSLock
     
     /// Creates a new instance of a Counter
@@ -64,13 +65,20 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
         }
     }
     
-    public func increment(_ x: Int64) {
-        guard let v = NumType.init(exactly: x) else { return }
+    /// Increments the counter
+    ///
+    /// - Parameters:
+    ///     - value: Value to increment by
+    public func increment(_ value: Int64) {
+        guard let v = NumType.init(exactly: value) else { return }
         self.inc(v)
     }
     
+    /// Resets the counter
     public func reset() {
-        
+        self.lock.withLock {
+            self.value = self.initialValue
+        }
     }
     
     /// Increments the Counter

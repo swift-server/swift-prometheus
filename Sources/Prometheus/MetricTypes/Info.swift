@@ -1,9 +1,9 @@
 /// Info metric
 ///
 /// Info tracks key-value information, usually about a whole target
-public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
+public class PromInfo<Labels: MetricLabels>: Metric, PrometheusHandled {
     /// Prometheus instance that created this Info
-    internal let prometheus: PrometheusClient
+    internal weak var prometheus: PrometheusClient?
     
     /// Name of the Info, required
     public let name: String
@@ -17,6 +17,7 @@ public class Info<Labels: MetricLabels>: Metric, PrometheusHandled {
     /// For Info metrics, these are the actual values the metric is exposing
     internal var labels = Labels()
     
+    /// Lock used for thread safety
     private let lock: NSLock
     
     /// Creates a new Info

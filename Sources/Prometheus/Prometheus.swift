@@ -2,6 +2,7 @@
 ///
 /// See https://prometheus.io/docs/introduction/overview/
 public class PrometheusClient: MetricsFactory {
+    /// Makes a counter
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
         if let counter = self.metrics.filter({ (m) -> Bool in
             return m._type == .counter && m.name == label
@@ -11,6 +12,7 @@ public class PrometheusClient: MetricsFactory {
         return self.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self)
     }
     
+    /// Makes a recorder
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
         if let recorder = self.metrics.filter({ (m) -> Bool in
             return m._type == (aggregate ? .histogram : .gauge) && m.name == label
@@ -18,24 +20,26 @@ public class PrometheusClient: MetricsFactory {
             return recorder
         }
         if aggregate {
-            return self.createHistogram(forType: Double.self, named: label)
+            return self.createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self)
         } else {
-            return self.createGauge(forType: Double.self, named: label)
+            return self.createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self)
         }
     }
     
+    /// Makes a timer
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
         if let timer = self.metrics.filter({ (m) -> Bool in
             return m._type == .summary && m.name == label
         }).first as? TimerHandler {
             return timer
         }
-        return self.createSummary(forType: Double.self, named: label)
+        return self.createSummary(forType: Double.self, named: label, labels: DimensionSummaryLabels.self)
     }
     
     /// Metrics tracked by this Prometheus instance
     internal var metrics: [Metric]
     
+    /// Lock used for thread safety
     private let lock: NSLock
     
     /// Create a PrometheusClient instance
@@ -70,10 +74,10 @@ public class PrometheusClient: MetricsFactory {
         named name: String,
         helpText: String? = nil,
         initialValue: T = 0,
-        withLabelType labelType: U.Type) -> Counter<T, U>
+        withLabelType labelType: U.Type) -> PromCounter<T, U>
     {
         return self.lock.withLock {
-            let counter = Counter<T, U>(name, helpText, initialValue, self)
+            let counter = PromCounter<T, U>(name, helpText, initialValue, self)
             self.metrics.append(counter)
             return counter
         }
@@ -92,7 +96,7 @@ public class PrometheusClient: MetricsFactory {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        initialValue: T = 0) -> Counter<T, EmptyLabels>
+        initialValue: T = 0) -> PromCounter<T, EmptyLabels>
     {
         return self.createCounter(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyLabels.self)
     }
@@ -114,10 +118,10 @@ public class PrometheusClient: MetricsFactory {
         named name: String,
         helpText: String? = nil,
         initialValue: T = 0,
-        withLabelType labelType: U.Type) -> Gauge<T, U>
+        withLabelType labelType: U.Type) -> PromGauge<T, U>
     {
         return self.lock.withLock {
-            let gauge = Gauge<T, U>(name, helpText, initialValue, self)
+            let gauge = PromGauge<T, U>(name, helpText, initialValue, self)
             self.metrics.append(gauge)
             return gauge
         }
@@ -136,7 +140,7 @@ public class PrometheusClient: MetricsFactory {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        initialValue: T = 0) -> Gauge<T, EmptyLabels>
+        initialValue: T = 0) -> PromGauge<T, EmptyLabels>
     {
         return self.createGauge(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyLabels.self)
     }
@@ -158,10 +162,10 @@ public class PrometheusClient: MetricsFactory {
         named name: String,
         helpText: String? = nil,
         buckets: [Double] = defaultBuckets,
-        labels: U.Type) -> Histogram<T, U>
+        labels: U.Type) -> PromHistogram<T, U>
     {
         return self.lock.withLock {
-            let histogram = Histogram<T, U>(name, helpText, U(), buckets, self)
+            let histogram = PromHistogram<T, U>(name, helpText, U(), buckets, self)
             self.metrics.append(histogram)
             return histogram
         }
@@ -180,7 +184,7 @@ public class PrometheusClient: MetricsFactory {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        buckets: [Double] = defaultBuckets) -> Histogram<T, EmptyHistogramLabels>
+        buckets: [Double] = defaultBuckets) -> PromHistogram<T, EmptyHistogramLabels>
     {
         return self.createHistogram(forType: type, named: name, helpText: helpText, buckets: buckets, labels: EmptyHistogramLabels.self)
     }
@@ -202,10 +206,10 @@ public class PrometheusClient: MetricsFactory {
         named name: String,
         helpText: String? = nil,
         quantiles: [Double] = defaultQuantiles,
-        labels: U.Type) -> Summary<T, U>
+        labels: U.Type) -> PromSummary<T, U>
     {
         return self.lock.withLock {
-            let summary = Summary<T, U>(name, helpText, U(), quantiles, self)
+            let summary = PromSummary<T, U>(name, helpText, U(), quantiles, self)
             self.metrics.append(summary)
             return summary
         }
@@ -224,7 +228,7 @@ public class PrometheusClient: MetricsFactory {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        quantiles: [Double] = defaultQuantiles) -> Summary<T, EmptySummaryLabels>
+        quantiles: [Double] = defaultQuantiles) -> PromSummary<T, EmptySummaryLabels>
     {
         return self.createSummary(forType: type, named: name, helpText: helpText, quantiles: quantiles, labels: EmptySummaryLabels.self)
     }
@@ -242,21 +246,30 @@ public class PrometheusClient: MetricsFactory {
     public func createInfo<U: MetricLabels>(
         named name: String,
         helpText: String? = nil,
-        labelType: U.Type) -> Info<U>
+        labelType: U.Type) -> PromInfo<U>
     {
         return self.lock.withLock {
-            let info = Info<U>(name, helpText, self)
+            let info = PromInfo<U>(name, helpText, self)
             self.metrics.append(info)
             return info
         }
     }
 }
 
+/// Prometheus specific errors
 enum PrometheusError: Error {
+    /// Thrown when a user tries to retrive
+    /// a `PromtheusClient` from `MetricsSystem`
+    /// but there was no `PrometheusClient` bootstrapped
     case PrometheusFactoryNotBootstrapped
 }
 
 public extension MetricsSystem {
+    /// Get the bootstrapped `MetricsSystem` as `PrometheusClient`
+    ///
+    /// - Returns: `PrometheusClient` used to bootstrap `MetricsSystem`
+    /// - Throws: `PrometheusError.PrometheusFactoryNotBootstrapped`
+    ///             if no `PrometheusClient` was used to bootstrap `MetricsSystem`
     static func prometheus() throws -> PrometheusClient {
         guard let prom = self.factory as? PrometheusClient else {
             throw PrometheusError.PrometheusFactoryNotBootstrapped

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>MetricType Enumeration Reference</title>
+    <title>PromHistogram Class Reference</title>
     <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
     <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
     <meta charset="utf-8">
@@ -14,9 +14,9 @@
   </head>
   <body>
 
-    <a name="//apple_ref/swift/Enum/MetricType" class="dashAnchor"></a>
+    <a name="//apple_ref/swift/Class/PromHistogram" class="dashAnchor"></a>
 
-    <a title="MetricType Enumeration Reference"></a>
+    <a title="PromHistogram Class Reference"></a>
 
     <header class="header">
       <p class="header-col header-col--primary">
@@ -50,7 +50,7 @@
     <p class="breadcrumbs">
       <a class="breadcrumb" href="../index.html">Prometheus Reference</a>
       <img class="carat" src="../img/carat.png" />
-      MetricType Enumeration Reference
+      PromHistogram Class Reference
     </p>
 
     <div class="content-wrapper">
@@ -169,14 +169,16 @@
 
         <section class="section">
           <div class="section-content">
-            <h1>MetricType</h1>
+            <h1>PromHistogram</h1>
               <div class="declaration">
                 <div class="language">
-                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">enum</span> <span class="kt">MetricType</span> <span class="p">:</span> <span class="kt">String</span></code></pre>
+                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">class</span> <span class="kt">PromHistogram</span><span class="o">&lt;</span><span class="kt">NumType</span><span class="p">,</span> <span class="kt">Labels</span><span class="o">&gt;</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/Metric.html">Metric</a></span><span class="p">,</span> <span class="kt">PrometheusHandled</span><span class="p">,</span> <span class="kt">RecorderHandler</span> <span class="k">where</span> <span class="kt">NumType</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/DoubleRepresentable.html">DoubleRepresentable</a></span><span class="p">,</span> <span class="kt">Labels</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/HistogramLabels.html">HistogramLabels</a></span></code></pre>
 
                 </div>
               </div>
-            <p>Different types of metrics supported by SwiftPrometheus</p>
+            <p>Prometheus Counter metric</p>
+
+<p>See <a href="https://prometheus.io/docs/concepts/metric_types/#Histogram">https://prometheus.io/docs/concepts/metric_types/#Histogram</a></p>
 
           </div>
         </section>
@@ -188,9 +190,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:10Prometheus10MetricTypeO7counteryA2CmF"></a>
-                    <a name="//apple_ref/swift/Element/counter" class="dashAnchor"></a>
-                    <a class="token" href="#/s:10Prometheus10MetricTypeO7counteryA2CmF">counter</a>
+                    <a name="/s:10Prometheus13PromHistogramC4nameSSvp"></a>
+                    <a name="//apple_ref/swift/Property/name" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus13PromHistogramC4nameSSvp">name</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -198,19 +200,19 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>See <code><a href="../Classes/PromCounter.html">PromCounter</a></code></p>
+                        <p>Name of this Histogram, required</p>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="k">case</span> <span class="n">counter</span></code></pre>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span></code></pre>
 
                         </div>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Metric.swift#L4">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Histogram.swift#L26">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -218,9 +220,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:10Prometheus10MetricTypeO5gaugeyA2CmF"></a>
-                    <a name="//apple_ref/swift/Element/gauge" class="dashAnchor"></a>
-                    <a class="token" href="#/s:10Prometheus10MetricTypeO5gaugeyA2CmF">gauge</a>
+                    <a name="/s:10Prometheus13PromHistogramC4helpSSSgvp"></a>
+                    <a name="//apple_ref/swift/Property/help" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus13PromHistogramC4helpSSSgvp">help</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -228,19 +230,19 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>See <code><a href="../Classes/PromGauge.html">PromGauge</a></code></p>
+                        <p>Help text of this Histogram, optional</p>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="k">case</span> <span class="n">gauge</span></code></pre>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">help</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span></code></pre>
 
                         </div>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Metric.swift#L6">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Histogram.swift#L28">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -248,9 +250,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:10Prometheus10MetricTypeO9histogramyA2CmF"></a>
-                    <a name="//apple_ref/swift/Element/histogram" class="dashAnchor"></a>
-                    <a class="token" href="#/s:10Prometheus10MetricTypeO9histogramyA2CmF">histogram</a>
+                    <a name="/s:10Prometheus13PromHistogramC5_typeAA10MetricTypeOvp"></a>
+                    <a name="//apple_ref/swift/Property/_type" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus13PromHistogramC5_typeAA10MetricTypeOvp">_type</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -258,19 +260,19 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>See <code><a href="../Classes/PromHistogram.html">PromHistogram</a></code></p>
+                        <p>Type of the metric, used for formatting</p>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="k">case</span> <span class="n">histogram</span></code></pre>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">_type</span><span class="p">:</span> <span class="kt"><a href="../Enums/MetricType.html">MetricType</a></span></code></pre>
 
                         </div>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Metric.swift#L8">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Histogram.swift#L31">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -278,9 +280,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:10Prometheus10MetricTypeO7summaryyA2CmF"></a>
-                    <a name="//apple_ref/swift/Element/summary" class="dashAnchor"></a>
-                    <a class="token" href="#/s:10Prometheus10MetricTypeO7summaryyA2CmF">summary</a>
+                    <a name="/s:10Prometheus13PromHistogramC9getMetricSSyF"></a>
+                    <a name="//apple_ref/swift/Method/getMetric()" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus13PromHistogramC9getMetricSSyF">getMetric()</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -288,19 +290,23 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>See <code><a href="../Classes/PromSummary.html">PromSummary</a></code></p>
+                        <p>Gets the metric string for this Histogram</p>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="k">case</span> <span class="n">summary</span></code></pre>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">getMetric</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kt">String</span></code></pre>
 
                         </div>
                       </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Newline seperated Prometheus formatted metric string</p>
+                      </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Metric.swift#L10">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Histogram.swift#L82-L125">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -308,9 +314,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:10Prometheus10MetricTypeO4infoyA2CmF"></a>
-                    <a name="//apple_ref/swift/Element/info" class="dashAnchor"></a>
-                    <a class="token" href="#/s:10Prometheus10MetricTypeO4infoyA2CmF">info</a>
+                    <a name="/s:10Prometheus13PromHistogramC6recordyys5Int64VF"></a>
+                    <a name="//apple_ref/swift/Method/record(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus13PromHistogramC6recordyys5Int64VF">record(_:)</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -318,19 +324,148 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>See `PromInfo</p>
+                        <p>Record a value</p>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="k">case</span> <span class="n">info</span></code></pre>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">record</span><span class="p">(</span><span class="n">_</span> <span class="nv">value</span><span class="p">:</span> <span class="kt">Int64</span><span class="p">)</span></code></pre>
 
                         </div>
                       </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>value</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Value to record</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Metric.swift#L12">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Histogram.swift#L131-L133">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus13PromHistogramC6recordyySdF"></a>
+                    <a name="//apple_ref/swift/Method/record(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus13PromHistogramC6recordyySdF">record(_:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Record a value</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">record</span><span class="p">(</span><span class="n">_</span> <span class="nv">value</span><span class="p">:</span> <span class="kt">Double</span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>value</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Value to record</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Histogram.swift#L139-L142">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus13PromHistogramC7observeyyx_q_SgtF"></a>
+                    <a name="//apple_ref/swift/Method/observe(_:_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus13PromHistogramC7observeyyx_q_SgtF">observe(_:_:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Observe a value</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">observe</span><span class="p">(</span><span class="n">_</span> <span class="nv">value</span><span class="p">:</span> <span class="kt">NumType</span><span class="p">,</span> <span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>value</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Value to observe</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to attach to the observed value</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Histogram.swift#L149-L164">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
