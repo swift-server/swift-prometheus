@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>EmptyHistogramLabels Structure Reference</title>
+    <title>PromInfo Class Reference</title>
     <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
     <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
     <meta charset="utf-8">
@@ -14,9 +14,9 @@
   </head>
   <body>
 
-    <a name="//apple_ref/swift/Struct/EmptyHistogramLabels" class="dashAnchor"></a>
+    <a name="//apple_ref/swift/Class/PromInfo" class="dashAnchor"></a>
 
-    <a title="EmptyHistogramLabels Structure Reference"></a>
+    <a title="PromInfo Class Reference"></a>
 
     <header class="header">
       <p class="header-col header-col--primary">
@@ -50,7 +50,7 @@
     <p class="breadcrumbs">
       <a class="breadcrumb" href="../index.html">Prometheus Reference</a>
       <img class="carat" src="../img/carat.png" />
-      EmptyHistogramLabels Structure Reference
+      PromInfo Class Reference
     </p>
 
     <div class="content-wrapper">
@@ -169,14 +169,16 @@
 
         <section class="section">
           <div class="section-content">
-            <h1>EmptyHistogramLabels</h1>
+            <h1>PromInfo</h1>
               <div class="declaration">
                 <div class="language">
-                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">struct</span> <span class="kt">EmptyHistogramLabels</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/HistogramLabels.html">HistogramLabels</a></span></code></pre>
+                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">class</span> <span class="kt">PromInfo</span><span class="o">&lt;</span><span class="kt">Labels</span><span class="o">&gt;</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/Metric.html">Metric</a></span><span class="p">,</span> <span class="kt">PrometheusHandled</span> <span class="k">where</span> <span class="kt">Labels</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/MetricLabels.html">MetricLabels</a></span></code></pre>
 
                 </div>
               </div>
-            <p>Empty labels class</p>
+            <p>Info metric</p>
+
+<p>Info tracks key-value information, usually about a whole target</p>
 
           </div>
         </section>
@@ -188,9 +190,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:10Prometheus20EmptyHistogramLabelsV2leSSvp"></a>
-                    <a name="//apple_ref/swift/Property/le" class="dashAnchor"></a>
-                    <a class="token" href="#/s:10Prometheus20EmptyHistogramLabelsV2leSSvp">le</a>
+                    <a name="/s:10Prometheus8PromInfoC4nameSSvp"></a>
+                    <a name="//apple_ref/swift/Property/name" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus8PromInfoC4nameSSvp">name</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -198,19 +200,19 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>Bucket</p>
+                        <p>Name of the Info, required</p>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">var</span> <span class="nv">le</span><span class="p">:</span> <span class="kt">String</span></code></pre>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span></code></pre>
 
                         </div>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Utils.swift#L12">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Info.swift#L9">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -218,9 +220,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:10Prometheus20EmptyHistogramLabelsVACycfc"></a>
-                    <a name="//apple_ref/swift/Method/init()" class="dashAnchor"></a>
-                    <a class="token" href="#/s:10Prometheus20EmptyHistogramLabelsVACycfc">init()</a>
+                    <a name="/s:10Prometheus8PromInfoC4helpSSSgvp"></a>
+                    <a name="//apple_ref/swift/Property/help" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus8PromInfoC4helpSSSgvp">help</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -228,19 +230,132 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>Creates empty labels</p>
+                        <p>Help text of the Info, optional</p>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="nf">init</span><span class="p">()</span></code></pre>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">help</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span></code></pre>
 
                         </div>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Utils.swift#L14">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Info.swift#L11">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus8PromInfoC5_typeAA10MetricTypeOvp"></a>
+                    <a name="//apple_ref/swift/Property/_type" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus8PromInfoC5_typeAA10MetricTypeOvp">_type</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Type of the metric, used for formatting</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">_type</span><span class="p">:</span> <span class="kt"><a href="../Enums/MetricType.html">MetricType</a></span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Info.swift#L14">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus8PromInfoC4infoyyxF"></a>
+                    <a name="//apple_ref/swift/Method/info(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus8PromInfoC4infoyyxF">info(_:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Set the info</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">info</span><span class="p">(</span><span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to set the Info to</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Info.swift#L40-L42">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus8PromInfoC9getMetricSSyF"></a>
+                    <a name="//apple_ref/swift/Method/getMetric()" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus8PromInfoC9getMetricSSyF">getMetric()</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Gets the metric string for this Info</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">getMetric</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kt">String</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Newline seperated Prometheus formatted metric string</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Info.swift#L48-L62">Show on GitHub</a>
                       </div>
                     </section>
                   </div>

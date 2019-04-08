@@ -2,22 +2,28 @@ import Foundation
 
 /// Empty labels class
 public struct EmptyLabels: MetricLabels {
+    /// Creates empty labels
     public init() { }
 }
 
 /// Empty labels class
 public struct EmptyHistogramLabels: HistogramLabels {
+    /// Bucket
     public var le: String = ""
+    /// Creates empty labels
     public init() { }
 }
 
 /// Empty labels class
 public struct EmptySummaryLabels: SummaryLabels {
+    /// Quantile
     public var quantile: String = ""
+    /// Creates empty labels
     public init() { }
 }
 
 internal extension Foundation.NSLock {
+    /// Lock helper
     func withLock<T>(_ body: () -> T) -> T {
         self.lock()
         defer {
@@ -74,6 +80,7 @@ fileprivate struct StringCodingKey: CodingKey {
     }
 }
 
+/// Helper for dimensions
 internal struct DimensionLabels: MetricLabels {
     let dimensions: [(String, String)]
     
@@ -97,13 +104,23 @@ internal struct DimensionLabels: MetricLabels {
     }
 }
 
+/// Helper for dimensions
 internal struct DimensionHistogramLabels: HistogramLabels {
+    /// Bucket
     var le: String
+    /// Dimensions
     let dimensions: [(String, String)]
     
+    /// Empty init
     init() {
         self.le = ""
         self.dimensions = []
+    }
+    
+    /// Init with dimensions
+    init(_ dimensions: [(String, String)]) {
+        self.le = ""
+        self.dimensions = dimensions
     }
     
     func encode(to encoder: Encoder) throws {
@@ -124,13 +141,23 @@ internal struct DimensionHistogramLabels: HistogramLabels {
     }
 }
 
+/// Helper for dimensions
 internal struct DimensionSummaryLabels: SummaryLabels {
+    /// Quantile
     var quantile: String
+    /// Dimensions
     let dimensions: [(String, String)]
     
+    /// Empty init
     init() {
         self.quantile = ""
         self.dimensions = []
+    }
+    
+    /// Init with dimensions
+    init(_ dimensions: [(String, String)]) {
+        self.quantile = ""
+        self.dimensions = dimensions
     }
     
     func encode(to encoder: Encoder) throws {
@@ -166,19 +193,24 @@ extension Double {
 
 /// Numbers that can be represented as Double instances
 public protocol DoubleRepresentable: Numeric {
+    /// Double value of the number
     var doubleValue: Double {get}
 }
 
 /// Numbers that convert to other types
 public protocol ConvertibleNumberType: DoubleRepresentable {}
 public extension ConvertibleNumberType {
+    /// Number as a Float
     var floatValue: Float {get {return Float(doubleValue)}}
+    /// Number as an Int
     var intValue: Int {get {return lrint(doubleValue)}}
+    /// Number as a CGFloat
     var CGFloatValue: CGFloat {get {return CGFloat(doubleValue)}}
 }
 
 /// Double Representable Conformance
 extension FixedWidthInteger {
+    /// Double value of the number
     public var doubleValue: Double {
         return Double(self)
     }
