@@ -127,20 +127,20 @@ public class Summary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metri
     ///
     public func observe(_ value: NumType, _ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
         prometheusQueue.async(flags: .barrier) {
-            if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
-                let sum = self.prometheus.getOrCreateSummary(withLabels: labels, forSummary: self)
-                sum.observe(value) {
-                    self.count.inc(1)
-                    self.sum.inc(value)
-                    self.values.append(value)
-                    done()
-                }
-                return
-            } else {
+            func completion() {
                 self.count.inc(1)
                 self.sum.inc(value)
                 self.values.append(value)
                 done()
+            }
+            
+            if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
+                let sum = self.prometheus.getOrCreateSummary(withLabels: labels, forSummary: self)
+                sum.observe(value) {
+                    completion()
+                }
+            } else {
+                completion()
             }
         }
     }

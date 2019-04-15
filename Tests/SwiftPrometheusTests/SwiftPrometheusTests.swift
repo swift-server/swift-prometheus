@@ -57,13 +57,15 @@ final class SwiftPrometheusTests: XCTestCase {
         
         let counter = prom.createCounter(forType: Int.self, named: "my_counter", helpText: "Counter for testing", initialValue: 10, withLabelType: BaseLabels.self)
         XCTAssertEqual(counter.get(), 10)
-        counter.inc(10) {
+        counter.inc(10) { value in
+            XCTAssertEqual(value, 20)
             semaphore.signal()
         }
         semaphore.wait()
         XCTAssertEqual(counter.get(), 20)
 
-        counter.inc(10, BaseLabels(myValue: "labels")) {
+        counter.inc(10, BaseLabels(myValue: "labels")) { value in
+            XCTAssertEqual(value, 20)
             semaphore.signal()
         }
         semaphore.wait()
@@ -82,13 +84,15 @@ final class SwiftPrometheusTests: XCTestCase {
         
         let gauge = prom.createGauge(forType: Int.self, named: "my_gauge", helpText: "Gauge for testing", initialValue: 10, withLabelType: BaseLabels.self)
         XCTAssertEqual(gauge.get(), 10)
-        gauge.inc(10) {
+        gauge.inc(10) { value in
+            XCTAssertEqual(value, 20)
             semaphore.signal()
         }
         semaphore.wait()
 
         XCTAssertEqual(gauge.get(), 20)
-        gauge.dec(12) {
+        gauge.dec(12) { value in
+            XCTAssertEqual(value, 8)
             semaphore.signal()
         }
         semaphore.wait()
@@ -99,7 +103,8 @@ final class SwiftPrometheusTests: XCTestCase {
         }
         semaphore.wait()
 
-        gauge.inc(10, BaseLabels(myValue: "labels")) {
+        gauge.inc(10, BaseLabels(myValue: "labels")) { value in
+            XCTAssertEqual(value, 20)
             semaphore.signal()
         }
         semaphore.wait()

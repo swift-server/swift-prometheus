@@ -126,30 +126,23 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     ///     - done: Completion handler
     public func observe(_ value: NumType, _ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
         prometheusQueue.async(flags: .barrier) {
+            let completion: () -> Void = {
+                self.total.inc(value)
+
+                for (i, bound) in self.upperBounds.enumerated() {
+                    if bound >= value.doubleValue {
+                        self.buckets[i].inc()
+                        break
+                    }
+                }
+                done()
+            }
+            
             if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
                 let his = self.prometheus.getOrCreateHistogram(with: labels, for: self)
-                his.observe(value) {
-                    self.total.inc(value)
-                    
-                    for (i, bound) in self.upperBounds.enumerated() {
-                        if bound >= value.doubleValue {
-                            self.buckets[i].inc()
-                            break
-                        }
-                    }
-                    done()
-                }
-                return
+                return his.observe(value, nil, completion)
             }
-            self.total.inc(value)
-            
-            for (i, bound) in self.upperBounds.enumerated() {
-                if bound >= value.doubleValue {
-                    self.buckets[i].inc()
-                    break
-                }
-            }
-            done()
+            return completion()
         }
     }
 }

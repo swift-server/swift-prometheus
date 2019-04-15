@@ -88,16 +88,16 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - labels: Labels to attach to the value
     ///     - done: Completion handler
     ///
-    public func inc(_ amount: NumType, _ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
+    public func inc(_ amount: NumType, _ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
         prometheusQueue.async(flags: .barrier) {
             if let labels = labels {
                 var val = self.metrics[labels] ?? self.initialValue
                 val += amount
                 self.metrics[labels] = val
-                done()
+                done(val)
             } else {
                 self.value += amount
-                done()
+                done(self.value)
             }
         }
     }
@@ -108,9 +108,9 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - labels: Labels to attach to the value
     ///     - done: Completion handler
     ///
-    public func inc(_ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
-        self.inc(1, labels) {
-            done()
+    public func inc(_ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
+        self.inc(1, labels) { value in
+            done(value)
         }
     }
     
@@ -121,16 +121,16 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - labels: Labels to attach to the value
     ///     - done: Completion handler
     ///
-    public func dec(_ amount: NumType, _ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
+    public func dec(_ amount: NumType, _ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
         prometheusQueue.async(flags: .barrier) {
             if let labels = labels {
                 var val = self.metrics[labels] ?? self.initialValue
                 val -= amount
                 self.metrics[labels] = val
-                done()
+                done(val)
             } else {
                 self.value -= amount
-                done()
+                done(self.value)
             }
         }
     }
@@ -140,9 +140,9 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     /// - Parameters:
     ///     - labels: Labels to attach to the value
     ///
-    public func dec(_ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
-        self.dec(1, labels) {
-            done()
+    public func dec(_ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
+        self.dec(1, labels) { value in
+            done(value)
         }
     }
     
