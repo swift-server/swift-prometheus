@@ -14,7 +14,7 @@ extension HistogramLabels {
     }
 }
 
-/// Prometheus Counter metric
+/// Prometheus Histogram metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#Histogram
 public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: Metric, PrometheusHandled {
@@ -71,8 +71,8 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     
     /// Gets the metric string for this Histogram
     ///
-    /// - Returns:
-    ///     Newline seperated Prometheus formatted metric string
+    /// - Parameters:
+    ///     - done: Newline separated Prometheus-formatted metric string
     public func getMetric(_ done: @escaping (String) -> Void) {
         prometheusQueue.async(flags: .barrier) {
             var output = [String]()
@@ -123,20 +123,26 @@ public class Histogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: M
     /// - Parameters:
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
-    public func observe(_ value: NumType, _ labels: Labels? = nil) {
+    ///     - done: Completion handler
+    public func observe(_ value: NumType, _ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
         prometheusQueue.async(flags: .barrier) {
+            let completion: () -> Void = {
+                self.total.inc(value)
+
+                for (i, bound) in self.upperBounds.enumerated() {
+                    if bound >= value.doubleValue {
+                        self.buckets[i].inc()
+                        break
+                    }
+                }
+                done()
+            }
+            
             if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
                 let his = self.prometheus.getOrCreateHistogram(with: labels, for: self)
-                his.observe(value)
+                return his.observe(value, nil, completion)
             }
-            self.total.inc(value)
-            
-            for (i, bound) in self.upperBounds.enumerated() {
-                if bound >= value.doubleValue {
-                    self.buckets[i].inc()
-                    return
-                }
-            }
+            return completion()
         }
     }
 }

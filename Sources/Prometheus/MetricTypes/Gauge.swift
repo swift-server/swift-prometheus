@@ -29,6 +29,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - help: Helpt text of the Gauge
     ///     - initialValue: Initial value to set the Gauge to
     ///     - p: Prometheus instance that created this Gauge
+    ///
     internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: PrometheusClient) {
         self.name = name
         self.help = help
@@ -39,8 +40,9 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     
     /// Gets the metric string for this Gauge
     ///
-    /// - Returns:
-    ///     Newline seperated Prometheus formatted metric string
+    /// - Parameters:
+    ///     - done: Callback passing a newline separated Prometheus-formatted metric string
+    ///
     public func getMetric(_ done: @escaping (String) -> Void) {
         prometheusQueue.async(flags: .barrier) {
             var output = [String]()
@@ -49,7 +51,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
                 output.append("# HELP \(self.name) \(help)")
             }
             output.append("# TYPE \(self.name) \(self._type)")
-
+            
             output.append("\(self.name) \(self.value)")
             
             self.metrics.forEach { (labels, value) in
@@ -67,15 +69,15 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - amount: Amount to set the gauge to
     ///     - labels: Labels to attach to the value
     ///
-    public func set(_ amount: NumType, _ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
+    public func set(_ amount: NumType, _ labels: Labels? = nil, _ done: @escaping () -> Void = { }) {
         prometheusQueue.async(flags: .barrier) {
-        if let labels = labels {
-            self.metrics[labels] = amount
-            done(amount)
-        } else {
-            self.value = amount
-            done(self.value)
-        }
+            if let labels = labels {
+                self.metrics[labels] = amount
+                done()
+            } else {
+                self.value = amount
+                done()
+            }
         }
     }
     
@@ -84,18 +86,19 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     /// - Parameters:
     ///     - amount: Amount to increment the Gauge with
     ///     - labels: Labels to attach to the value
+    ///     - done: Completion handler
     ///
     public func inc(_ amount: NumType, _ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
         prometheusQueue.async(flags: .barrier) {
-        if let labels = labels {
-            var val = self.metrics[labels] ?? self.initialValue
-            val += amount
-            self.metrics[labels] = val
-            done(val)
-        } else {
-            self.value += amount
-            done(self.value)
-        }
+            if let labels = labels {
+                var val = self.metrics[labels] ?? self.initialValue
+                val += amount
+                self.metrics[labels] = val
+                done(val)
+            } else {
+                self.value += amount
+                done(self.value)
+            }
         }
     }
     
@@ -103,11 +106,10 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///
     /// - Parameters:
     ///     - labels: Labels to attach to the value
+    ///     - done: Completion handler
     ///
     public func inc(_ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
-        self.inc(1, labels) {
-            done($0)
-        }
+        self.inc(1, labels, done)
     }
     
     /// Decrements the Gauge
@@ -115,18 +117,19 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     /// - Parameters:
     ///     - amount: Amount to decrement the Gauge with
     ///     - labels: Labels to attach to the value
+    ///     - done: Completion handler
     ///
     public func dec(_ amount: NumType, _ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
         prometheusQueue.async(flags: .barrier) {
-        if let labels = labels {
-            var val = self.metrics[labels] ?? self.initialValue
-            val -= amount
-            self.metrics[labels] = val
-            done(val)
-        } else {
-            self.value -= amount
-            done(self.value)
-        }
+            if let labels = labels {
+                var val = self.metrics[labels] ?? self.initialValue
+                val -= amount
+                self.metrics[labels] = val
+                done(val)
+            } else {
+                self.value -= amount
+                done(self.value)
+            }
         }
     }
     
@@ -136,9 +139,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - labels: Labels to attach to the value
     ///
     public func dec(_ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
-        self.dec(1, labels) {
-            done($0)
-        }
+        self.dec(1, labels, done)
     }
     
     /// Gets the value of the Gauge
@@ -147,6 +148,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - labels: Labels to get the value for
     ///
     /// - Returns: The value of the Gauge attached to the provided labels
+    ///
     public func get(_ labels: Labels? = nil) -> NumType {
         if let labels = labels {
             return self.metrics[labels] ?? initialValue
