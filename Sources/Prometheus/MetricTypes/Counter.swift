@@ -73,10 +73,11 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
                 var val = self.metrics[labels] ?? self.initialValue
                 val += amount
                 self.metrics[labels] = val
+                done(val)
             } else {
                 self.value += amount
+                done(self.value)
             }
-            done(self.value)
         }
     }
     

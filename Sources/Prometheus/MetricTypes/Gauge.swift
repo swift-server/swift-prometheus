@@ -109,9 +109,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - done: Completion handler
     ///
     public func inc(_ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
-        self.inc(1, labels) { value in
-            done(value)
-        }
+        self.inc(1, labels, done)
     }
     
     /// Decrements the Gauge
@@ -141,9 +139,7 @@ public class Gauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHa
     ///     - labels: Labels to attach to the value
     ///
     public func dec(_ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
-        self.dec(1, labels) { value in
-            done(value)
-        }
+        self.dec(1, labels, done)
     }
     
     /// Gets the value of the Gauge
