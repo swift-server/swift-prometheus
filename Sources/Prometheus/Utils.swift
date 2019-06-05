@@ -23,8 +23,7 @@ public struct EmptySummaryLabels: SummaryLabels {
 }
 
 /// Creates a Prometheus String representation of a `MetricLabels` instance
-public func encodeLabels<Labels: MetricLabels>(_ labels: Labels, _ excludingKeys: [String] = []) -> String {
-    // TODO: Fix this up to a custom decoder or something
+func encodeLabels<Labels: MetricLabels>(_ labels: Labels, _ excludingKeys: [String] = []) -> String {
     do {
         let data = try JSONEncoder().encode(labels)
         guard var dictionary = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any] else {
@@ -35,7 +34,7 @@ public func encodeLabels<Labels: MetricLabels>(_ labels: Labels, _ excludingKeys
         }
         var output = [String]()
         dictionary.sorted { $0.key > $1.key }.forEach { (key, value) in
-            output.append("\(key)=\"\(value)\"")
+            output.append(#"\#(key)="\#(value)""#)
         }
         return output.isEmpty ? "" : "{\(output.joined(separator: ", "))}"
     } catch {
