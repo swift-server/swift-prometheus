@@ -1,51 +1,21 @@
+import NIOConcurrencyHelpers
+
 /// Prometheus class
 ///
 /// See https://prometheus.io/docs/introduction/overview/
-public class PrometheusClient: MetricsFactory {
-    /// Makes a counter
-    public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
-        if let counter = self.metrics.filter({ (m) -> Bool in
-            return m._type == .counter && m.name == label
-        }).first as? CounterHandler {
-            return counter
-        }
-        return self.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self)
-    }
-    
-    /// Makes a recorder
-    public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
-        if let recorder = self.metrics.filter({ (m) -> Bool in
-            return m._type == (aggregate ? .histogram : .gauge) && m.name == label
-        }).first as? RecorderHandler {
-            return recorder
-        }
-        if aggregate {
-            return self.createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self)
-        } else {
-            return self.createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self)
-        }
-    }
-    
-    /// Makes a timer
-    public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
-        if let timer = self.metrics.filter({ (m) -> Bool in
-            return m._type == .summary && m.name == label
-        }).first as? TimerHandler {
-            return timer
-        }
-        return self.createSummary(forType: Double.self, named: label, labels: DimensionSummaryLabels.self)
-    }
+public class PrometheusClient {
+
     
     /// Metrics tracked by this Prometheus instance
-    internal var metrics: [Metric]
+    public private(set) var metrics: [Metric]
     
     /// Lock used for thread safety
-    private let lock: NSLock
+    private let lock: Lock
     
     /// Create a PrometheusClient instance
     public init() {
         self.metrics = []
-        self.lock = NSLock()
+        self.lock = Lock()
     }
     
     /// Creates prometheus formatted metrics
@@ -257,23 +227,10 @@ public class PrometheusClient: MetricsFactory {
 }
 
 /// Prometheus specific errors
-enum PrometheusError: Error {
+public enum PrometheusError: Error {
     /// Thrown when a user tries to retrive
     /// a `PromtheusClient` from `MetricsSystem`
     /// but there was no `PrometheusClient` bootstrapped
     case PrometheusFactoryNotBootstrapped
 }
 
-public extension MetricsSystem {
-    /// Get the bootstrapped `MetricsSystem` as `PrometheusClient`
-    ///
-    /// - Returns: `PrometheusClient` used to bootstrap `MetricsSystem`
-    /// - Throws: `PrometheusError.PrometheusFactoryNotBootstrapped`
-    ///             if no `PrometheusClient` was used to bootstrap `MetricsSystem`
-    static func prometheus() throws -> PrometheusClient {
-        guard let prom = self.factory as? PrometheusClient else {
-            throw PrometheusError.PrometheusFactoryNotBootstrapped
-        }
-        return prom
-    }
-}

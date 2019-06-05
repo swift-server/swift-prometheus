@@ -1,7 +1,9 @@
+import NIOConcurrencyHelpers
+
 /// Prometheus Counter metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#counter
-public class PromCounter<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled, CounterHandler {
+public class PromCounter<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled {
     /// Prometheus instance that created this Counter
     internal weak var prometheus: PrometheusClient?
     
@@ -23,7 +25,7 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: Metric, Promet
     internal var metrics: [Labels: NumType] = [:]
     
     /// Lock used for thread safety
-    internal let lock: NSLock
+    internal let lock: Lock
     
     /// Creates a new instance of a Counter
     ///
@@ -38,7 +40,7 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: Metric, Promet
         self.initialValue = initialValue
         self.value = initialValue
         self.prometheus = p
-        self.lock = NSLock()
+        self.lock = Lock()
     }
     
     /// Gets the metric string for this counter
@@ -65,21 +67,6 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: Metric, Promet
         }
     }
     
-    /// Increments the counter
-    ///
-    /// - Parameters:
-    ///     - value: Value to increment by
-    public func increment(_ value: Int64) {
-        guard let v = NumType.init(exactly: value) else { return }
-        self.inc(v)
-    }
-    
-    /// Resets the counter
-    public func reset() {
-        self.lock.withLock {
-            self.value = self.initialValue
-        }
-    }
     
     /// Increments the Counter
     ///

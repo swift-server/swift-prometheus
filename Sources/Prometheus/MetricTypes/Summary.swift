@@ -1,3 +1,5 @@
+import NIOConcurrencyHelpers
+
 /// Default quantiles used by Summaries
 public var defaultQuantiles = [0.01, 0.05, 0.5, 0.9, 0.95, 0.99, 0.999]
 
@@ -18,7 +20,7 @@ extension SummaryLabels {
 /// Prometheus Counter metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#summary
-public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metric, PrometheusHandled, TimerHandler {
+public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metric, PrometheusHandled {
     /// Prometheus instance that created this Summary
     internal weak var prometheus: PrometheusClient?
     
@@ -49,7 +51,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: M
     fileprivate var subSummaries: [PromSummary<NumType, Labels>] = []
     
     /// Lock used for thread safety
-    private let lock: NSLock
+    private let lock: Lock
     
     /// Creates a new Summary
     ///
@@ -73,7 +75,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: M
         
         self.labels = labels
         
-        self.lock = NSLock()
+        self.lock = Lock()
     }
     
     /// Gets the metric string for this Summary

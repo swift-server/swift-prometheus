@@ -10,15 +10,19 @@ let package = Package(
             targets: ["Prometheus"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/tomerd/swift-server-metrics-api-proposal.git", .branch("master"))
+        .package(url: "https://github.com/apple/swift-metrics.git", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "1.0.0"),
     ],
     targets: [
         .target(
             name: "Prometheus",
-            dependencies: ["Metrics"]),
+            dependencies: ["NIOConcurrencyHelpers"]),
+        .target(
+            name: "PrometheusMetrics",
+            dependencies: ["Prometheus", "CoreMetrics"]),
         .target(
             name: "PrometheusExample",
-            dependencies: ["Prometheus"]),
+            dependencies: ["PrometheusMetrics", "Metrics"]),
         .testTarget(
             name: "SwiftPrometheusTests",
             dependencies: ["Prometheus"]),

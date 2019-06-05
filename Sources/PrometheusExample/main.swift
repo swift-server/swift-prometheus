@@ -1,13 +1,15 @@
-import Prometheus
+import PrometheusMetrics
 import Foundation
 //import Metrics
+
+//let counter = Counter(label: <#T##String#>, dimensions: <#T##[(String, String)]#>)
 
 let myProm = PrometheusClient()
 
 MetricsSystem.bootstrap(myProm)
 
 for _ in 0...Int.random(in: 10...100) {
-    let c = Metrics.Counter(label: "test")
+    let c = Counter(label: "test")
     c.increment()
 }
 
@@ -28,7 +30,7 @@ for _ in 0...Int.random(in: 100...500_000) {
 
 
 let x = myProm.makeCounter(label: "test", dimensions: [])
-x.increment(12)
+x.increment(by: 12)
 
 struct MyCodable: MetricLabels {
    var thing: String = "*"

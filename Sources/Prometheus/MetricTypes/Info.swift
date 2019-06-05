@@ -1,3 +1,5 @@
+import NIOConcurrencyHelpers
+
 /// Info metric
 ///
 /// Info tracks key-value information, usually about a whole target
@@ -18,7 +20,7 @@ public class PromInfo<Labels: MetricLabels>: Metric, PrometheusHandled {
     internal var labels = Labels()
     
     /// Lock used for thread safety
-    private let lock: NSLock
+    private let lock: Lock
     
     /// Creates a new Info
     ///
@@ -30,7 +32,7 @@ public class PromInfo<Labels: MetricLabels>: Metric, PrometheusHandled {
         self.name = name
         self.help = help
         self.prometheus = p
-        self.lock = NSLock()
+        self.lock = Lock()
     }
     
     /// Set the info
