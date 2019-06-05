@@ -1,7 +1,9 @@
+import NIOConcurrencyHelpers
+
 /// Prometheus Gauge metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#gauge
-public class PromGauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled, RecorderHandler {
+public class PromGauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled {
     /// Prometheus instance that created this Gauge
     internal weak var prometheus: PrometheusClient?
     
@@ -23,7 +25,7 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: Metric, Promethe
     private var metrics: [Labels: NumType] = [:]
     
     /// Lock used for thread safety
-    private let lock: NSLock
+    private let lock: Lock
     
     /// Creates a new instance of a Gauge
     ///
@@ -38,7 +40,7 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: Metric, Promethe
         self.initialValue = initialValue
         self.value = initialValue
         self.prometheus = p
-        self.lock = NSLock()
+        self.lock = Lock()
     }
     
     /// Gets the metric string for this Gauge
@@ -65,22 +67,22 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: Metric, Promethe
         }
     }
     
-    /// Record a value
-    ///
-    /// - Parameters:
-    ///     - value: Value to record
-    public func record(_ value: Int64) {
-        self.record(Double(value))
-    }
-    
-    /// Record a value
-    ///
-    /// - Parameters:
-    ///     - value: Value to record
-    public func record(_ value: Double) {
-        guard let v = value as? NumType else { return }
-        self.set(v)
-    }
+//    /// Record a value
+//    ///
+//    /// - Parameters:
+//    ///     - value: Value to record
+//    public func record(_ value: Int64) {
+//        self.record(Double(value))
+//    }
+//
+//    /// Record a value
+//    ///
+//    /// - Parameters:
+//    ///     - value: Value to record
+//    public func record(_ value: Double) {
+//        guard let v = value as? NumType else { return }
+//        self.set(v)
+//    }
     
     /// Sets the Gauge
     ///

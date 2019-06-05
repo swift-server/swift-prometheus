@@ -1,3 +1,5 @@
+import NIOConcurrencyHelpers
+
 /// Default buckets used by Histograms
 public var defaultBuckets = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, Double.greatestFiniteMagnitude]
 
@@ -18,7 +20,7 @@ extension HistogramLabels {
 /// Prometheus Counter metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#Histogram
-public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: Metric, PrometheusHandled, RecorderHandler {
+public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: Metric, PrometheusHandled {
     /// Prometheus instance that created this Histogram
     internal weak var prometheus: PrometheusClient?
     
@@ -46,7 +48,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     private let total: PromCounter<NumType, EmptyLabels>
     
     /// Lock used for thread safety
-    private let lock: NSLock
+    private let lock: Lock
     
     /// Creates a new Histogram
     ///
@@ -68,7 +70,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         
         self.upperBounds = buckets
         
-        self.lock = NSLock()
+        self.lock = Lock()
         
         buckets.forEach { _ in
             self.buckets.append(.init("\(name)_bucket", nil, 0, p))
@@ -124,22 +126,22 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         }
     }
     
-    /// Record a value
-    ///
-    /// - Parameters:
-    ///     - value: Value to record
-    public func record(_ value: Int64) {
-        self.record(Double(value))
-    }
-    
-    /// Record a value
-    ///
-    /// - Parameters:
-    ///     - value: Value to record
-    public func record(_ value: Double) {
-        guard let v = value as? NumType else { return }
-        self.observe(v)
-    }
+//    /// Record a value
+//    ///
+//    /// - Parameters:
+//    ///     - value: Value to record
+//    public func record(_ value: Int64) {
+//        self.record(Double(value))
+//    }
+//    
+//    /// Record a value
+//    ///
+//    /// - Parameters:
+//    ///     - value: Value to record
+//    public func record(_ value: Double) {
+//        guard let v = value as? NumType else { return }
+//        self.observe(v)
+//    }
     
     /// Observe a value
     ///
