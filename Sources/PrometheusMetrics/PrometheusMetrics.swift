@@ -12,9 +12,9 @@ class MetricsCounter: CounterHandler {
     let counter: PromCounter<Int64, DimensionLabels>
     let labels: DimensionLabels?
     
-    internal init(counter: PromCounter<Int64, DimensionLabels>, dimensions: [(String, String)]?) {
+    internal init(counter: PromCounter<Int64, DimensionLabels>, dimensions: [(String, String)]) {
         self.counter = counter
-        guard let dimensions = dimensions else {
+        guard !dimensions.isEmpty else {
             labels = nil
             return
         }
@@ -32,9 +32,9 @@ class MetricsGauge: RecorderHandler {
     let gauge: PromGauge<Double, DimensionLabels>
     let labels: DimensionLabels?
     
-    internal init(gauge: PromGauge<Double, DimensionLabels>, dimensions: [(String, String)]?) {
+    internal init(gauge: PromGauge<Double, DimensionLabels>, dimensions: [(String, String)]) {
         self.gauge = gauge
-        guard let dimensions = dimensions else {
+        guard !dimensions.isEmpty else {
             labels = nil
             return
         }
@@ -54,9 +54,9 @@ class MetricsHistogram: RecorderHandler {
     let histogram: PromHistogram<Double, DimensionHistogramLabels>
     let labels: DimensionHistogramLabels?
     
-    internal init(histogram: PromHistogram<Double, DimensionHistogramLabels>, dimensions: [(String, String)]?) {
+    internal init(histogram: PromHistogram<Double, DimensionHistogramLabels>, dimensions: [(String, String)]) {
         self.histogram = histogram
-        guard let dimensions = dimensions else {
+        guard !dimensions.isEmpty else {
             labels = nil
             return
         }
@@ -76,9 +76,9 @@ class MetricsSummary: TimerHandler {
     let summary: PromSummary<Int64, DimensionSummaryLabels>
     let labels: DimensionSummaryLabels?
     
-    internal init(summary: PromSummary<Int64, DimensionSummaryLabels>, dimensions: [(String, String)]?) {
+    internal init(summary: PromSummary<Int64, DimensionSummaryLabels>, dimensions: [(String, String)]) {
         self.summary = summary
-        guard let dimensions = dimensions else {
+        guard !dimensions.isEmpty else {
             labels = nil
             return
         }
