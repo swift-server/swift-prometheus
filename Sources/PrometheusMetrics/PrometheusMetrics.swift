@@ -8,7 +8,7 @@
 import Prometheus
 import CoreMetrics
 
-class MetricsCounter: CounterHandler {
+private class MetricsCounter: CounterHandler {
     let counter: PromCounter<Int64, DimensionLabels>
     let labels: DimensionLabels?
     
@@ -28,7 +28,7 @@ class MetricsCounter: CounterHandler {
     func reset() { }
 }
 
-class MetricsGauge: RecorderHandler {
+private class MetricsGauge: RecorderHandler {
     let gauge: PromGauge<Double, DimensionLabels>
     let labels: DimensionLabels?
     
@@ -50,7 +50,7 @@ class MetricsGauge: RecorderHandler {
     }
 }
 
-class MetricsHistogram: RecorderHandler {
+private class MetricsHistogram: RecorderHandler {
     let histogram: PromHistogram<Double, DimensionHistogramLabels>
     let labels: DimensionHistogramLabels?
     
@@ -72,7 +72,7 @@ class MetricsHistogram: RecorderHandler {
     }
 }
 
-class MetricsSummary: TimerHandler {
+private class MetricsSummary: TimerHandler {
     let summary: PromSummary<Int64, DimensionSummaryLabels>
     let labels: DimensionSummaryLabels?
     
@@ -105,7 +105,6 @@ extension PrometheusClient: MetricsFactory {
     
     /// Makes a counter
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
-//        fatalError()
         let createHandler = { (counter: PromCounter) -> CounterHandler in
             return MetricsCounter(counter: counter, dimensions: dimensions)
         }
@@ -119,28 +118,44 @@ extension PrometheusClient: MetricsFactory {
     
     /// Makes a recorder
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
-        fatalError()
-        //        if let recorder = self.metrics.filter({ (m) -> Bool in
-        //            return m._type == (aggregate ? .histogram : .gauge) && m.name == label
-        //        }).first as? RecorderHandler {
-        //            return recorder
-        //        }
-        //        if aggregate {
-        //            return self.createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self)
-        //        } else {
-        //            return self.createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self)
-        //        }
+        return aggregate ? makeHistogram(label: label, dimensions: dimensions) : makeGauge(label: label, dimensions: dimensions)
+    }
+    
+    private func makeGauge(label: String, dimensions: [(String, String)]) -> RecorderHandler {
+        let createHandler = { (gauge: PromGauge) -> RecorderHandler in
+            return MetricsGauge(gauge: gauge, dimensions: dimensions)
+        }
+        if let gauge = self.metrics.compactMap({ $0 as? PromGauge<Double, DimensionLabels> }).filter({
+            $0._type == .gauge && $0.name == label
+        }).first {
+            return createHandler(gauge)
+        }
+        return createHandler(createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self))
+    }
+    
+    private func makeHistogram(label: String, dimensions: [(String, String)]) -> RecorderHandler {
+        let createHandler = { (histogram: PromHistogram) -> RecorderHandler in
+            return MetricsHistogram(histogram: histogram, dimensions: dimensions)
+        }
+        if let histogram = self.metrics.compactMap({ $0 as? PromHistogram<Double, DimensionHistogramLabels> }).filter({
+            $0._type == .histogram && $0.name == label
+        }).first {
+            return createHandler(histogram)
+        }
+        return createHandler(createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self))
     }
     
     /// Makes a timer
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
-        fatalError()
-        //        if let timer = self.metrics.filter({ (m) -> Bool in
-        //            return m._type == .summary && m.name == label
-        //        }).first as? TimerHandler {
-        //            return timer
-        //        }
-        //        return self.createSummary(forType: Double.self, named: label, labels: DimensionSummaryLabels.self)
+        let createHandler = { (summary: PromSummary) -> TimerHandler in
+            return MetricsSummary(summary: summary, dimensions: dimensions)
+        }
+        if let summary = self.metrics.compactMap({ $0 as? PromSummary<Int64, DimensionSummaryLabels> }).filter({
+            $0._type == .summary && $0.name == label
+        }).first {
+            return createHandler(summary)
+        }
+        return createHandler(createSummary(forType: Int64.self, named: label, labels: DimensionSummaryLabels.self))
     }
 }
 
@@ -161,7 +176,7 @@ public extension MetricsSystem {
 // MARK: - Labels
 
 /// A generic `String` based `CodingKey` implementation.
-fileprivate struct StringCodingKey: CodingKey {
+private struct StringCodingKey: CodingKey {
     /// `CodingKey` conformance.
     public var stringValue: String
     
@@ -189,7 +204,7 @@ fileprivate struct StringCodingKey: CodingKey {
 
 
 /// Helper for dimensions
-internal struct DimensionLabels: MetricLabels {
+private struct DimensionLabels: MetricLabels {
     let dimensions: [(String, String)]
     
     init() {
@@ -221,7 +236,7 @@ internal struct DimensionLabels: MetricLabels {
 }
 
 /// Helper for dimensions
-internal struct DimensionHistogramLabels: HistogramLabels {
+private struct DimensionHistogramLabels: HistogramLabels {
     /// Bucket
     var le: String
     /// Dimensions
@@ -262,7 +277,7 @@ internal struct DimensionHistogramLabels: HistogramLabels {
 }
 
 /// Helper for dimensions
-internal struct DimensionSummaryLabels: SummaryLabels {
+private struct DimensionSummaryLabels: SummaryLabels {
     /// Quantile
     var quantile: String
     /// Dimensions
