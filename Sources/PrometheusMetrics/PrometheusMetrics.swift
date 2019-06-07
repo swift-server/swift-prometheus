@@ -32,7 +32,7 @@ private class MetricsGauge: RecorderHandler {
     }
     
     func record(_ value: Int64) {
-        gauge.inc(value.doubleValue, labels)
+        self.record(value.doubleValue)
     }
     
     func record(_ value: Double) {

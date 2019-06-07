@@ -25,6 +25,6 @@ let package = Package(
             dependencies: ["PrometheusMetrics", "Metrics"]),
         .testTarget(
             name: "SwiftPrometheusTests",
-            dependencies: ["Prometheus"]),
+            dependencies: ["Prometheus", "PrometheusMetrics"]),
     ]
 )
