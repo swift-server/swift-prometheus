@@ -126,5 +126,12 @@ final class PrometheusMetricsTests: XCTestCase {
         my_summary_sum{myValue="labels"} 123
         """)
     }
+    
+    func testMetricDestroying() {
+        let counter = Counter(label: "my_counter")
+        counter.increment()
+        counter.destroy()
+        XCTAssertEqual(prom.getMetrics(), "")
+    }
 }
 

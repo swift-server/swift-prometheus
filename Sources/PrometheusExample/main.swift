@@ -111,24 +111,5 @@ for _ in 0...Int.random(in: 100...1000) {
    summary.observe(Double.random(in: 0...10000), SummaryThing("/test"))
 }
 
-struct MyInfoStruct: MetricLabels {
-   let version: String
-   let major: String
-
-   init() {
-       self.version = "1.0.0"
-       self.major = "1"
-   }
-
-   init(_ v: String, _ m: String) {
-       self.version = v
-       self.major = m
-   }
-}
-
-let info = myProm.createInfo(named: "my_info", helpText: "Just some info", labelType: MyInfoStruct.self)
-
-info.info(MyInfoStruct("2.0.0", "2"))
-
 let metrics = try! MetricsSystem.prometheus().getMetrics()
 print(metrics)

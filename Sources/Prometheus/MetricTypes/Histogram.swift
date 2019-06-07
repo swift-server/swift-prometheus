@@ -126,23 +126,6 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         }
     }
     
-//    /// Record a value
-//    ///
-//    /// - Parameters:
-//    ///     - value: Value to record
-//    public func record(_ value: Int64) {
-//        self.record(Double(value))
-//    }
-//    
-//    /// Record a value
-//    ///
-//    /// - Parameters:
-//    ///     - value: Value to record
-//    public func record(_ value: Double) {
-//        guard let v = value as? NumType else { return }
-//        self.observe(v)
-//    }
-    
     /// Observe a value
     ///
     /// - Parameters:
