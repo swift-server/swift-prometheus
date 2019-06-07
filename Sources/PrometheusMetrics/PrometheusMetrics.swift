@@ -32,7 +32,7 @@ private class MetricsGauge: RecorderHandler {
     }
     
     func record(_ value: Int64) {
-        gauge.inc(value.doubleValue, labels)
+        self.record(value.doubleValue)
     }
     
     func record(_ value: Double) {
@@ -82,15 +82,22 @@ private class MetricsSummary: TimerHandler {
 
 extension PrometheusClient: MetricsFactory {
     public func destroyCounter(_ handler: CounterHandler) {
-        
+        guard let handler = handler as? MetricsCounter else { return }
+        self.removeMetric(handler.counter)
     }
     
     public func destroyRecorder(_ handler: RecorderHandler) {
-        
+        if let handler = handler as? MetricsGauge {
+            self.removeMetric(handler.gauge)
+        }
+        if let handler = handler as? MetricsHistogram {
+            self.removeMetric(handler.histogram)
+        }
     }
     
     public func destroyTimer(_ handler: TimerHandler) {
-        
+        guard let handler = handler as? MetricsSummary else { return }
+        self.removeMetric(handler.summary)
     }
     
     /// Makes a counter
@@ -98,9 +105,7 @@ extension PrometheusClient: MetricsFactory {
         let createHandler = { (counter: PromCounter) -> CounterHandler in
             return MetricsCounter(counter: counter, dimensions: dimensions)
         }
-        if let counter = self.metrics.compactMap({ $0 as? PromCounter<Int64, DimensionLabels> }).filter({ (m) -> Bool in
-            return m._type == .counter && m.name == label
-        }).first {
+        if let counter: PromCounter<Int64, DimensionLabels> = self.getMetricInstance(with: label, andType: .counter) {
             return createHandler(counter)
         }
         return createHandler(self.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self))
@@ -115,9 +120,7 @@ extension PrometheusClient: MetricsFactory {
         let createHandler = { (gauge: PromGauge) -> RecorderHandler in
             return MetricsGauge(gauge: gauge, dimensions: dimensions)
         }
-        if let gauge = self.metrics.compactMap({ $0 as? PromGauge<Double, DimensionLabels> }).filter({
-            $0._type == .gauge && $0.name == label
-        }).first {
+        if let gauge: PromGauge<Double, DimensionLabels> = self.getMetricInstance(with: label, andType: .gauge) {
             return createHandler(gauge)
         }
         return createHandler(createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self))
@@ -127,9 +130,7 @@ extension PrometheusClient: MetricsFactory {
         let createHandler = { (histogram: PromHistogram) -> RecorderHandler in
             return MetricsHistogram(histogram: histogram, dimensions: dimensions)
         }
-        if let histogram = self.metrics.compactMap({ $0 as? PromHistogram<Double, DimensionHistogramLabels> }).filter({
-            $0._type == .histogram && $0.name == label
-        }).first {
+        if let histogram: PromHistogram<Double, DimensionHistogramLabels> = self.getMetricInstance(with: label, andType: .histogram) {
             return createHandler(histogram)
         }
         return createHandler(createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self))
@@ -140,9 +141,7 @@ extension PrometheusClient: MetricsFactory {
         let createHandler = { (summary: PromSummary) -> TimerHandler in
             return MetricsSummary(summary: summary, dimensions: dimensions)
         }
-        if let summary = self.metrics.compactMap({ $0 as? PromSummary<Int64, DimensionSummaryLabels> }).filter({
-            $0._type == .summary && $0.name == label
-        }).first {
+        if let summary: PromSummary<Int64, DimensionSummaryLabels> = self.getMetricInstance(with: label, andType: .summary) {
             return createHandler(summary)
         }
         return createHandler(createSummary(forType: Int64.self, named: label, labels: DimensionSummaryLabels.self))

@@ -8,8 +8,6 @@ public enum MetricType: String {
     case histogram
     /// See `PromSummary`
     case summary
-    /// See `PromInfo
-    case info
 }
 
 /// Metric protocol
