@@ -23,7 +23,7 @@
         <a class="header-link" href="../index.html">
           Prometheus Docs
         </a>
-         (100% documented)
+         (97% documented)
       </p>
     
       <p class="header-col--secondary">
@@ -67,9 +67,6 @@
               </li>
               <li class="nav-group-task">
                 <a class="nav-group-task-link" href="../Classes/PromHistogram.html">PromHistogram</a>
-              </li>
-              <li class="nav-group-task">
-                <a class="nav-group-task-link" href="../Classes/PromInfo.html">PromInfo</a>
               </li>
               <li class="nav-group-task">
                 <a class="nav-group-task-link" href="../Classes/PromSummary.html">PromSummary</a>
@@ -182,38 +179,6 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:10Prometheus0A6ClientC7metricsSayAA6Metric_pGvp"></a>
-                    <a name="//apple_ref/swift/Property/metrics" class="dashAnchor"></a>
-                    <a class="token" href="#/s:10Prometheus0A6ClientC7metricsSayAA6Metric_pGvp">metrics</a>
-                    </code>
-                  </div>
-                  <div class="height-container">
-                    <div class="pointer-container"></div>
-                    <section class="section">
-                      <div class="pointer"></div>
-                      <div class="abstract">
-                        <p>Metrics tracked by this Prometheus instance</p>
-
-                      </div>
-                      <div class="declaration">
-                        <h4>Declaration</h4>
-                        <div class="language">
-                          <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">private(set)</span> <span class="k">var</span> <span class="nv">metrics</span><span class="p">:</span> <span class="p">[</span><span class="kt"><a href="../Protocols/Metric.html">Metric</a></span><span class="p">]</span> <span class="p">{</span>
-  <span class="k">get</span>
-  <span class="p">}</span></code></pre>
-
-                        </div>
-                      </div>
-                      <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L10">Show on GitHub</a>
-                      </div>
-                    </section>
-                  </div>
-                </li>
-                <li class="item">
-                  <div>
-                    <code>
                     <a name="/s:10Prometheus0A6ClientCACycfc"></a>
                     <a name="//apple_ref/swift/Method/init()" class="dashAnchor"></a>
                     <a class="token" href="#/s:10Prometheus0A6ClientCACycfc">init()</a>
@@ -236,7 +201,7 @@
                         </div>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L16-L19">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L19-L23">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -270,7 +235,76 @@
                         <p>Newline seperated string with metrics for all Metric Trackers of this Prometheus instance</p>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L24-L28">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L28-L32">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="task-group">
+              <div class="task-name-container">
+                <a name="/Metric%20Access"></a>
+                <a name="//apple_ref/swift/Section/Metric Access" class="dashAnchor"></a>
+                <a href="#/Metric%20Access">
+                  <h3 class="section-name">Metric Access</h3>
+                </a>
+              </div>
+              <ul class="item-container">
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC12removeMetricyyAA0D0_pF"></a>
+                    <a name="//apple_ref/swift/Method/removeMetric(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC12removeMetricyyAA0D0_pF">removeMetric(_:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">removeMetric</span><span class="p">(</span><span class="n">_</span> <span class="nv">metric</span><span class="p">:</span> <span class="kt"><a href="../Protocols/Metric.html">Metric</a></span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L36-L42">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC17getMetricInstance4with7andTypexSgSS_AA0dH0OtAA0D0RzlF"></a>
+                    <a name="//apple_ref/swift/Method/getMetricInstance(with:andType:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC17getMetricInstance4with7andTypexSgSS_AA0dH0OtAA0D0RzlF">getMetricInstance(with:andType:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">getMetricInstance</span><span class="o">&lt;</span><span class="kt">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">with</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span> <span class="n">andType</span> <span class="nv">type</span><span class="p">:</span> <span class="kt"><a href="../Enums/MetricType.html">MetricType</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">T</span><span class="p">?</span> <span class="k">where</span> <span class="kt">T</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/Metric.html">Metric</a></span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L44-L48">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -387,7 +421,7 @@
                         <p>Counter instance</p>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L42-L54">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L62-L78">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -480,7 +514,7 @@
                         <p>Counter instance</p>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L65-L72">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L89-L96">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -597,7 +631,7 @@
                         <p>Gauge instance</p>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L86-L98">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L110-L126">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -690,7 +724,7 @@
                         <p>Gauge instance</p>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L109-L116">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L137-L144">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -807,7 +841,7 @@
                         <p>Histogram instance</p>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L130-L142">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L158-L174">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -900,7 +934,7 @@
                         <p>Histogram instance</p>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L153-L160">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L185-L192">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -1017,7 +1051,7 @@
                         <p>Summary instance</p>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L174-L186">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L206-L222">Show on GitHub</a>
                       </div>
                     </section>
                   </div>
@@ -1110,94 +1144,7 @@
                         <p>Summary instance</p>
                       </div>
                       <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L197-L204">Show on GitHub</a>
-                      </div>
-                    </section>
-                  </div>
-                </li>
-              </ul>
-            </div>
-            <div class="task-group">
-              <div class="task-name-container">
-                <a name="/Info"></a>
-                <a name="//apple_ref/swift/Section/Info" class="dashAnchor"></a>
-                <a href="#/Info">
-                  <h3 class="section-name">Info</h3>
-                </a>
-              </div>
-              <ul class="item-container">
-                <li class="item">
-                  <div>
-                    <code>
-                    <a name="/s:10Prometheus0A6ClientC10createInfo5named8helpText9labelTypeAA04PromD0CyxGSS_SSSgxmtAA12MetricLabelsRzlF"></a>
-                    <a name="//apple_ref/swift/Method/createInfo(named:helpText:labelType:)" class="dashAnchor"></a>
-                    <a class="token" href="#/s:10Prometheus0A6ClientC10createInfo5named8helpText9labelTypeAA04PromD0CyxGSS_SSSgxmtAA12MetricLabelsRzlF">createInfo(named:helpText:labelType:)</a>
-                    </code>
-                  </div>
-                  <div class="height-container">
-                    <div class="pointer-container"></div>
-                    <section class="section">
-                      <div class="pointer"></div>
-                      <div class="abstract">
-                        <p>Creates an Info metric with the given values</p>
-
-                      </div>
-                      <div class="declaration">
-                        <h4>Declaration</h4>
-                        <div class="language">
-                          <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">createInfo</span><span class="o">&lt;</span><span class="kt">U</span><span class="p">:</span> <span class="kt"><a href="../Protocols/MetricLabels.html">MetricLabels</a></span><span class="o">&gt;</span><span class="p">(</span>
-    <span class="n">named</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
-    <span class="nv">helpText</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span>
-    <span class="nv">labelType</span><span class="p">:</span> <span class="kt">U</span><span class="o">.</span><span class="k">Type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Classes/PromInfo.html">PromInfo</a></span><span class="o">&lt;</span><span class="kt">U</span><span class="o">&gt;</span></code></pre>
-
-                        </div>
-                      </div>
-                      <div>
-                        <h4>Parameters</h4>
-                        <table class="graybox">
-                          <tbody>
-                            <tr>
-                              <td>
-                                <code>
-                                <em>name</em>
-                                </code>
-                              </td>
-                              <td>
-                                <div>
-                                  <p>Name of the info</p>
-                                </div>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td>
-                                <code>
-                                <em>helpText</em>
-                                </code>
-                              </td>
-                              <td>
-                                <div>
-                                  <p>Help text for the info. Usually a short description</p>
-                                </div>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td>
-                                <code>
-                                <em>labelType</em>
-                                </code>
-                              </td>
-                              <td>
-                                <div>
-                                  <p>Type of labels this Info can use</p>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                      <div class="slightly-smaller">
-                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L216-L226">Show on GitHub</a>
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L233-L240">Show on GitHub</a>
                       </div>
                     </section>
                   </div>

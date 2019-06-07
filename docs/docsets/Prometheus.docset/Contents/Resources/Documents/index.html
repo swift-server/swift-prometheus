@@ -22,7 +22,7 @@
         <a class="header-link" href="index.html">
           Prometheus Docs
         </a>
-         (100% documented)
+         (97% documented)
       </p>
     
       <p class="header-col--secondary">
@@ -66,9 +66,6 @@
               </li>
               <li class="nav-group-task">
                 <a class="nav-group-task-link" href="Classes/PromHistogram.html">PromHistogram</a>
-              </li>
-              <li class="nav-group-task">
-                <a class="nav-group-task-link" href="Classes/PromInfo.html">PromInfo</a>
               </li>
               <li class="nav-group-task">
                 <a class="nav-group-task-link" href="Classes/PromSummary.html">PromSummary</a>
@@ -183,11 +180,9 @@
 <span class="kt">MetricsSystem</span><span class="o">.</span><span class="nf">bootstrap</span><span class="p">(</span><span class="n">myProm</span><span class="p">)</span>
 </code></pre>
 
-<p>To use prometheus specific features in a later stage of your program, or to get your metrics out of the system, use the following snippet:</p>
+<p>To use prometheus specific features in a later stage of your program, or to get your metrics out of the system, there is a convenience method added to <code>MetricsSystem</code>:</p>
 <pre class="highlight swift"><code><span class="c1">// This is the same instance was used in `.bootstrap()` earlier.</span>
 <span class="k">let</span> <span class="nv">promInstance</span> <span class="o">=</span> <span class="k">try</span> <span class="kt">MetricsSystem</span><span class="o">.</span><span class="nf">prometheus</span><span class="p">()</span>
-<span class="c1">// To get the metrics out</span>
-<span class="k">let</span> <span class="nv">metrics</span> <span class="o">=</span> <span class="n">promInstance</span><span class="o">.</span><span class="nf">getMetrics</span><span class="p">()</span>
 </code></pre>
 
 <p>You can than use the same APIs that are layed out in the rest of this README</p>
