@@ -1,13 +1,3 @@
-//
-//  File.swift
-//  
-//
-//  Created by Jari (LotU) on 04/06/2019.
-//
-
-import Prometheus
-import CoreMetrics
-
 private class MetricsCounter: CounterHandler {
     let counter: PromCounter<Int64, DimensionLabels>
     let labels: DimensionLabels?
