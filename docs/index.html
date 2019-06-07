@@ -95,6 +95,9 @@
               <li class="nav-group-task">
                 <a class="nav-group-task-link" href="Enums/MetricType.html">MetricType</a>
               </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Enums/PrometheusError.html">PrometheusError</a>
+              </li>
             </ul>
           </li>
           <li class="nav-group-name">
@@ -111,17 +114,6 @@
               </li>
               <li class="nav-group-task">
                 <a class="nav-group-task-link" href="Extensions/Float.html">Float</a>
-              </li>
-              <li class="nav-group-task">
-                <a class="nav-group-task-link" href="Extensions/MetricsSystem.html">MetricsSystem</a>
-              </li>
-            </ul>
-          </li>
-          <li class="nav-group-name">
-            <a class="nav-group-name-link" href="Functions.html">Functions</a>
-            <ul class="nav-group-tasks">
-              <li class="nav-group-task">
-                <a class="nav-group-task-link" href="Functions.html#/s:10Prometheus12encodeLabelsySSx_SaySSGtAA06MetricC0RzlF">encodeLabels(_:_:)</a>
               </li>
             </ul>
           </li>
@@ -176,17 +168,40 @@
 <h1 id='usage' class='heading'>Usage</h1>
 
 <p>For examples, see <a href="./Sources/PrometheusExample/main.swift">main.swift</a></p>
+
+<p>First, we have to create an instance of our <code><a href="Classes/PrometheusClient.html">PrometheusClient</a></code>:</p>
+<pre class="highlight swift"><code><span class="kd">import</span> <span class="kt">Prometheus</span>
+<span class="k">let</span> <span class="nv">myProm</span> <span class="o">=</span> <span class="kt">PrometheusClient</span><span class="p">()</span>
+</code></pre>
+<h2 id='usage-with-swift-metrics' class='heading'>Usage with Swift-Metrics</h2>
+
+<p><em>For more details about swift-metrics, check the GitHub repo <a href="https://github.com/apple/swift-metrics">here</a></em></p>
+
+<p>To use SwiftPrometheus with swift-metrics, all the setup required is this:</p>
+<pre class="highlight swift"><code><span class="kd">import</span> <span class="kt">PrometheusMetrics</span> <span class="c1">// Auto imports Prometheus too, but adds the swift-metrics compatibility</span>
+<span class="k">let</span> <span class="nv">myProm</span> <span class="o">=</span> <span class="kt">PrometheusClient</span><span class="p">()</span>
+<span class="kt">MetricsSystem</span><span class="o">.</span><span class="nf">bootstrap</span><span class="p">(</span><span class="n">myProm</span><span class="p">)</span>
+</code></pre>
+
+<p>To use prometheus specific features in a later stage of your program, or to get your metrics out of the system, use the following snippet:</p>
+<pre class="highlight swift"><code><span class="c1">// This is the same instance was used in `.bootstrap()` earlier.</span>
+<span class="k">let</span> <span class="nv">promInstance</span> <span class="o">=</span> <span class="k">try</span> <span class="kt">MetricsSystem</span><span class="o">.</span><span class="nf">prometheus</span><span class="p">()</span>
+<span class="c1">// To get the metrics out</span>
+<span class="k">let</span> <span class="nv">metrics</span> <span class="o">=</span> <span class="n">promInstance</span><span class="o">.</span><span class="nf">getMetrics</span><span class="p">()</span>
+</code></pre>
+
+<p>You can than use the same APIs that are layed out in the rest of this README</p>
 <h2 id='counter' class='heading'>Counter</h2>
 
 <p>Counters go up, and reset when the process restarts.</p>
-<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">counter</span> <span class="o">=</span> <span class="kt">Prometheus</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="nf">createCounter</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Int</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_counter"</span><span class="p">)</span>
+<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">counter</span> <span class="o">=</span> <span class="n">myProm</span><span class="o">.</span><span class="nf">createCounter</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Int</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_counter"</span><span class="p">)</span>
 <span class="n">counter</span><span class="o">.</span><span class="nf">inc</span><span class="p">()</span> <span class="c1">// Increment by 1</span>
 <span class="n">counter</span><span class="o">.</span><span class="nf">inc</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span> <span class="c1">// Increment by given value </span>
 </code></pre>
 <h2 id='gauge' class='heading'>Gauge</h2>
 
 <p>Gauges can go up and down</p>
-<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">gauge</span> <span class="o">=</span> <span class="kt">Prometheus</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="nf">createGauge</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Int</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_gauge"</span><span class="p">)</span>
+<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">gauge</span> <span class="o">=</span> <span class="n">myProm</span><span class="o">.</span><span class="nf">createGauge</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Int</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_gauge"</span><span class="p">)</span>
 <span class="n">gauge</span><span class="o">.</span><span class="nf">inc</span><span class="p">()</span> <span class="c1">// Increment by 1</span>
 <span class="n">gauge</span><span class="o">.</span><span class="nf">dec</span><span class="p">(</span><span class="mi">19</span><span class="p">)</span> <span class="c1">// Decrement by given value</span>
 <span class="n">gauge</span><span class="o">.</span><span class="nf">set</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span> <span class="c1">// Set to a given value</span>
@@ -194,13 +209,13 @@
 <h2 id='histogram' class='heading'>Histogram</h2>
 
 <p>Histograms track the size and number of events in buckets. This allows for aggregatable calculation of quantiles.</p>
-<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">histogram</span> <span class="o">=</span> <span class="kt">Prometheus</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="nf">createHistogram</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Double</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_histogram"</span><span class="p">)</span>
+<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">histogram</span> <span class="o">=</span> <span class="n">myProm</span><span class="o">.</span><span class="nf">createHistogram</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Double</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_histogram"</span><span class="p">)</span>
 <span class="n">histogram</span><span class="o">.</span><span class="nf">observe</span><span class="p">(</span><span class="mf">4.7</span><span class="p">)</span> <span class="c1">// Observe the given value</span>
 </code></pre>
 <h2 id='summary' class='heading'>Summary</h2>
 
 <p>Summaries track the size and number of events</p>
-<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">summary</span> <span class="o">=</span> <span class="kt">Prometheus</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="nf">createSummary</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Double</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_summary"</span><span class="p">)</span>
+<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">summary</span> <span class="o">=</span> <span class="n">myProm</span><span class="o">.</span><span class="nf">createSummary</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Double</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_summary"</span><span class="p">)</span>
 <span class="n">summary</span><span class="o">.</span><span class="nf">observe</span><span class="p">(</span><span class="mf">4.7</span><span class="p">)</span> <span class="c1">// Observe the given value</span>
 </code></pre>
 <h2 id='info' class='heading'>Info</h2>
@@ -218,7 +233,7 @@
    <span class="p">}</span>
 <span class="p">}</span>
 
-<span class="k">let</span> <span class="nv">info</span> <span class="o">=</span> <span class="kt">Prometheus</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="nf">createInfo</span><span class="p">(</span><span class="nv">named</span><span class="p">:</span> <span class="s">"my_info"</span><span class="p">,</span> <span class="nv">helpText</span><span class="p">:</span> <span class="s">"Just some info"</span><span class="p">,</span> <span class="nv">labelType</span><span class="p">:</span> <span class="kt">MyInfoStruct</span><span class="o">.</span><span class="k">self</span><span class="p">)</span>
+<span class="k">let</span> <span class="nv">info</span> <span class="o">=</span> <span class="n">myProm</span><span class="o">.</span><span class="nf">createInfo</span><span class="p">(</span><span class="nv">named</span><span class="p">:</span> <span class="s">"my_info"</span><span class="p">,</span> <span class="nv">helpText</span><span class="p">:</span> <span class="s">"Just some info"</span><span class="p">,</span> <span class="nv">labelType</span><span class="p">:</span> <span class="kt">MyInfoStruct</span><span class="o">.</span><span class="k">self</span><span class="p">)</span>
 
 <span class="n">info</span><span class="o">.</span><span class="nf">info</span><span class="p">(</span><span class="kt">MyInfoStruct</span><span class="p">(</span><span class="s">"def"</span><span class="p">))</span>
 </code></pre>
@@ -231,7 +246,7 @@
    <span class="k">var</span> <span class="nv">route</span><span class="p">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">"*"</span>
 <span class="p">}</span>
 
-<span class="k">let</span> <span class="nv">counter</span> <span class="o">=</span> <span class="kt">Prometheus</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="nf">createCounter</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Int</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_counter"</span><span class="p">,</span> <span class="nv">helpText</span><span class="p">:</span> <span class="s">"Just a counter"</span><span class="p">,</span> <span class="nv">withLabelType</span><span class="p">:</span> <span class="kt">RouteLabels</span><span class="o">.</span><span class="k">self</span><span class="p">)</span>
+<span class="k">let</span> <span class="nv">counter</span> <span class="o">=</span> <span class="n">myProm</span><span class="o">.</span><span class="nf">createCounter</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Int</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_counter"</span><span class="p">,</span> <span class="nv">helpText</span><span class="p">:</span> <span class="s">"Just a counter"</span><span class="p">,</span> <span class="nv">withLabelType</span><span class="p">:</span> <span class="kt">RouteLabels</span><span class="o">.</span><span class="k">self</span><span class="p">)</span>
 
 <span class="n">counter</span><span class="o">.</span><span class="nf">inc</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="o">.</span><span class="nf">init</span><span class="p">(</span><span class="nv">route</span><span class="p">:</span> <span class="s">"/"</span><span class="p">))</span>
 </code></pre>
@@ -241,7 +256,7 @@
 
 <p>This could look something like this:</p>
 <pre class="highlight swift"><code><span class="n">router</span><span class="o">.</span><span class="nf">get</span><span class="p">(</span><span class="s">"/metrics"</span><span class="p">)</span> <span class="p">{</span> <span class="n">request</span> <span class="o">-&gt;</span> <span class="kt">String</span> <span class="k">in</span>
-    <span class="k">return</span> <span class="kt">Prometheus</span><span class="o">.</span><span class="n">shared</span><span class="o">.</span><span class="nf">getMetrics</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">myProm</span><span class="o">.</span><span class="nf">getMetrics</span><span class="p">()</span>
 <span class="p">}</span>
 </code></pre>
 
@@ -261,7 +276,7 @@
       </article>
     </div>
     <section class="footer">
-      <p>&copy; 2019 <a class="link" href="https://github.com/MrLotU" target="_blank" rel="external">MrLotU</a>. All rights reserved. (Last updated: 2019-04-08)</p>
+      <p>&copy; 2019 <a class="link" href="https://github.com/MrLotU" target="_blank" rel="external">MrLotU</a>. All rights reserved. (Last updated: 2019-06-07)</p>
       <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.9.4</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
     </section>
   </body>
