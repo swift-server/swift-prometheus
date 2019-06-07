@@ -8,12 +8,35 @@ A prometheus client for Swift supporting counters, gauges, histograms, summaries
 
 For examples, see [main.swift](./Sources/PrometheusExample/main.swift)
 
+First, we have to create an instance of our `PrometheusClient`:
+```swift
+import Prometheus
+let myProm = PrometheusClient()
+```
+
+## Usage with Swift-Metrics
+_For more details about swift-metrics, check the GitHub repo [here](https://github.com/apple/swift-metrics)_
+
+To use SwiftPrometheus with swift-metrics, all the setup required is this:
+```swift
+import PrometheusMetrics // Auto imports Prometheus too, but adds the swift-metrics compatibility
+let myProm = PrometheusClient()
+MetricsSystem.bootstrap(myProm)
+```
+
+To use prometheus specific features in a later stage of your program, or to get your metrics out of the system, there is a convenience method added to `MetricsSystem`:
+```swift
+// This is the same instance was used in `.bootstrap()` earlier.
+let promInstance = try MetricsSystem.prometheus()
+```
+You can than use the same APIs that are layed out in the rest of this README
+
 ## Counter
 
 Counters go up, and reset when the process restarts.
 
 ```swift
-let counter = Prometheus.shared.createCounter(forType: Int.self, named: "my_counter")
+let counter = myProm.createCounter(forType: Int.self, named: "my_counter")
 counter.inc() // Increment by 1
 counter.inc(12) // Increment by given value 
 ```
@@ -23,7 +46,7 @@ counter.inc(12) // Increment by given value
 Gauges can go up and down
 
 ```swift
-let gauge = Prometheus.shared.createGauge(forType: Int.self, named: "my_gauge")
+let gauge = myProm.createGauge(forType: Int.self, named: "my_gauge")
 gauge.inc() // Increment by 1
 gauge.dec(19) // Decrement by given value
 gauge.set(12) // Set to a given value
@@ -34,7 +57,7 @@ gauge.set(12) // Set to a given value
 Histograms track the size and number of events in buckets. This allows for aggregatable calculation of quantiles.
 
 ```swift
-let histogram = Prometheus.shared.createHistogram(forType: Double.self, named: "my_histogram")
+let histogram = myProm.createHistogram(forType: Double.self, named: "my_histogram")
 histogram.observe(4.7) // Observe the given value
 ```
 
@@ -43,7 +66,7 @@ histogram.observe(4.7) // Observe the given value
 Summaries track the size and number of events
 
 ```swift
-let summary = Prometheus.shared.createSummary(forType: Double.self, named: "my_summary")
+let summary = myProm.createSummary(forType: Double.self, named: "my_summary")
 summary.observe(4.7) // Observe the given value
 ```
 
@@ -64,7 +87,7 @@ struct MyInfoStruct: MetricLabels {
    }
 }
 
-let info = Prometheus.shared.createInfo(named: "my_info", helpText: "Just some info", labelType: MyInfoStruct.self)
+let info = myProm.createInfo(named: "my_info", helpText: "Just some info", labelType: MyInfoStruct.self)
 
 info.info(MyInfoStruct("def"))
 ```
@@ -78,7 +101,7 @@ struct RouteLabels: MetricLabels {
    var route: String = "*"
 }
 
-let counter = Prometheus.shared.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", withLabelType: RouteLabels.self)
+let counter = myProm.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", withLabelType: RouteLabels.self)
 
 counter.inc(12, .init(route: "/"))
 ```
@@ -90,7 +113,7 @@ To keep SwiftPrometheus as clean and leight weitght as possible, there is no way
 This could look something like this:
 ```swift
 router.get("/metrics") { request -> String in
-    return Prometheus.shared.getMetrics()
+    return myProm.getMetrics()
 }
 ```
 Here, I used [Vapor](https://github.com/vapor/vapor) syntax, but this will work with any web framework, since it's just returning a plain String.
