@@ -1,6 +1,0 @@
-language: generic
-os: osx
-osx_image: xcode10.1
-script:
-  - swift build
-  - swift test
