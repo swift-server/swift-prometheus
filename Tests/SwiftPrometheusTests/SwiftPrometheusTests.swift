@@ -41,7 +41,6 @@ final class SwiftPrometheusTests: XCTestCase {
         }
     }
     
-    
     var prom: PrometheusClient!
     
     override func setUp() {

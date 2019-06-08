@@ -1,8 +1,5 @@
 import Foundation
 
-/// Prometheus global dispatch queue
-internal let prometheusQueue = DispatchQueue(label: "prometheus.internal", attributes: .concurrent)
-
 /// Empty labels class
 public struct EmptyLabels: MetricLabels {
     public init() { }
@@ -18,6 +15,16 @@ public struct EmptyHistogramLabels: HistogramLabels {
 public struct EmptySummaryLabels: SummaryLabels {
     public var quantile: String = ""
     public init() { }
+}
+
+internal extension Foundation.NSLock {
+    func withLock<T>(_ body: () -> T) -> T {
+        self.lock()
+        defer {
+            self.unlock()
+        }
+        return body()
+    }
 }
 
 /// Creates a Prometheus String representation of a `MetricLabels` instance

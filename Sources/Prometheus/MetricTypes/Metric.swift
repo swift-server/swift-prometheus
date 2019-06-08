@@ -11,7 +11,7 @@ public protocol Metric {
     var help: String? { get }
     var _type: MetricType { get }
     
-    func getMetric(_ done: @escaping (String) -> Void)
+    func getMetric() -> String
 }
 
 //extension Metric {

@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "metrics",
+        "repositoryURL": "https://github.com/tomerd/swift-server-metrics-api-proposal.git",
+        "state": {
+          "branch": "master",
+          "revision": "5c1c7399692c583d7eaeca4faad3cbab20f265ae",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
