@@ -11,7 +11,7 @@ jobs:
       - run: swift test
   swift5:
     docker:
-      - image: swift:5
+      - image: swift:5.0
     steps:
       - checkout
       - run: apt-get update; apt-get install -y libssl-dev zlib1g-dev

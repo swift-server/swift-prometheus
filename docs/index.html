@@ -158,7 +158,7 @@
         <section class="section">
           <div class="section-content">
             
-            <p><a href="https://travis-ci.com/MrLotU/SwiftPrometheus"><img src="https://travis-ci.com/MrLotU/SwiftPrometheus.svg?branch=master" alt="Build Status"></a> <a href="http://swift.org"><img src="https://img.shields.io/badge/swift-4.2-orange.svg?style=flat" alt="Swift 4.2"></a></p>
+            <p><a href="https://circleci.com/gh/MrLotU/SwiftPrometheus"><img src="https://circleci.com/gh/MrLotU/SwiftPrometheus.svg?style=svg" alt="CircleCI"></a><a href="http://swift.org"><img src="https://img.shields.io/badge/swift-5.0-orange.svg?style=flat" alt="Swift 5.0"></a></p>
 <h1 id='swiftprometheus-prometheus-client-for-swift' class='heading'>SwiftPrometheus, Prometheus client for Swift</h1>
 
 <p>A prometheus client for Swift supporting counters, gauges, histograms, summaries and info.</p>
@@ -230,6 +230,8 @@
 
 <span class="k">let</span> <span class="nv">info</span> <span class="o">=</span> <span class="n">myProm</span><span class="o">.</span><span class="nf">createInfo</span><span class="p">(</span><span class="nv">named</span><span class="p">:</span> <span class="s">"my_info"</span><span class="p">,</span> <span class="nv">helpText</span><span class="p">:</span> <span class="s">"Just some info"</span><span class="p">,</span> <span class="nv">labelType</span><span class="p">:</span> <span class="kt">MyInfoStruct</span><span class="o">.</span><span class="k">self</span><span class="p">)</span>
 
+<span class="k">let</span> <span class="nv">info</span> <span class="o">=</span> <span class="n">prom</span><span class="o">.</span><span class="nf">createInfo</span><span class="p">(</span><span class="nv">named</span><span class="p">:</span> <span class="s">"my_info"</span><span class="p">,</span> <span class="nv">helpText</span><span class="p">:</span> <span class="s">"Just some info"</span><span class="p">,</span> <span class="nv">labelType</span><span class="p">:</span> <span class="kt">MyInfoStruct</span><span class="o">.</span><span class="k">self</span><span class="p">)</span>
+
 <span class="n">info</span><span class="o">.</span><span class="nf">info</span><span class="p">(</span><span class="kt">MyInfoStruct</span><span class="p">(</span><span class="s">"def"</span><span class="p">))</span>
 </code></pre>
 <h2 id='labels' class='heading'>Labels</h2>
@@ -243,11 +245,13 @@
 
 <span class="k">let</span> <span class="nv">counter</span> <span class="o">=</span> <span class="n">myProm</span><span class="o">.</span><span class="nf">createCounter</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Int</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_counter"</span><span class="p">,</span> <span class="nv">helpText</span><span class="p">:</span> <span class="s">"Just a counter"</span><span class="p">,</span> <span class="nv">withLabelType</span><span class="p">:</span> <span class="kt">RouteLabels</span><span class="o">.</span><span class="k">self</span><span class="p">)</span>
 
+<span class="k">let</span> <span class="nv">counter</span> <span class="o">=</span> <span class="n">prom</span><span class="o">.</span><span class="nf">createCounter</span><span class="p">(</span><span class="nv">forType</span><span class="p">:</span> <span class="kt">Int</span><span class="o">.</span><span class="k">self</span><span class="p">,</span> <span class="nv">named</span><span class="p">:</span> <span class="s">"my_counter"</span><span class="p">,</span> <span class="nv">helpText</span><span class="p">:</span> <span class="s">"Just a counter"</span><span class="p">,</span> <span class="nv">withLabelType</span><span class="p">:</span> <span class="kt">RouteLabels</span><span class="o">.</span><span class="k">self</span><span class="p">)</span>
+
 <span class="n">counter</span><span class="o">.</span><span class="nf">inc</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="o">.</span><span class="nf">init</span><span class="p">(</span><span class="nv">route</span><span class="p">:</span> <span class="s">"/"</span><span class="p">))</span>
 </code></pre>
 <h1 id='exporting' class='heading'>Exporting</h1>
 
-<p>To keep SwiftPrometheus as clean and leight weitght as possible, there is no way of exporting metrics to Prometheus. All you can do is get a formatted string that Prometheus can use, so you can integrate it in your own Serverside Swift application</p>
+<p>To keep SwiftPrometheus as clean and lightweight as possible, there is no way of exporting metrics directly to Prometheus. Instead, retrieve a formatted string that Prometheus can use, so you can integrate it in your own Serverside Swift application</p>
 
 <p>This could look something like this:</p>
 <pre class="highlight swift"><code><span class="n">router</span><span class="o">.</span><span class="nf">get</span><span class="p">(</span><span class="s">"/metrics"</span><span class="p">)</span> <span class="p">{</span> <span class="n">request</span> <span class="o">-&gt;</span> <span class="kt">String</span> <span class="k">in</span>
@@ -260,7 +264,7 @@
 
 <p>All contributions are most welcome!</p>
 
-<p>If you think of some crazy cool new feature that should be included, please <a href="https://github.com/MrLotU/SwiftPrometheus/issues/new/choose">create an issue</a>. Or, if you want to implement it yourself, <a href="https://github.com/MrLotU/SwiftPrometheus/fork">fork this repo</a> and submit a PR!</p>
+<p>-If you think of some cool new feature that should be included, please <a href="https://github.com/MrLotU/SwiftPrometheus/issues/new/choose">create an issue</a>. Or, if you want to implement it yourself, <a href="https://github.com/MrLotU/SwiftPrometheus/fork">fork this repo</a> and submit a PR!</p>
 
 <p>If you find a bug or have issues, please <a href="https://github.com/MrLotU/SwiftPrometheus/issues/new/choose">create an issue</a> explaining your problems. Please include as much information as possible, so it&rsquo;s easier for me to reproduce (Framework, OS, Swift version, terminal output, etc.)</p>
 
