@@ -34,7 +34,7 @@ func encodeLabels<Labels: MetricLabels>(_ labels: Labels, _ excludingKeys: [Stri
         }
         var output = [String]()
         dictionary.sorted { $0.key > $1.key }.forEach { (key, value) in
-            output.append(#"\#(key)="\#(value)""#)
+            output.append("\(key)=\"\(value)\"")
         }
         return output.isEmpty ? "" : "{\(output.joined(separator: ", "))}"
     } catch {
