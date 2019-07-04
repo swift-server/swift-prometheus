@@ -158,9 +158,9 @@ extension PrometheusClient {
         if let histogram = histograms.first {
             return histogram
         } else {
-            let histogram = PromHistogram<T, U>(histogram.name, histogram.help, labels, histogram.upperBounds, self)
-            histogram.subHistograms.append(histogram)
-            return histogram
+            let newHistogram = PromHistogram<T, U>(histogram.name, histogram.help, labels, histogram.upperBounds, self)
+            histogram.subHistograms.append(newHistogram)
+            return newHistogram
         }
     }
 }

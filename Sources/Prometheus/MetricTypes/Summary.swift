@@ -148,18 +148,18 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
 
 extension PrometheusClient {
     /// Helper for summaries & labels
-    fileprivate func getOrCreateSummary<T: Numeric, U: SummaryLabels>(withLabels labels: U, forSummary sum: PromSummary<T, U>) -> PromSummary<T, U> {
-        let summaries = sum.subSummaries.filter { (metric) -> Bool in
-            guard metric.name == sum.name, metric.help == sum.help, metric.labels == labels else { return false }
+    fileprivate func getOrCreateSummary<T: Numeric, U: SummaryLabels>(withLabels labels: U, forSummary summary: PromSummary<T, U>) -> PromSummary<T, U> {
+        let summaries = summary.subSummaries.filter { (metric) -> Bool in
+            guard metric.name == summary.name, metric.help == summary.help, metric.labels == labels else { return false }
             return true
         }
         if summaries.count > 2 { fatalError("Somehow got 2 summaries with the same data type") }
         if let summary = summaries.first {
             return summary
         } else {
-            let summary = PromSummary<T, U>(sum.name, sum.help, labels, sum.quantiles, self)
-            sum.subSummaries.append(summary)
-            return summary
+            let newSummary = PromSummary<T, U>(summary.name, summary.help, labels, summary.quantiles, self)
+            summary.subSummaries.append(newSummary)
+            return newSummary
         }
     }
 }

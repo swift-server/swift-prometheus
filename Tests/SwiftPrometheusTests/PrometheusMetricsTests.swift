@@ -1,4 +1,5 @@
 import XCTest
+@testable import Prometheus
 @testable import CoreMetrics
 @testable import PrometheusMetrics
 
