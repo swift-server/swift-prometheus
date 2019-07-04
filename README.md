@@ -126,6 +126,6 @@ Here, I used [Vapor](https://github.com/vapor/vapor) syntax, but this will work 
 
 All contributions are most welcome!
 
--If you think of some cool new feature that should be included, please [create an issue](https://github.com/MrLotU/SwiftPrometheus/issues/new/choose). Or, if you want to implement it yourself, [fork this repo](https://github.com/MrLotU/SwiftPrometheus/fork) and submit a PR!
+If you think of some cool new feature that should be included, please [create an issue](https://github.com/MrLotU/SwiftPrometheus/issues/new/choose). Or, if you want to implement it yourself, [fork this repo](https://github.com/MrLotU/SwiftPrometheus/fork) and submit a PR!
 
 If you find a bug or have issues, please [create an issue](https://github.com/MrLotU/SwiftPrometheus/issues/new/choose) explaining your problems. Please include as much information as possible, so it's easier for me to reproduce (Framework, OS, Swift version, terminal output, etc.)

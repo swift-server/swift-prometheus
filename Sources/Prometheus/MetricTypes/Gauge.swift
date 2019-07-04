@@ -3,7 +3,7 @@ import NIOConcurrencyHelpers
 /// Prometheus Gauge metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#gauge
-public class PromGauge<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled {
+public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, PrometheusHandled {
     /// Prometheus instance that created this Gauge
     internal weak var prometheus: PrometheusClient?
     
@@ -13,7 +13,7 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: Metric, Promethe
     public let help: String?
     
     /// Type of the metric, used for formatting
-    public let _type: MetricType = .gauge
+    public let _type: PromMetricType = .gauge
     
     /// Current value of the counter
     private var value: NumType

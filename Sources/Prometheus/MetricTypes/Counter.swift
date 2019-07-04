@@ -2,8 +2,8 @@ import NIOConcurrencyHelpers
 
 /// Prometheus Counter metric
 ///
-/// See https://prometheus.io/docs/concepts/metric_types/#counter
-public class PromCounter<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled {
+/// See: https://prometheus.io/docs/concepts/metric_types/#counter
+public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, PrometheusHandled {
     /// Prometheus instance that created this Counter
     internal weak var prometheus: PrometheusClient?
     
@@ -13,7 +13,7 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: Metric, Promet
     public let help: String?
     
     /// Type of the metric, used for formatting
-    public let _type: MetricType = .counter
+    public let _type: PromMetricType = .counter
     
     /// Current value of the counter
     internal var value: NumType

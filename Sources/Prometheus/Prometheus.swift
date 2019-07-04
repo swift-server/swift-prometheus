@@ -6,11 +6,11 @@ import NIOConcurrencyHelpers
 public class PrometheusClient {
     
     /// Metrics tracked by this Prometheus instance
-    private var metrics: [Metric]
+    private var metrics: [PromMetric]
     
     /// To keep track of the type of a metric since  it can not change
     /// througout the lifetime of the program
-    private var metricTypeMap: [String: MetricType]
+    private var metricTypeMap: [String: PromMetricType]
     
     /// Lock used for thread safety
     private let lock: Lock
@@ -33,7 +33,7 @@ public class PrometheusClient {
     
     // MARK: - Metric Access
     
-    public func removeMetric(_ metric: Metric) {
+    public func removeMetric(_ metric: PromMetric) {
         // `metricTypeMap` is left untouched as those must be consistent
         // throughout the lifetime of a program.
         return lock.withLock {
@@ -41,7 +41,7 @@ public class PrometheusClient {
         }
     }
     
-    public func getMetricInstance<T>(with name: String, andType type: MetricType) -> T? where T: Metric {
+    public func getMetricInstance<T>(with name: String, andType type: PromMetricType) -> T? where T: PromMetric {
         return lock.withLock {
             self.metrics.compactMap { $0 as? T }.filter { $0.name == name && $0._type == type }.first
         }
@@ -159,7 +159,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        buckets: [Double] = defaultBuckets,
+        buckets: [Double] = Prometheus.defaultBuckets,
         labels: U.Type) -> PromHistogram<T, U>
     {
         return self.lock.withLock {
@@ -186,7 +186,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        buckets: [Double] = defaultBuckets) -> PromHistogram<T, EmptyHistogramLabels>
+        buckets: [Double] = Prometheus.defaultBuckets) -> PromHistogram<T, EmptyHistogramLabels>
     {
         return self.createHistogram(forType: type, named: name, helpText: helpText, buckets: buckets, labels: EmptyHistogramLabels.self)
     }
@@ -207,7 +207,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        quantiles: [Double] = defaultQuantiles,
+        quantiles: [Double] = Prometheus.defaultQuantiles,
         labels: U.Type) -> PromSummary<T, U>
     {
         return self.lock.withLock {
@@ -234,7 +234,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        quantiles: [Double] = defaultQuantiles) -> PromSummary<T, EmptySummaryLabels>
+        quantiles: [Double] = Prometheus.defaultQuantiles) -> PromSummary<T, EmptySummaryLabels>
     {
         return self.createSummary(forType: type, named: name, helpText: helpText, quantiles: quantiles, labels: EmptySummaryLabels.self)
     }
@@ -245,6 +245,6 @@ public enum PrometheusError: Error {
     /// Thrown when a user tries to retrive
     /// a `PromtheusClient` from `MetricsSystem`
     /// but there was no `PrometheusClient` bootstrapped
-    case PrometheusFactoryNotBootstrapped
+    case prometheusFactoryNotBootstrapped(bootstrappedWith: String)
 }
 

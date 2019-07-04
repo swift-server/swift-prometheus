@@ -1,11 +1,8 @@
 import NIOConcurrencyHelpers
 
-/// Default quantiles used by Summaries
-public var defaultQuantiles = [0.01, 0.05, 0.5, 0.9, 0.95, 0.99, 0.999]
-
 /// Label type Summaries can use
 public protocol SummaryLabels: MetricLabels {
-    /// Quantile
+    /// Quantile used to label the summary.
     var quantile: String { get set }
 }
 
@@ -20,7 +17,7 @@ extension SummaryLabels {
 /// Prometheus Counter metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#summary
-public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: Metric, PrometheusHandled {
+public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: PromMetric, PrometheusHandled {
     /// Prometheus instance that created this Summary
     internal weak var prometheus: PrometheusClient?
     
@@ -30,7 +27,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: M
     public let help: String?
     
     /// Type of the metric, used for formatting
-    public let _type: MetricType = .summary
+    public let _type: PromMetricType = .summary
     
     /// Labels for this Summary
     internal private(set) var labels: Labels
@@ -61,7 +58,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: M
     ///     - labels: Labels for the Summary
     ///     - quantiles: Quantiles to use for the Summary
     ///     - p: Prometheus instance creating this Summary
-    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ quantiles: [Double] = defaultQuantiles, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ quantiles: [Double] = Prometheus.defaultQuantiles, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         

@@ -1,3 +1,6 @@
+import Prometheus
+import CoreMetrics
+
 private class MetricsCounter: CounterHandler {
     let counter: PromCounter<Int64, DimensionLabels>
     let labels: DimensionLabels?
@@ -100,7 +103,6 @@ extension PrometheusClient: MetricsFactory {
         self.removeMetric(handler.summary)
     }
     
-    /// Makes a counter
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
         let createHandler = { (counter: PromCounter) -> CounterHandler in
             return MetricsCounter(counter: counter, dimensions: dimensions)
@@ -111,7 +113,6 @@ extension PrometheusClient: MetricsFactory {
         return createHandler(self.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self))
     }
     
-    /// Makes a recorder
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
         return aggregate ? makeHistogram(label: label, dimensions: dimensions) : makeGauge(label: label, dimensions: dimensions)
     }
@@ -136,7 +137,6 @@ extension PrometheusClient: MetricsFactory {
         return createHandler(createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self))
     }
     
-    /// Makes a timer
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
         let createHandler = { (summary: PromSummary) -> TimerHandler in
             return MetricsSummary(summary: summary, dimensions: dimensions)
@@ -156,7 +156,7 @@ public extension MetricsSystem {
     ///             if no `PrometheusClient` was used to bootstrap `MetricsSystem`
     static func prometheus() throws -> PrometheusClient {
         guard let prom = self.factory as? PrometheusClient else {
-            throw PrometheusError.PrometheusFactoryNotBootstrapped
+            throw PrometheusError.prometheusFactoryNotBootstrapped(bootstrappedWith: "\(self.factory)")
         }
         return prom
     }
