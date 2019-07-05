@@ -19,7 +19,8 @@ _For more details about swift-metrics, check the GitHub repo [here](https://gith
 
 To use SwiftPrometheus with swift-metrics, all the setup required is this:
 ```swift
-import PrometheusMetrics // Auto imports Prometheus too, but adds the swift-metrics compatibility
+import Prometheus
+import PrometheusMetrics
 let myProm = PrometheusClient()
 MetricsSystem.bootstrap(myProm)
 ```
