@@ -1,9 +1,11 @@
+import NIOConcurrencyHelpers
+
 /// Prometheus Counter metric
 ///
-/// See https://prometheus.io/docs/concepts/metric_types/#counter
-public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, PrometheusHandled {
+/// See: https://prometheus.io/docs/concepts/metric_types/#counter
+public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, PrometheusHandled {
     /// Prometheus instance that created this Counter
-    internal let prometheus: PrometheusClient
+    internal weak var prometheus: PrometheusClient?
     
     /// Name of the Counter, required
     public let name: String
@@ -11,16 +13,19 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     public let help: String?
     
     /// Type of the metric, used for formatting
-    public let _type: MetricType = .counter
+    public let _type: PromMetricType = .counter
     
     /// Current value of the counter
     internal var value: NumType
     
     /// Initial value of the counter
-    private var initialValue: NumType
+    private let initialValue: NumType
     
     /// Storage of values that have labels attached
     internal var metrics: [Labels: NumType] = [:]
+    
+    /// Lock used for thread safety
+    internal let lock: Lock
     
     /// Creates a new instance of a Counter
     ///
@@ -35,14 +40,15 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
         self.initialValue = initialValue
         self.value = initialValue
         self.prometheus = p
+        self.lock = Lock()
     }
     
     /// Gets the metric string for this counter
     ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric(_ done: @escaping (String) -> Void) {
-        prometheusQueue.async(flags: .barrier) {
+    public func collect() -> String {
+        return self.lock.withLock {
             var output = [String]()
             
             if let help = self.help {
@@ -57,9 +63,10 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
                 output.append("\(self.name)\(labelsString) \(value)")
             }
             
-            done(output.joined(separator: "\n"))
+            return output.joined(separator: "\n")
         }
     }
+    
     
     /// Increments the Counter
     ///
@@ -67,16 +74,17 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     ///     - amount: Amount to increment the counter with
     ///     - labels: Labels to attach to the value
     ///
-    public func inc(_ amount: NumType = 1, _ labels: Labels? = nil, _ done: @escaping (NumType) -> Void = { _ in }) {
-        prometheusQueue.async(flags: .barrier) {
+    @discardableResult
+    public func inc(_ amount: NumType = 1, _ labels: Labels? = nil) -> NumType {
+        return self.lock.withLock {
             if let labels = labels {
                 var val = self.metrics[labels] ?? self.initialValue
                 val += amount
                 self.metrics[labels] = val
-                done(val)
+                return val
             } else {
                 self.value += amount
-                done(self.value)
+                return self.value
             }
         }
     }
@@ -88,10 +96,12 @@ public class Counter<NumType: Numeric, Labels: MetricLabels>: Metric, Prometheus
     ///
     /// - Returns: The value of the Counter attached to the provided labels
     public func get(_ labels: Labels? = nil) -> NumType {
-        if let labels = labels {
-            return self.metrics[labels] ?? initialValue
-        } else {
-            return self.value
+        return self.lock.withLock {
+            if let labels = labels {
+                return self.metrics[labels] ?? initialValue
+            } else {
+                return self.value
+            }
         }
     }
 }

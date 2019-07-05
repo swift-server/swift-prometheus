@@ -1,30 +1,49 @@
+import NIOConcurrencyHelpers
+
 /// Prometheus class
 ///
 /// See https://prometheus.io/docs/introduction/overview/
 public class PrometheusClient {
     
-    /// Create a PrometheusClient instance
-    public init() { }
-    
     /// Metrics tracked by this Prometheus instance
-    internal var metrics: [Metric] = []
+    private var metrics: [PromMetric]
     
+    /// To keep track of the type of a metric since  it can not change
+    /// througout the lifetime of the program
+    private var metricTypeMap: [String: PromMetricType]
+    
+    /// Lock used for thread safety
+    private let lock: Lock
+    
+    /// Create a PrometheusClient instance
+    public init() {
+        self.metrics = []
+        self.metricTypeMap = [:]
+        self.lock = Lock()
+    }
     
     /// Creates prometheus formatted metrics
     ///
     /// - Returns: Newline seperated string with metrics for all Metric Trackers of this Prometheus instance
-    public func getMetrics(_ done: @escaping (String) -> Void) {
-        prometheusQueue.async(flags: .barrier) {
-            var list = [String]()
-            self.metrics.forEach { metric in
-                metric.getMetric { str in
-                    list.append(str)
-                    
-                    if list.count == self.metrics.count {
-                        done(list.joined(separator: "\n"))
-                    }
-                }
-            }
+    public func collect() -> String {
+        return self.lock.withLock {
+            return self.metrics.map { $0.collect() }.joined(separator: "\n")
+        }
+    }
+    
+    // MARK: - Metric Access
+    
+    public func removeMetric(_ metric: PromMetric) {
+        // `metricTypeMap` is left untouched as those must be consistent
+        // throughout the lifetime of a program.
+        return lock.withLock {
+            self.metrics.removeAll { $0._type == metric._type && $0.name == metric.name }
+        }
+    }
+    
+    public func getMetricInstance<T>(with name: String, andType type: PromMetricType) -> T? where T: PromMetric {
+        return lock.withLock {
+            self.metrics.compactMap { $0 as? T }.filter { $0.name == name && $0._type == type }.first
         }
     }
     
@@ -45,13 +64,17 @@ public class PrometheusClient {
         named name: String,
         helpText: String? = nil,
         initialValue: T = 0,
-        withLabelType labelType: U.Type) -> Counter<T, U>
+        withLabelType labelType: U.Type) -> PromCounter<T, U>
     {
-        let counter = Counter<T, U>(name, helpText, initialValue, self)
-        prometheusQueue.async(flags: .barrier) {
+        return self.lock.withLock {
+            if let type = metricTypeMap[name] {
+                precondition(type == .counter, "Label \(name) was associated with \(type) before. Can not be used for a counter now.")
+            }
+            let counter = PromCounter<T, U>(name, helpText, initialValue, self)
+            self.metricTypeMap[name] = .counter
             self.metrics.append(counter)
+            return counter
         }
-        return counter
     }
     
     /// Creates a counter with the given values
@@ -67,7 +90,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        initialValue: T = 0) -> Counter<T, EmptyLabels>
+        initialValue: T = 0) -> PromCounter<T, EmptyLabels>
     {
         return self.createCounter(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyLabels.self)
     }
@@ -89,13 +112,17 @@ public class PrometheusClient {
         named name: String,
         helpText: String? = nil,
         initialValue: T = 0,
-        withLabelType labelType: U.Type) -> Gauge<T, U>
+        withLabelType labelType: U.Type) -> PromGauge<T, U>
     {
-        let gauge = Gauge<T, U>(name, helpText, initialValue, self)
-        prometheusQueue.async(flags: .barrier) {
+        return self.lock.withLock {
+            if let type = metricTypeMap[name] {
+                precondition(type == .gauge, "Label \(name) was associated with \(type) before. Can not be used for a gauge now.")
+            }
+            let gauge = PromGauge<T, U>(name, helpText, initialValue, self)
+            self.metricTypeMap[name] = .gauge
             self.metrics.append(gauge)
+            return gauge
         }
-        return gauge
     }
     
     /// Creates a gauge with the given values
@@ -111,7 +138,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        initialValue: T = 0) -> Gauge<T, EmptyLabels>
+        initialValue: T = 0) -> PromGauge<T, EmptyLabels>
     {
         return self.createGauge(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyLabels.self)
     }
@@ -132,14 +159,18 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        buckets: [Double] = defaultBuckets,
-        labels: U.Type) -> Histogram<T, U>
+        buckets: [Double] = Prometheus.defaultBuckets,
+        labels: U.Type) -> PromHistogram<T, U>
     {
-        let histogram = Histogram<T, U>(name, helpText, U(), buckets, self)
-        prometheusQueue.async(flags: .barrier) {
+        return self.lock.withLock {
+            if let type = metricTypeMap[name] {
+                precondition(type == .histogram, "Label \(name) was associated with \(type) before. Can not be used for a histogram now.")
+            }
+            let histogram = PromHistogram<T, U>(name, helpText, U(), buckets, self)
+            self.metricTypeMap[name] = .histogram
             self.metrics.append(histogram)
+            return histogram
         }
-        return histogram
     }
     
     /// Creates a histogram with the given values
@@ -155,7 +186,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        buckets: [Double] = defaultBuckets) -> Histogram<T, EmptyHistogramLabels>
+        buckets: [Double] = Prometheus.defaultBuckets) -> PromHistogram<T, EmptyHistogramLabels>
     {
         return self.createHistogram(forType: type, named: name, helpText: helpText, buckets: buckets, labels: EmptyHistogramLabels.self)
     }
@@ -176,14 +207,18 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        quantiles: [Double] = defaultQuantiles,
-        labels: U.Type) -> Summary<T, U>
+        quantiles: [Double] = Prometheus.defaultQuantiles,
+        labels: U.Type) -> PromSummary<T, U>
     {
-        let summary = Summary<T, U>(name, helpText, U(), quantiles, self)
-        prometheusQueue.async(flags: .barrier) {
+        return self.lock.withLock {
+            if let type = metricTypeMap[name] {
+                precondition(type == .summary, "Label \(name) was associated with \(type) before. Can not be used for a summary now.")
+            }
+            let summary = PromSummary<T, U>(name, helpText, U(), quantiles, self)
+            self.metricTypeMap[name] = .summary
             self.metrics.append(summary)
+            return summary
         }
-        return summary
     }
     
     /// Creates a summary with the given values
@@ -199,30 +234,17 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        quantiles: [Double] = defaultQuantiles) -> Summary<T, EmptySummaryLabels>
+        quantiles: [Double] = Prometheus.defaultQuantiles) -> PromSummary<T, EmptySummaryLabels>
     {
         return self.createSummary(forType: type, named: name, helpText: helpText, quantiles: quantiles, labels: EmptySummaryLabels.self)
     }
-    
-    // MARK: - Info
-    
-    /// Creates an Info metric with the given values
-    ///
-    /// - Parameters:
-    ///     - name: Name of the info
-    ///     - helpText: Help text for the info. Usually a short description
-    ///     - labelType: Type of labels this Info can use
-    ///
-    /// - Returns Info instance
-    public func createInfo<U: MetricLabels>(
-        named name: String,
-        helpText: String? = nil,
-        labelType: U.Type) -> Info<U>
-    {
-        let info = Info<U>(name, helpText, self)
-        prometheusQueue.async(flags: .barrier) {
-            self.metrics.append(info)
-        }
-        return info
-    }
 }
+
+/// Prometheus specific errors
+public enum PrometheusError: Error {
+    /// Thrown when a user tries to retrive
+    /// a `PromtheusClient` from `MetricsSystem`
+    /// but there was no `PrometheusClient` bootstrapped
+    case prometheusFactoryNotBootstrapped(bootstrappedWith: String)
+}
+

@@ -1,0 +1,43 @@
+version: 2
+
+jobs:
+  swift4:
+    docker:
+      - image: swift:4.2
+    steps:
+      - checkout
+      - run: apt-get update; apt-get install -y libssl-dev zlib1g-dev
+      - run: swift build
+      - run: swift test
+  swift5:
+    docker:
+      - image: swift:5.0
+    steps:
+      - checkout
+      - run: apt-get update; apt-get install -y libssl-dev zlib1g-dev
+      - run: swift build
+      - run: swift test
+  bionic:
+    docker:
+      - image: vapor/swift:5.1-bionic
+    steps:
+      - checkout
+      - run: apt-get update; apt-get install -y libssl-dev zlib1g-dev
+      - run: swift build
+      - run: swift test
+  bionic-release:
+    docker:
+      - image: vapor/swift:5.1-bionic
+    steps:
+      - checkout
+      - run: apt-get update; apt-get install -y libssl-dev zlib1g-dev
+      - run: swift build -c release
+
+workflows:
+  version: 2
+  tests:
+    jobs:
+      - bionic
+      - bionic-release
+      - swift4
+      - swift5

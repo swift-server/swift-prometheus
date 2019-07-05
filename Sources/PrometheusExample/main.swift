@@ -1,9 +1,52 @@
 import Prometheus
+import Metrics
+import PrometheusMetrics
 import Foundation
 
-let group = DispatchGroup()
-
 let myProm = PrometheusClient()
+
+MetricsSystem.bootstrap(myProm)
+
+for _ in 0...Int.random(in: 10...100) {
+    let c = Counter(label: "test")
+    c.increment()
+}
+
+for _ in 0...Int.random(in: 10...100) {
+    let c = Counter(label: "test", dimensions: [("abc", "123")])
+    c.increment()
+}
+
+for _ in 0...Int.random(in: 100...500_000) {
+    let r = Recorder(label: "recorder")
+    r.record(Double.random(in: 0...20))
+}
+
+for _ in 0...Int.random(in: 100...500_000) {
+    let g = Gauge(label: "non_agg_recorder")
+    g.record(Double.random(in: 0...20))
+}
+
+for _ in 0...Int.random(in: 100...500_000) {
+    let t = Timer(label: "timer")
+    t.recordMicroseconds(Double.random(in: 20...150))
+}
+
+for _ in 0...Int.random(in: 100...500_000) {
+    let r = Recorder(label: "recorder", dimensions: [("abc", "123")])
+    r.record(Double.random(in: 0...20))
+}
+
+for _ in 0...Int.random(in: 100...500_000) {
+    let g = Gauge(label: "non_agg_recorder", dimensions: [("abc", "123")])
+    g.record(Double.random(in: 0...20))
+}
+
+for _ in 0...Int.random(in: 100...500_000) {
+    let t = Timer(label: "timer", dimensions: [("abc", "123")])
+    t.recordMicroseconds(Double.random(in: 20...150))
+}
+
 
 struct MyCodable: MetricLabels {
    var thing: String = "*"
@@ -70,34 +113,5 @@ for _ in 0...Int.random(in: 100...1000) {
    summary.observe(Double.random(in: 0...10000), SummaryThing("/test"))
 }
 
-struct MyInfoStruct: MetricLabels {
-   let version: String
-   let major: String
-   
-   init() {
-       self.version = "1.0.0"
-       self.major = "1"
-   }
-   
-   init(_ v: String, _ m: String) {
-       self.version = v
-       self.major = m
-   }
-}
-
-let info = myProm.createInfo(named: "my_info", helpText: "Just some info", labelType: MyInfoStruct.self)
-
-info.info(MyInfoStruct("2.0.0", "2"))
-
-group.enter()
-
-myProm.getMetrics {
-    print($0)
-    group.leave()
-}
-
-group.notify(queue: .main) {
-    exit(EXIT_SUCCESS)
-}
-
-dispatchMain()
+let metrics = try! MetricsSystem.prometheus().collect()
+print(metrics)

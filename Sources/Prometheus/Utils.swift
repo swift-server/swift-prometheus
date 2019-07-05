@@ -1,28 +1,29 @@
 import Foundation
 
-/// Prometheus global dispatch queue
-internal let prometheusQueue = DispatchQueue(label: "prometheus.internal", attributes: .concurrent)
-
 /// Empty labels class
 public struct EmptyLabels: MetricLabels {
+    /// Creates empty labels
     public init() { }
 }
 
 /// Empty labels class
 public struct EmptyHistogramLabels: HistogramLabels {
+    /// Bucket
     public var le: String = ""
+    /// Creates empty labels
     public init() { }
 }
 
 /// Empty labels class
 public struct EmptySummaryLabels: SummaryLabels {
+    /// Quantile
     public var quantile: String = ""
+    /// Creates empty labels
     public init() { }
 }
 
 /// Creates a Prometheus String representation of a `MetricLabels` instance
-public func encodeLabels<Labels: MetricLabels>(_ labels: Labels, _ excludingKeys: [String] = []) -> String {
-    // TODO: Fix this up to a custom decoder or something
+func encodeLabels<Labels: MetricLabels>(_ labels: Labels, _ excludingKeys: [String] = []) -> String {
     do {
         let data = try JSONEncoder().encode(labels)
         guard var dictionary = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any] else {
@@ -46,7 +47,7 @@ extension Double {
     var description: String {
         if self == Double.greatestFiniteMagnitude {
             return "+Inf"
-        } else if self == Double.leastNormalMagnitude {
+        } else if self == Double.leastNonzeroMagnitude {
             return "-Inf"
         } else {
             return "\(self)"
@@ -56,19 +57,24 @@ extension Double {
 
 /// Numbers that can be represented as Double instances
 public protocol DoubleRepresentable: Numeric {
+    /// Double value of the number
     var doubleValue: Double {get}
 }
 
 /// Numbers that convert to other types
 public protocol ConvertibleNumberType: DoubleRepresentable {}
 public extension ConvertibleNumberType {
+    /// Number as a Float
     var floatValue: Float {get {return Float(doubleValue)}}
+    /// Number as an Int
     var intValue: Int {get {return lrint(doubleValue)}}
+    /// Number as a CGFloat
     var CGFloatValue: CGFloat {get {return CGFloat(doubleValue)}}
 }
 
 /// Double Representable Conformance
 extension FixedWidthInteger {
+    /// Double value of the number
     public var doubleValue: Double {
         return Double(self)
     }
