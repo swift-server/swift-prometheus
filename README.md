@@ -117,7 +117,7 @@ To keep SwiftPrometheus as clean and lightweight as possible, there is no way of
 This could look something like this:
 ```swift
 router.get("/metrics") { request -> String in
-    return myProm.getMetrics()
+    return myProm.collect()
 }
 ```
 Here, I used [Vapor](https://github.com/vapor/vapor) syntax, but this will work with any web framework, since it's just returning a plain String.

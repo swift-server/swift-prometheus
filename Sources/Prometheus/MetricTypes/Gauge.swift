@@ -48,7 +48,7 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, Prom
     ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric() -> String {
+    public func collect() -> String {
         return self.lock.withLock {
             var output = [String]()
             

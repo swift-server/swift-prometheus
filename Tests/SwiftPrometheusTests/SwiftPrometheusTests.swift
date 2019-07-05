@@ -60,7 +60,7 @@ final class SwiftPrometheusTests: XCTestCase {
         XCTAssertEqual(counter.get(), 20)
         XCTAssertEqual(counter.get(BaseLabels(myValue: "labels")), 20)
         
-        XCTAssertEqual(counter.getMetric(), "# HELP my_counter Counter for testing\n# TYPE my_counter counter\nmy_counter 20\nmy_counter{myValue=\"labels\"} 20")
+        XCTAssertEqual(counter.collect(), "# HELP my_counter Counter for testing\n# TYPE my_counter counter\nmy_counter 20\nmy_counter{myValue=\"labels\"} 20")
     }
     
     func testGauge() {
@@ -75,7 +75,7 @@ final class SwiftPrometheusTests: XCTestCase {
         XCTAssertEqual(gauge.get(), 20)
         XCTAssertEqual(gauge.get(BaseLabels(myValue: "labels")), 20)
         
-        XCTAssertEqual(gauge.getMetric(), "# HELP my_gauge Gauge for testing\n# TYPE my_gauge gauge\nmy_gauge 20\nmy_gauge{myValue=\"labels\"} 20")
+        XCTAssertEqual(gauge.collect(), "# HELP my_gauge Gauge for testing\n# TYPE my_gauge gauge\nmy_gauge 20\nmy_gauge{myValue=\"labels\"} 20")
     }
     
     func testHistogram() {
@@ -86,7 +86,7 @@ final class SwiftPrometheusTests: XCTestCase {
         
         histogram.observe(3, .init(myValue: "labels"))
         
-        XCTAssertEqual(histogram.getMetric(), "# HELP my_histogram Histogram for testing\n# TYPE my_histogram histogram\nmy_histogram_bucket{myValue=\"*\", le=\"0.5\"} 0.0\nmy_histogram_bucket{myValue=\"*\", le=\"1.0\"} 1.0\nmy_histogram_bucket{myValue=\"*\", le=\"2.0\"} 2.0\nmy_histogram_bucket{myValue=\"*\", le=\"3.0\"} 4.0\nmy_histogram_bucket{myValue=\"*\", le=\"5.0\"} 4.0\nmy_histogram_bucket{myValue=\"*\", le=\"+Inf\"} 4.0\nmy_histogram_count{myValue=\"*\"} 4.0\nmy_histogram_sum{myValue=\"*\"} 9.0\nmy_histogram_bucket{myValue=\"labels\", le=\"0.5\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"1.0\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"2.0\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"3.0\"} 1.0\nmy_histogram_bucket{myValue=\"labels\", le=\"5.0\"} 1.0\nmy_histogram_bucket{myValue=\"labels\", le=\"+Inf\"} 1.0\nmy_histogram_count{myValue=\"labels\"} 1.0\nmy_histogram_sum{myValue=\"labels\"} 3.0")
+        XCTAssertEqual(histogram.collect(), "# HELP my_histogram Histogram for testing\n# TYPE my_histogram histogram\nmy_histogram_bucket{myValue=\"*\", le=\"0.5\"} 0.0\nmy_histogram_bucket{myValue=\"*\", le=\"1.0\"} 1.0\nmy_histogram_bucket{myValue=\"*\", le=\"2.0\"} 2.0\nmy_histogram_bucket{myValue=\"*\", le=\"3.0\"} 4.0\nmy_histogram_bucket{myValue=\"*\", le=\"5.0\"} 4.0\nmy_histogram_bucket{myValue=\"*\", le=\"+Inf\"} 4.0\nmy_histogram_count{myValue=\"*\"} 4.0\nmy_histogram_sum{myValue=\"*\"} 9.0\nmy_histogram_bucket{myValue=\"labels\", le=\"0.5\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"1.0\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"2.0\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"3.0\"} 1.0\nmy_histogram_bucket{myValue=\"labels\", le=\"5.0\"} 1.0\nmy_histogram_bucket{myValue=\"labels\", le=\"+Inf\"} 1.0\nmy_histogram_count{myValue=\"labels\"} 1.0\nmy_histogram_sum{myValue=\"labels\"} 3.0")
     }
     
     func testSummary() {
@@ -99,6 +99,6 @@ final class SwiftPrometheusTests: XCTestCase {
         
         summary.observe(123, .init(myValue: "labels"))
         
-        XCTAssertEqual(summary.getMetric(), "# HELP my_summary Summary for testing\n# TYPE my_summary summary\nmy_summary{quantile=\"0.5\", myValue=\"*\"} 4.0\nmy_summary{quantile=\"0.9\", myValue=\"*\"} 10000.0\nmy_summary{quantile=\"0.99\", myValue=\"*\"} 10000.0\nmy_summary_count{myValue=\"*\"} 5.0\nmy_summary_sum{myValue=\"*\"} 10130.0\nmy_summary{quantile=\"0.5\", myValue=\"labels\"} 123.0\nmy_summary{quantile=\"0.9\", myValue=\"labels\"} 123.0\nmy_summary{quantile=\"0.99\", myValue=\"labels\"} 123.0\nmy_summary_count{myValue=\"labels\"} 1.0\nmy_summary_sum{myValue=\"labels\"} 123.0")
+        XCTAssertEqual(summary.collect(), "# HELP my_summary Summary for testing\n# TYPE my_summary summary\nmy_summary{quantile=\"0.5\", myValue=\"*\"} 4.0\nmy_summary{quantile=\"0.9\", myValue=\"*\"} 10000.0\nmy_summary{quantile=\"0.99\", myValue=\"*\"} 10000.0\nmy_summary_count{myValue=\"*\"} 5.0\nmy_summary_sum{myValue=\"*\"} 10130.0\nmy_summary{quantile=\"0.5\", myValue=\"labels\"} 123.0\nmy_summary{quantile=\"0.9\", myValue=\"labels\"} 123.0\nmy_summary{quantile=\"0.99\", myValue=\"labels\"} 123.0\nmy_summary_count{myValue=\"labels\"} 1.0\nmy_summary_sum{myValue=\"labels\"} 123.0")
     }
 }

@@ -31,7 +31,7 @@ public protocol PromMetric {
     var _type: PromMetricType { get }
     
     /// Retrieves the Prometheus-formatted metric data
-    func getMetric() -> String
+    func collect() -> String
 }
 
 /// Adding a prometheus instance to all metrics

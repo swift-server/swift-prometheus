@@ -113,5 +113,5 @@ for _ in 0...Int.random(in: 100...1000) {
    summary.observe(Double.random(in: 0...10000), SummaryThing("/test"))
 }
 
-let metrics = try! MetricsSystem.prometheus().getMetrics()
+let metrics = try! MetricsSystem.prometheus().collect()
 print(metrics)

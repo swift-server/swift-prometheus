@@ -47,7 +47,7 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, Pr
     ///
     /// - Returns:
     ///     Newline seperated Prometheus formatted metric string
-    public func getMetric() -> String {
+    public func collect() -> String {
         return self.lock.withLock {
             var output = [String]()
             
