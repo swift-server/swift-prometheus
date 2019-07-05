@@ -41,7 +41,7 @@ final class PrometheusMetricsTests: XCTestCase {
 
         XCTAssertEqual(prom.collect(), """
         # TYPE my_gauge gauge
-        my_gauge 42.0
+        my_gauge 20.0
         my_gauge{myValue=\"labels\"} 10.0
         """)
     }
