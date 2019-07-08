@@ -78,7 +78,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     /// Gets the metric string for this Summary
     ///
     /// - Returns:
-    ///     Newline seperated Prometheus formatted metric string
+    ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
         return self.lock.withLock {
             var output = [String]()

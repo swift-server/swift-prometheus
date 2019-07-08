@@ -31,7 +31,7 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, Prom
     ///
     /// - Parameters:
     ///     - name: Name of the Gauge
-    ///     - help: Helpt text of the Gauge
+    ///     - help: Help text of the Gauge
     ///     - initialValue: Initial value to set the Gauge to
     ///     - p: Prometheus instance that created this Gauge
     ///
@@ -47,7 +47,7 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, Prom
     /// Gets the metric string for this Gauge
     ///
     /// - Returns:
-    ///     Newline seperated Prometheus formatted metric string
+    ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
         return self.lock.withLock {
             var output = [String]()

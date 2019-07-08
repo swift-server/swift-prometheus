@@ -24,7 +24,7 @@ public class PrometheusClient {
     
     /// Creates prometheus formatted metrics
     ///
-    /// - Returns: Newline seperated string with metrics for all Metric Trackers of this Prometheus instance
+    /// - Returns: Newline separated string with metrics for all Metric Trackers of this Prometheus instance
     public func collect() -> String {
         return self.lock.withLock {
             return self.metrics.map { $0.collect() }.joined(separator: "\n")
