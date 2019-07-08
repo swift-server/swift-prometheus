@@ -31,7 +31,7 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, Pr
     ///
     /// - Parameters:
     ///     - name: Name of the Counter
-    ///     - help: Helpt text of the Counter
+    ///     - help: Help text of the Counter
     ///     - initialValue: Initial value to set the counter to
     ///     - p: Prometheus instance that created this counter
     internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: PrometheusClient) {
@@ -46,7 +46,7 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, Pr
     /// Gets the metric string for this counter
     ///
     /// - Returns:
-    ///     Newline seperated Prometheus formatted metric string
+    ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
         return self.lock.withLock {
             var output = [String]()

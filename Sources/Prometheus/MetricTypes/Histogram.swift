@@ -77,7 +77,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     /// Gets the metric string for this Histogram
     ///
     /// - Returns:
-    ///     Newline seperated Prometheus formatted metric string
+    ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
         return self.lock.withLock {
             var output = [String]()
