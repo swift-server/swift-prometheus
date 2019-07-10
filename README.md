@@ -50,7 +50,7 @@ counter.reset() // Set the value back to 0
 
 ## Gauge
 
-Gauges can go up and down, they represent a "point-in-time" snapshot of a value. This is similar to the sppedometer of a car.
+Gauges can go up and down, they represent a "point-in-time" snapshot of a value. This is similar to the speedometer of a car.
 
 ```swift
 let gauge = myProm.createGauge(forType: Int.self, named: "my_gauge")
