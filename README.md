@@ -6,45 +6,51 @@ A prometheus client for Swift supporting counters, gauges, histograms, summaries
 
 # Usage
 
-For examples, see [main.swift](./Sources/PrometheusExample/main.swift)
+To see a working demo, see [PrometheusExample](./Sources/PrometheusExample/main.swift).
 
 First, we have to create an instance of our `PrometheusClient`:
+
 ```swift
 import Prometheus
 let myProm = PrometheusClient()
 ```
 
-## Usage with Swift-Metrics
-_For more details about swift-metrics, check the GitHub repo [here](https://github.com/apple/swift-metrics)_
+## Usage with SwiftMetrics
+_For more details about swift-metrics, please view [the GitHub repo](https://github.com/apple/swift-metrics)._
 
-To use SwiftPrometheus with swift-metrics, all the setup required is this:
+To use SwiftPrometheus with swift-metrics, you need to configure the backend inside the `MetricsSystem`:
+
 ```swift
+import Metrics
 import Prometheus
-import PrometheusMetrics
 let myProm = PrometheusClient()
 MetricsSystem.bootstrap(myProm)
 ```
 
-To use prometheus specific features in a later stage of your program, or to get your metrics out of the system, there is a convenience method added to `MetricsSystem`:
+To use prometheus-specific features in a later stage of your program, or to get your metrics out of the system, there is a convenience method added to `MetricsSystem`:
+
 ```swift
-// This is the same instance was used in `.bootstrap()` earlier.
+// This returns the same instance passed in to `.bootstrap()` earlier.
 let promInstance = try MetricsSystem.prometheus()
+print(promInstance.collect())
 ```
-You can than use the same APIs that are layed out in the rest of this README
+
+You can then use the same APIs described in the rest of this README.
 
 ## Counter
 
-Counters go up, and reset when the process restarts.
+Counters go up (they can only increase in value), and reset when the process restarts.
 
 ```swift
 let counter = myProm.createCounter(forType: Int.self, named: "my_counter")
 counter.inc() // Increment by 1
-counter.inc(12) // Increment by given value 
+counter.inc(12) // Increment by given value
+counter.reset() // Set the value back to 0
 ```
 
 ## Gauge
 
-Gauges can go up and down
+Gauges can go up and down, they represent a "point-in-time" snapshot of a value. This is similar to the sppedometer of a car.
 
 ```swift
 let gauge = myProm.createGauge(forType: Int.self, named: "my_gauge")
@@ -73,16 +79,16 @@ summary.observe(4.7) // Observe the given value
 
 ## Info
 
-Info tracks key-value information, usually about a whole target.
+Info tracks key-value information, usually about a whole target. These are typically helpful details like git sha or other metadata.
 
 ```swift
 struct MyInfoStruct: MetricLabels {
    let value: String
-   
+
    init() {
        self.value = "abc"
    }
-   
+
    init(_ v: String) {
        self.value = v
    }
@@ -99,6 +105,7 @@ info.info(MyInfoStruct("def"))
 All metric types support adding labels, allowing for grouping of related metrics.
 
 Example with a counter:
+
 ```swift
 struct RouteLabels: MetricLabels {
    var route: String = "*"
@@ -113,15 +120,15 @@ counter.inc(12, .init(route: "/"))
 
 # Exporting
 
-To keep SwiftPrometheus as clean and lightweight as possible, there is no way of exporting metrics directly to Prometheus. Instead, retrieve a formatted string that Prometheus can use, so you can integrate it in your own Serverside Swift application
+Prometheus itself is designed to "pull" metrics from a destination. Following this pattern, SwiftPrometheus is designed to expose metrics, as opposed to submitted/exporting them directly to Prometheus itself. Instead, SwiftPrometheus produces a formatted string that Prometheus can parse, which can be integrated into your own application.
 
-This could look something like this:
+By default, this should be accessible on your main serving port, at the `/metrics` endpoint. An example in [Vapor](https://vapor.codes) syntax looks like:
+
 ```swift
 router.get("/metrics") { request -> String in
     return myProm.collect()
 }
 ```
-Here, I used [Vapor](https://github.com/vapor/vapor) syntax, but this will work with any web framework, since it's just returning a plain String.
 
 # Contributing
 
