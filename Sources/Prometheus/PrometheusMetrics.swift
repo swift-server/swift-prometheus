@@ -1,4 +1,3 @@
-import Prometheus
 import CoreMetrics
 
 private class MetricsCounter: CounterHandler {

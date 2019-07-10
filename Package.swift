@@ -8,6 +8,9 @@ let package = Package(
         .library(
             name: "SwiftPrometheus",
             targets: ["Prometheus"]),
+        .executable(
+            name: "PrometheusExample",
+            targets: ["PrometheusExample"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-metrics.git", from: "1.0.0"),
@@ -16,15 +19,12 @@ let package = Package(
     targets: [
         .target(
             name: "Prometheus",
-            dependencies: ["NIOConcurrencyHelpers"]),
-        .target(
-            name: "PrometheusMetrics",
-            dependencies: ["Prometheus", "CoreMetrics"]),
+            dependencies: ["CoreMetrics", "NIOConcurrencyHelpers"]),
         .target(
             name: "PrometheusExample",
-            dependencies: ["PrometheusMetrics", "Metrics"]),
+            dependencies: ["Prometheus", "Metrics"]),
         .testTarget(
             name: "SwiftPrometheusTests",
-            dependencies: ["Prometheus", "PrometheusMetrics"]),
+            dependencies: ["Prometheus"]),
     ]
 )
