@@ -120,7 +120,7 @@ counter.inc(12, .init(route: "/"))
 
 # Exporting
 
-Prometheus itself is designed to "pull" metrics from a destination. Following this pattern, SwiftPrometheus is designed to expose metrics, as opposed to submitted/exporting them directly to Prometheus itself. Instead, SwiftPrometheus produces a formatted string that Prometheus can parse, which can be integrated into your own application.
+Prometheus itself is designed to "pull" metrics from a destination. Following this pattern, SwiftPrometheus is designed to expose metrics, as opposed to submitted/exporting them directly to Prometheus itself. SwiftPrometheus produces a formatted string that Prometheus can parse, which can be integrated into your own application.
 
 By default, this should be accessible on your main serving port, at the `/metrics` endpoint. An example in [Vapor](https://vapor.codes) syntax looks like:
 
