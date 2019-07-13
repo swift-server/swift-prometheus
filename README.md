@@ -45,7 +45,6 @@ Counters go up (they can only increase in value), and reset when the process res
 let counter = myProm.createCounter(forType: Int.self, named: "my_counter")
 counter.inc() // Increment by 1
 counter.inc(12) // Increment by given value
-counter.reset() // Set the value back to 0
 ```
 
 ## Gauge
@@ -75,30 +74,6 @@ Summaries track the size and number of events
 ```swift
 let summary = myProm.createSummary(forType: Double.self, named: "my_summary")
 summary.observe(4.7) // Observe the given value
-```
-
-## Info
-
-Info tracks key-value information, usually about a whole target. These are typically helpful details like git sha or other metadata.
-
-```swift
-struct MyInfoStruct: MetricLabels {
-   let value: String
-
-   init() {
-       self.value = "abc"
-   }
-
-   init(_ v: String) {
-       self.value = v
-   }
-}
-
-let info = myProm.createInfo(named: "my_info", helpText: "Just some info", labelType: MyInfoStruct.self)
-
-let info = prom.createInfo(named: "my_info", helpText: "Just some info", labelType: MyInfoStruct.self)
-
-info.info(MyInfoStruct("def"))
 ```
 
 ## Labels
