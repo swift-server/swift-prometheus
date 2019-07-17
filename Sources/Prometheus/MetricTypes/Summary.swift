@@ -14,7 +14,7 @@ extension SummaryLabels {
     }
 }
 
-/// Prometheus Counter metric
+/// Prometheus Summary metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#summary
 public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: PromMetric, PrometheusHandled {
@@ -89,27 +89,28 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
             output.append("# TYPE \(self.name) \(self._type)")
 
             calculateQuantiles(quantiles: self.quantiles, values: self.values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
-                let (q, v) = arg
-                self.labels.quantile = "\(q)"
+                let (quantile, value) = arg
+                self.labels.quantile = "\(quantile)"
                 let labelsString = encodeLabels(self.labels)
-                output.append("\(self.name)\(labelsString) \(v)")
+                output.append("\(self.name)\(labelsString) \(self.name.contains("_seconds") ? value / 1_000_000_000: value)")
+
             }
             
             let labelsString = encodeLabels(self.labels, ["quantile"])
             output.append("\(self.name)_count\(labelsString) \(self.count.get())")
-            output.append("\(self.name)_sum\(labelsString) \(self.sum.get())")
+            output.append("\(self.name)_sum\(labelsString) \(self.name.contains("_seconds") ? NumType(exactly: Int64(self.sum.get().doubleValue / 1_000_000_000))! : self.sum.get())")
             
             self.subSummaries.forEach { subSum in
                 calculateQuantiles(quantiles: self.quantiles, values: subSum.values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
-                    let (q, v) = arg
-                    subSum.labels.quantile = "\(q)"
+                    let (quantile, value) = arg
+                    subSum.labels.quantile = "\(quantile)"
                     let labelsString = encodeLabels(subSum.labels)
-                    output.append("\(subSum.name)\(labelsString) \(v)")
+                    output.append("\(subSum.name)\(labelsString) \(self.name.contains("_seconds") ? value / 1_000_000_000: value)")
                 }
                 
                 let labelsString = encodeLabels(subSum.labels, ["quantile"])
                 output.append("\(subSum.name)_count\(labelsString) \(subSum.count.get())")
-                output.append("\(subSum.name)_sum\(labelsString) \(subSum.sum.get())")
+                output.append("\(subSum.name)_sum\(labelsString) \(self.name.contains("_seconds") ? NumType(exactly: Int64(subSum.sum.get().doubleValue / 1_000_000_000))! : subSum.sum.get())")
                 subSum.labels.quantile = ""
             }
             

@@ -126,6 +126,43 @@ final class PrometheusMetricsTests: XCTestCase {
         my_summary_sum{myValue="labels"} 123
         """)
     }
+
+    /// This is what you'd get with
+    //     let start = Date()
+    //     let oneSecond = -start.timeIntervalSince(start.addingTimeInterval(1.0))
+    func testSummaryDouble() {
+        let summary = Timer(label: "summary_seconds")
+
+        summary.recordSeconds(1.0)
+        summary.recordSeconds(2.0)
+        summary.recordSeconds(4.0)
+        summary.recordSeconds(10000.0)
+
+        let summaryTwo = Timer(label: "summary_seconds", dimensions: [("myValue", "labels")])
+        summaryTwo.recordSeconds(123.0)
+
+        XCTAssertEqual(prom.collect(), """
+        # TYPE summary_seconds summary
+        summary_seconds{quantile="0.01"} 1.0
+        summary_seconds{quantile="0.05"} 1.0
+        summary_seconds{quantile="0.5"} 4.0
+        summary_seconds{quantile="0.9"} 10000.0
+        summary_seconds{quantile="0.95"} 10000.0
+        summary_seconds{quantile="0.99"} 10000.0
+        summary_seconds{quantile="0.999"} 10000.0
+        summary_seconds_count 5
+        summary_seconds_sum 10130
+        summary_seconds{quantile="0.01", myValue="labels"} 123.0
+        summary_seconds{quantile="0.05", myValue="labels"} 123.0
+        summary_seconds{quantile="0.5", myValue="labels"} 123.0
+        summary_seconds{quantile="0.9", myValue="labels"} 123.0
+        summary_seconds{quantile="0.95", myValue="labels"} 123.0
+        summary_seconds{quantile="0.99", myValue="labels"} 123.0
+        summary_seconds{quantile="0.999", myValue="labels"} 123.0
+        summary_seconds_count{myValue="labels"} 1
+        summary_seconds_sum{myValue="labels"} 123
+        """)
+    }
     
     func testMetricDestroying() {
         let counter = Counter(label: "my_counter")
