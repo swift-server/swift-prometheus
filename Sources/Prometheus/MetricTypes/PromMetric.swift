@@ -1,3 +1,5 @@
+import NIO
+
 /// Different types of metrics supported by SwiftPrometheus
 public enum PromMetricType: String {
     /// See `PromCounter`
@@ -32,6 +34,8 @@ public protocol PromMetric {
     
     /// Retrieves the Prometheus-formatted metric data
     func collect() -> String
+    
+    func collect(into buffer: inout ByteBuffer)
 }
 
 /// Adding a prometheus instance to all metrics

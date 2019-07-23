@@ -119,4 +119,4 @@ prom.futureResult.whenSuccess {
     print($0)
 }
 
-try! MetricsSystem.prometheus().collect(prom)
+try! MetricsSystem.prometheus().collect(prom.succeed)

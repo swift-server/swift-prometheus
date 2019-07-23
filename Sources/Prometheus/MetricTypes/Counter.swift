@@ -1,3 +1,4 @@
+import NIO
 import NIOConcurrencyHelpers
 
 /// Prometheus Counter metric
@@ -65,6 +66,10 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, Pr
             
             return output.joined(separator: "\n")
         }
+    }
+    
+    public func collect(into buffer: inout ByteBuffer) {
+        buffer.writeString(self.collect())
     }
     
     

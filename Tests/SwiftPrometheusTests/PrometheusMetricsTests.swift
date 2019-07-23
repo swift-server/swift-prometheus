@@ -29,7 +29,7 @@ final class PrometheusMetricsTests: XCTestCase {
         counterTwo.increment(by: 10)
         
         let promise = self.elg.makePromise(of: String.self)
-        prom.collect(promise)
+        prom.collect(promise.succeed)
         
         XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_counter counter
@@ -49,7 +49,7 @@ final class PrometheusMetricsTests: XCTestCase {
         gaugeTwo.record(10)
 
         let promise = self.elg.makePromise(of: String.self)
-        prom.collect(promise)
+        prom.collect(promise.succeed)
         
         XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_gauge gauge
@@ -68,7 +68,7 @@ final class PrometheusMetricsTests: XCTestCase {
         recorderTwo.record(3)
 
         let promise = self.elg.makePromise(of: String.self)
-        prom.collect(promise)
+        prom.collect(promise.succeed)
         
         XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_histogram histogram
@@ -121,7 +121,7 @@ final class PrometheusMetricsTests: XCTestCase {
         summaryTwo.recordNanoseconds(123)
         
         let promise = self.elg.makePromise(of: String.self)
-        prom.collect(promise)
+        prom.collect(promise.succeed)
         
         XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_summary summary
@@ -151,9 +151,26 @@ final class PrometheusMetricsTests: XCTestCase {
         counter.increment()
         counter.destroy()
         let promise = self.elg.makePromise(of: String.self)
-        prom.collect(promise)
+        prom.collect(promise.succeed)
         
         XCTAssertEqual(try! promise.futureResult.wait(), "")
+    }
+    
+    func testBuffer() {
+        let counter = Counter(label: "my_counter")
+        counter.increment(by: 10)
+        let counterTwo = Counter(label: "my_counter", dimensions: [("myValue", "labels")])
+        counterTwo.increment(by: 10)
+        
+        let promise = self.elg.makePromise(of: ByteBuffer.self)
+        prom.collect(promise.succeed)
+        var buffer = try! promise.futureResult.wait()
+        
+        XCTAssertEqual(buffer.readString(length: buffer.readableBytes), """
+        # TYPE my_counter counter
+        my_counter 10
+        my_counter{myValue=\"labels\"} 10
+        """)
     }
 }
 

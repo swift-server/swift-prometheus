@@ -27,9 +27,9 @@ public class PrometheusClient {
     ///
     /// - Parameters:
     ///     - p: Promise that will succeed with a newline separated string with metrics for all Metrics this PrometheusClient handles
-    public func collect(_ p: EventLoopPromise<String>) {
+    public func collect(_ succeed: (String) -> ()) {
         self.lock.withLock {
-            p.succeed(self.metrics.map { $0.collect() }.joined(separator: "\n"))
+            succeed(self.metrics.map { $0.collect() }.joined(separator: "\n"))
         }
     }
     
@@ -37,12 +37,15 @@ public class PrometheusClient {
     ///
     /// - Parameters:
     ///     - p: Promise that will succeed with a newline separated string with metrics for all Metrics this PrometheusClient handles
-//    public func collect(_ p: EventLoopPromise<ByteBuffer>) {
-//        self.lock.withLock {
-//            let buffer = ByteBuffer()
-////            p.succeed(result: self.metrics.map { $0.collect() }.joined(separator: "\n"))
-//        }
-//    }
+    public func collect(_ succeed: (ByteBuffer) -> ()) {
+        self.lock.withLock {
+            var buffer = ByteBufferAllocator().buffer(capacity: 0)
+            self.metrics.forEach {
+                $0.collect(into: &buffer)
+            }
+            succeed(buffer)
+        }
+    }
     
     // MARK: - Metric Access
     
