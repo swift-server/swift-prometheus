@@ -19,7 +19,7 @@ let package = Package(
     targets: [
         .target(
             name: "Prometheus",
-            dependencies: ["CoreMetrics", "NIOConcurrencyHelpers"]),
+            dependencies: ["CoreMetrics", "NIOConcurrencyHelpers", "NIO"]),
         .target(
             name: "PrometheusExample",
             dependencies: ["Prometheus", "Metrics"]),

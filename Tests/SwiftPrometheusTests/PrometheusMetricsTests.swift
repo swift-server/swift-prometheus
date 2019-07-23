@@ -1,18 +1,25 @@
 import XCTest
+import NIO
 @testable import Prometheus
 @testable import CoreMetrics
 
 final class PrometheusMetricsTests: XCTestCase {
     
     var prom: PrometheusClient!
+    var group: EventLoopGroup!
+    var elg: EventLoop {
+        return group.next()
+    }
     
     override func setUp() {
         self.prom = PrometheusClient()
+        self.group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
         MetricsSystem.bootstrapInternal(prom)
     }
     
     override func tearDown() {
         self.prom = nil
+        try! self.group.syncShutdownGracefully()
     }
     
     func testCounter() {
@@ -20,8 +27,11 @@ final class PrometheusMetricsTests: XCTestCase {
         counter.increment(by: 10)
         let counterTwo = Counter(label: "my_counter", dimensions: [("myValue", "labels")])
         counterTwo.increment(by: 10)
-
-        XCTAssertEqual(prom.collect(), """
+        
+        let promise = self.elg.newPromise(of: String.self)
+        prom.collect(promise)
+        
+        XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_counter counter
         my_counter 10
         my_counter{myValue=\"labels\"} 10
@@ -38,7 +48,10 @@ final class PrometheusMetricsTests: XCTestCase {
         let gaugeTwo = Gauge(label: "my_gauge", dimensions: [("myValue", "labels")])
         gaugeTwo.record(10)
 
-        XCTAssertEqual(prom.collect(), """
+        let promise = self.elg.newPromise(of: String.self)
+        prom.collect(promise)
+        
+        XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_gauge gauge
         my_gauge 20.0
         my_gauge{myValue=\"labels\"} 10.0
@@ -54,7 +67,10 @@ final class PrometheusMetricsTests: XCTestCase {
         let recorderTwo = Recorder(label: "my_histogram", dimensions: [("myValue", "labels")])
         recorderTwo.record(3)
 
-        XCTAssertEqual(prom.collect(), """
+        let promise = self.elg.newPromise(of: String.self)
+        prom.collect(promise)
+        
+        XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_histogram histogram
         my_histogram_bucket{le="0.005"} 0.0
         my_histogram_bucket{le="0.01"} 0.0
@@ -104,7 +120,10 @@ final class PrometheusMetricsTests: XCTestCase {
         let summaryTwo = Timer(label: "my_summary", dimensions: [("myValue", "labels")])
         summaryTwo.recordNanoseconds(123)
         
-        XCTAssertEqual(prom.collect(), """
+        let promise = self.elg.newPromise(of: String.self)
+        prom.collect(promise)
+        
+        XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_summary summary
         my_summary{quantile="0.01"} 1.0
         my_summary{quantile="0.05"} 1.0
@@ -131,7 +150,10 @@ final class PrometheusMetricsTests: XCTestCase {
         let counter = Counter(label: "my_counter")
         counter.increment()
         counter.destroy()
-        XCTAssertEqual(prom.collect(), "")
+        let promise = self.elg.newPromise(of: String.self)
+        prom.collect(promise)
+        
+        XCTAssertEqual(try! promise.futureResult.wait(), "")
     }
 }
 

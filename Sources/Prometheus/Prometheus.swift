@@ -1,4 +1,5 @@
 import NIOConcurrencyHelpers
+import NIO
 
 /// Prometheus class
 ///
@@ -24,10 +25,11 @@ public class PrometheusClient {
     
     /// Creates prometheus formatted metrics
     ///
-    /// - Returns: Newline separated string with metrics for all Metric Trackers of this Prometheus instance
-    public func collect() -> String {
+    /// - Parameters:
+    ///     - p: Promise that will succeed with a newline separated string with metrics for all Metrics this PrometheusClient handles
+    public func collect(_ p: EventLoopPromise<String>) {
         return self.lock.withLock {
-            return self.metrics.map { $0.collect() }.joined(separator: "\n")
+            p.succeed(result: self.metrics.map { $0.collect() }.joined(separator: "\n"))
         }
     }
     
