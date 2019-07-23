@@ -28,7 +28,7 @@ public class PrometheusClient {
     /// - Parameters:
     ///     - p: Promise that will succeed with a newline separated string with metrics for all Metrics this PrometheusClient handles
     public func collect(_ p: EventLoopPromise<String>) {
-        return self.lock.withLock {
+        self.lock.withLock {
             p.succeed(result: self.metrics.map { $0.collect() }.joined(separator: "\n"))
         }
     }

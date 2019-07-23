@@ -120,6 +120,3 @@ prom.futureResult.whenSuccess {
 }
 
 try! MetricsSystem.prometheus().collect(prom)
-
-//let metrics = try! MetricsSystem.prometheus().collect()
-//print(metrics)
