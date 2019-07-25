@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "d9dc73592b0409026afc0e59531f7f84cb5fcf8a",
-          "version": "2.5.0"
+          "revision": "6a79d4687ede7c088fe3e31d9b3452d6e6cd91eb",
+          "version": "2.5.1"
         }
       }
     ]

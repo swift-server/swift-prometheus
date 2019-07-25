@@ -37,6 +37,10 @@ public protocol PromMetric {
 }
 
 extension PromMetric {
+    /// Helper method to record metrics into a `ByteBuffer` directly
+    ///
+    /// - Parameters:
+    ///     - buffer: `ByteBuffer` to collect into
     func collect(into buffer: inout ByteBuffer) {
         buffer.writeString(collect())
     }
