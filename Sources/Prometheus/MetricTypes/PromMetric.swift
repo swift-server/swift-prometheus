@@ -34,8 +34,12 @@ public protocol PromMetric {
     
     /// Retrieves the Prometheus-formatted metric data
     func collect() -> String
-    
-    func collect(into buffer: inout ByteBuffer)
+}
+
+extension PromMetric {
+    func collect(into buffer: inout ByteBuffer) {
+        buffer.writeString(collect())
+    }
 }
 
 /// Adding a prometheus instance to all metrics

@@ -1,4 +1,3 @@
-import NIO
 import NIOConcurrencyHelpers
 
 /// Prometheus Gauge metric
@@ -67,10 +66,6 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, Prom
             
             return output.joined(separator: "\n")
         }
-    }
-    
-    public func collect(into buffer: inout ByteBuffer) {
-        buffer.writeString(self.collect())
     }
     
     /// Sets the Gauge

@@ -1,4 +1,3 @@
-import NIO
 import NIOConcurrencyHelpers
 
 /// Label type Summaries can use
@@ -118,10 +117,6 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
             
             return output.joined(separator: "\n")
         }
-    }
-    
-    public func collect(into buffer: inout ByteBuffer) {
-        buffer.writeString(self.collect())
     }
     
     /// Record a value

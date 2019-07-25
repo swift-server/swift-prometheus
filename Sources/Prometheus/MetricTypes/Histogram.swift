@@ -1,4 +1,3 @@
-import NIO
 import NIOConcurrencyHelpers
 
 /// Label type Histograms can use
@@ -122,10 +121,6 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
             
             return output.joined(separator: "\n")
         }
-    }
-    
-    public func collect(into buffer: inout ByteBuffer) {
-        buffer.writeString(self.collect())
     }
     
     /// Observe a value
