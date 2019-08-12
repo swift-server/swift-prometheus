@@ -23,10 +23,12 @@ public class PrometheusClient {
         self.lock = Lock()
     }
     
+    // MARK: - Collection
+    
     /// Creates prometheus formatted metrics
     ///
     /// - Parameters:
-    ///     - p: Promise that will succeed with a newline separated string with metrics for all Metrics this PrometheusClient handles
+    ///     - succeed: Closure that will be called with a newline separated string with metrics for all Metrics this PrometheusClient handles
     public func collect(_ succeed: (String) -> ()) {
         self.lock.withLock {
             succeed(self.metrics.map { $0.collect() }.joined(separator: "\n"))
@@ -36,7 +38,15 @@ public class PrometheusClient {
     /// Creates prometheus formatted metrics
     ///
     /// - Parameters:
-    ///     - p: Promise that will succeed with a newline separated string with metrics for all Metrics this PrometheusClient handles
+    ///     - promise: Promise that will succeed with a newline separated string with metrics for all Metrics this PrometheusClient handles
+    public func collect(into promise: EventLoopPromise<String>) {
+        collect(promise.succeed)
+    }
+    
+    /// Creates prometheus formatted metrics
+    ///
+    /// - Parameters:
+    ///     - succeed: Closure that will be called with a `ByteBuffer` containing a newline separated string with metrics for all Metrics this PrometheusClient handles
     public func collect(_ succeed: (ByteBuffer) -> ()) {
         self.lock.withLock {
             var buffer = ByteBufferAllocator().buffer(capacity: 0)
@@ -45,6 +55,14 @@ public class PrometheusClient {
             }
             succeed(buffer)
         }
+    }
+
+    /// Creates prometheus formatted metrics
+    ///
+    /// - Parameters:
+    ///     - promise: Promise that will succeed with a `ByteBuffer` containing a newline separated string with metrics for all Metrics this PrometheusClient handles
+    public func collect(into promise: EventLoopPromise<ByteBuffer>) {
+        collect(promise.succeed)
     }
     
     // MARK: - Metric Access
