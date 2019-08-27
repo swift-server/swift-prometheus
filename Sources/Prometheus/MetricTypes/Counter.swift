@@ -67,7 +67,6 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, Pr
         }
     }
     
-    
     /// Increments the Counter
     ///
     /// - Parameters:

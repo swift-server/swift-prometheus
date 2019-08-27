@@ -1,5 +1,6 @@
 import Prometheus
 import Metrics
+import NIO
 
 let myProm = PrometheusClient()
 
@@ -111,5 +112,11 @@ for _ in 0...Int.random(in: 100...1000) {
    summary.observe(Double.random(in: 0...10000), SummaryThing("/test"))
 }
 
-let metrics = try! MetricsSystem.prometheus().collect()
-print(metrics)
+let elg = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+let prom = elg.next().makePromise(of: String.self)
+
+prom.futureResult.whenSuccess {
+    print($0)
+}
+
+try! MetricsSystem.prometheus().collect(prom.succeed)

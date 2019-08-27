@@ -14,12 +14,12 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-metrics.git", from: "1.0.0"),
-        .package(url: "https://github.com/apple/swift-nio.git", Version("1.0.0") ..< Version("3.0.0")),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.0.0"),
     ],
     targets: [
         .target(
             name: "Prometheus",
-            dependencies: ["CoreMetrics", "NIOConcurrencyHelpers"]),
+            dependencies: ["CoreMetrics", "NIOConcurrencyHelpers", "NIO"]),
         .target(
             name: "PrometheusExample",
             dependencies: ["Prometheus", "Metrics"]),
