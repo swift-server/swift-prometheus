@@ -42,7 +42,7 @@ extension PromMetric {
     /// - Parameters:
     ///     - buffer: `ByteBuffer` to collect into
     func collect(into buffer: inout ByteBuffer) {
-        buffer.writeString(collect())
+        buffer.write(string: collect())
     }
 }
 

@@ -113,7 +113,7 @@ for _ in 0...Int.random(in: 100...1000) {
 }
 
 let elg = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-let prom = elg.next().makePromise(of: String.self)
+let prom = elg.next().newPromise(of: String.self)
 
 prom.futureResult.whenSuccess {
     print($0)

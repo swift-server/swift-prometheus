@@ -28,7 +28,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let counterTwo = Counter(label: "my_counter", dimensions: [("myValue", "labels")])
         counterTwo.increment(by: 10)
         
-        let promise = self.eventLoop.makePromise(of: String.self)
+        let promise = self.eventLoop.newPromise(of: String.self)
         prom.collect(promise.succeed)
         
         XCTAssertEqual(try! promise.futureResult.wait(), """
@@ -48,7 +48,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let gaugeTwo = Gauge(label: "my_gauge", dimensions: [("myValue", "labels")])
         gaugeTwo.record(10)
 
-        let promise = self.eventLoop.makePromise(of: String.self)
+        let promise = self.eventLoop.newPromise(of: String.self)
         prom.collect(promise.succeed)
         
         XCTAssertEqual(try! promise.futureResult.wait(), """
@@ -67,7 +67,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let recorderTwo = Recorder(label: "my_histogram", dimensions: [("myValue", "labels")])
         recorderTwo.record(3)
 
-        let promise = self.eventLoop.makePromise(of: String.self)
+        let promise = self.eventLoop.newPromise(of: String.self)
         prom.collect(promise.succeed)
         
         XCTAssertEqual(try! promise.futureResult.wait(), """
@@ -120,7 +120,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let summaryTwo = Timer(label: "my_summary", dimensions: [("myValue", "labels")])
         summaryTwo.recordNanoseconds(123)
         
-        let promise = self.eventLoop.makePromise(of: String.self)
+        let promise = self.eventLoop.newPromise(of: String.self)
         prom.collect(promise.succeed)
         
         XCTAssertEqual(try! promise.futureResult.wait(), """
@@ -150,7 +150,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let counter = Counter(label: "my_counter")
         counter.increment()
         counter.destroy()
-        let promise = self.eventLoop.makePromise(of: String.self)
+        let promise = self.eventLoop.newPromise(of: String.self)
         prom.collect(promise.succeed)
         
         XCTAssertEqual(try! promise.futureResult.wait(), "")
@@ -162,7 +162,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let counterTwo = Counter(label: "my_counter", dimensions: [("myValue", "labels")])
         counterTwo.increment(by: 10)
         
-        let promise = self.eventLoop.makePromise(of: ByteBuffer.self)
+        let promise = self.eventLoop.newPromise(of: ByteBuffer.self)
         prom.collect(promise.succeed)
         var buffer = try! promise.futureResult.wait()
         
