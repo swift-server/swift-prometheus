@@ -14,7 +14,7 @@ extension SummaryLabels {
     }
 }
 
-/// Prometheus Counter metric
+/// Prometheus Summary metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#summary
 public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: PromMetric, PrometheusHandled {

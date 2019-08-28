@@ -101,10 +101,15 @@ public class PrometheusClient {
         initialValue: T = 0,
         withLabelType labelType: U.Type) -> PromCounter<T, U>
     {
+        if let counter: PromCounter<T, U> = getMetricInstance(with: name, andType: .counter) {
+            return counter
+        }
+
         return self.lock.withLock {
             if let type = metricTypeMap[name] {
                 precondition(type == .counter, "Label \(name) was associated with \(type) before. Can not be used for a counter now.")
             }
+
             let counter = PromCounter<T, U>(name, helpText, initialValue, self)
             self.metricTypeMap[name] = .counter
             self.metrics.append(counter)
