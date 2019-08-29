@@ -11,7 +11,7 @@ SwiftPormetheus is available through SPM. To include it in your project add the 
         .package(url: "https://github.com/MrLotU/SwiftPrometheus.git", from: "1.0.0-alpha")
 ```
 
-_NOTE: For NIO 1 use `from: "0.0.0-alpha"` instead._
+_NOTE: For NIO 1 use `from: "0.4.0-alpha"` instead._
 
 # Usage
 
