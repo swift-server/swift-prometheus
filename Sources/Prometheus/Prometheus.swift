@@ -5,7 +5,7 @@ import NIO
 ///
 /// See https://prometheus.io/docs/introduction/overview/
 public class PrometheusClient {
-    
+
     /// Metrics tracked by this Prometheus instance
     private var metrics: [PromMetric]
     
@@ -109,7 +109,6 @@ public class PrometheusClient {
             if let type = metricTypeMap[name] {
                 precondition(type == .counter, "Label \(name) was associated with \(type) before. Can not be used for a counter now.")
             }
-
             let counter = PromCounter<T, U>(name, helpText, initialValue, self)
             self.metricTypeMap[name] = .counter
             self.metrics.append(counter)
@@ -154,6 +153,10 @@ public class PrometheusClient {
         initialValue: T = 0,
         withLabelType labelType: U.Type) -> PromGauge<T, U>
     {
+        if let gauge: PromGauge<T, U> = getMetricInstance(with: name, andType: .gauge) {
+            return gauge
+        }
+
         return self.lock.withLock {
             if let type = metricTypeMap[name] {
                 precondition(type == .gauge, "Label \(name) was associated with \(type) before. Can not be used for a gauge now.")
@@ -202,6 +205,10 @@ public class PrometheusClient {
         buckets: [Double] = Prometheus.defaultBuckets,
         labels: U.Type) -> PromHistogram<T, U>
     {
+        if let histogram: PromHistogram<T, U> = getMetricInstance(with: name, andType: .histogram) {
+            return histogram
+        }
+
         return self.lock.withLock {
             if let type = metricTypeMap[name] {
                 precondition(type == .histogram, "Label \(name) was associated with \(type) before. Can not be used for a histogram now.")
@@ -250,6 +257,10 @@ public class PrometheusClient {
         quantiles: [Double] = Prometheus.defaultQuantiles,
         labels: U.Type) -> PromSummary<T, U>
     {
+        if let summary: PromSummary<T, U> = getMetricInstance(with: name, andType: .summary) {
+            return summary
+        }
+
         return self.lock.withLock {
             if let type = metricTypeMap[name] {
                 precondition(type == .summary, "Label \(name) was associated with \(type) before. Can not be used for a summary now.")
