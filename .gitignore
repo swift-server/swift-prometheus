@@ -4,3 +4,4 @@
 /*.xcodeproj
 build/
 .swiftpm/
+.idea

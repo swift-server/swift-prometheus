@@ -156,7 +156,7 @@ final class PrometheusMetricsTests: XCTestCase {
         XCTAssertEqual(try! promise.futureResult.wait(), "")
     }
     
-    func testBuffer() {
+    func testCollectIntoBuffer() {
         let counter = Counter(label: "my_counter")
         counter.increment(by: 10)
         let counterTwo = Counter(label: "my_counter", dimensions: [("myValue", "labels")])
@@ -169,8 +169,52 @@ final class PrometheusMetricsTests: XCTestCase {
         XCTAssertEqual(buffer.readString(length: buffer.readableBytes), """
         # TYPE my_counter counter
         my_counter 10
-        my_counter{myValue=\"labels\"} 10
+        my_counter{myValue=\"labels\"} 10\n
         """)
+    }
+
+    func testCollectAFewMetricsIntoBuffer() {
+        let counter = Counter(label: "my_counter")
+        counter.increment(by: 10)
+        let counterA = Counter(label: "my_counter", dimensions: [("a", "aaa"), ("x", "x")])
+        counterA.increment(by: 4)
+        let gauge = Gauge(label: "my_gauge")
+        gauge.record(100)
+
+        let promise = self.eventLoop.makePromise(of: ByteBuffer.self)
+        prom.collect(promise.succeed)
+        var buffer = try! promise.futureResult.wait()
+
+        XCTAssertEqual(buffer.readString(length: buffer.readableBytes),
+            """
+            # TYPE my_counter counter
+            my_counter 10
+            my_counter{x="x", a="aaa"} 4
+            # TYPE my_gauge gauge
+            my_gauge 100.0\n
+            """)
+    }
+
+    func testCollectAFewMetricsIntoString() {
+        let counter = Counter(label: "my_counter")
+        counter.increment(by: 10)
+        let counterA = Counter(label: "my_counter", dimensions: [("a", "aaa"), ("x", "x")])
+        counterA.increment(by: 4)
+        let gauge = Gauge(label: "my_gauge")
+        gauge.record(100)
+
+        let promise = self.eventLoop.makePromise(of: String.self)
+        prom.collect(promise.succeed)
+        let string = try! promise.futureResult.wait()
+
+        XCTAssertEqual(string,
+            """
+            # TYPE my_counter counter
+            my_counter 10
+            my_counter{x="x", a="aaa"} 4
+            # TYPE my_gauge gauge
+            my_gauge 100.0
+            """)
     }
 }
 
