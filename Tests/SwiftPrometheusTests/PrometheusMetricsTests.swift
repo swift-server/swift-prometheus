@@ -117,8 +117,8 @@ final class PrometheusMetricsTests: XCTestCase {
         summary.recordNanoseconds(4)
         summary.recordNanoseconds(10000)
         
-        let summaryTwo = Timer(label: "my_summary", dimensions: [("myValue", "labels")])
-        summaryTwo.recordNanoseconds(123)
+//        let summaryTwo = Timer(label: "my_summary", dimensions: [("myValue", "labels")])
+//        summaryTwo.recordNanoseconds(123)
         
         let promise = self.eventLoop.makePromise(of: String.self)
         prom.collect(promise.succeed)
@@ -143,6 +143,31 @@ final class PrometheusMetricsTests: XCTestCase {
         my_summary{quantile="0.999", myValue="labels"} 123.0
         my_summary_count{myValue="labels"} 1
         my_summary_sum{myValue="labels"} 123
+        """)
+    }
+    
+    func testSummaryWithDisplayUnit() {
+        let summary = Timer(label: "my_summary", preferredDisplayUnit: .seconds)
+        
+        summary.recordSeconds(1)
+        summary.recordSeconds(2)
+        summary.recordSeconds(4)
+        summary.recordSeconds(10000)
+
+        let promise = self.eventLoop.makePromise(of: String.self)
+        prom.collect(promise.succeed)
+        
+        XCTAssertEqual(try! promise.futureResult.wait(), """
+        # TYPE my_summary summary
+        my_summary{quantile="0.01"} 1.0
+        my_summary{quantile="0.05"} 1.0
+        my_summary{quantile="0.5"} 4.0
+        my_summary{quantile="0.9"} 10000.0
+        my_summary{quantile="0.95"} 10000.0
+        my_summary{quantile="0.99"} 10000.0
+        my_summary{quantile="0.999"} 10000.0
+        my_summary_count 5
+        my_summary_sum 10130
         """)
     }
     

@@ -1,4 +1,5 @@
 import NIOConcurrencyHelpers
+import enum CoreMetrics.TimeUnit
 
 /// Label type Summaries can use
 public protocol SummaryLabels: MetricLabels {
@@ -28,6 +29,8 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     
     /// Type of the metric, used for formatting
     public let _type: PromMetricType = .summary
+    
+    private var displayUnit: TimeUnit?
     
     /// Labels for this Summary
     internal private(set) var labels: Labels
@@ -64,6 +67,8 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         
         self.prometheus = p
         
+        self.displayUnit = nil
+        
         self.sum = .init("\(self.name)_sum", nil, 0, p)
         
         self.count = .init("\(self.name)_count", nil, 0, p)
@@ -92,7 +97,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
                 let (q, v) = arg
                 self.labels.quantile = "\(q)"
                 let labelsString = encodeLabels(self.labels)
-                output.append("\(self.name)\(labelsString) \(v)")
+                output.append("\(self.name)\(labelsString) \(format(v))")
             }
             
             let labelsString = encodeLabels(self.labels, ["quantile"])
@@ -104,7 +109,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
                     let (q, v) = arg
                     subSum.labels.quantile = "\(q)"
                     let labelsString = encodeLabels(subSum.labels)
-                    output.append("\(subSum.name)\(labelsString) \(v)")
+                    output.append("\(subSum.name)\(labelsString) \(format(v))")
                 }
                 
                 let labelsString = encodeLabels(subSum.labels, ["quantile"])
@@ -116,6 +121,24 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
             self.labels.quantile = ""
             
             return output.joined(separator: "\n")
+        }
+    }
+    
+    private func format(_ v: Double) -> Double {
+        guard let displayUnit = self.displayUnit else { return v }
+        switch displayUnit {
+        case .days: return (v / 1_000_000_000) * 60 * 60 * 24
+        case .hours: return (v / 1_000_000_000) * 60 * 60
+        case .minutes: return (v / 1_000_000_000) * 60
+        case .seconds: return v / 1_000_000_000
+        case .milliseconds: return v / 1_000_000
+        case .nanoseconds: return v
+        }
+    }
+    
+    internal func preferDisplayUnit(_ unit: TimeUnit) {
+        self.lock.withLock {
+            self.displayUnit = unit
         }
     }
     
