@@ -6,6 +6,9 @@ extension PrometheusMetricsTests {
     //   `swift test --generate-linuxmain`
     // to regenerate.
     static let __allTests__PrometheusMetricsTests = [
+        ("testCollectAFewMetricsIntoBuffer", testCollectAFewMetricsIntoBuffer),
+        ("testCollectAFewMetricsIntoString", testCollectAFewMetricsIntoString),
+        ("testCollectIntoBuffer", testCollectIntoBuffer),
         ("testCounter", testCounter),
         ("testGauge", testGauge),
         ("testHistogram", testHistogram),
