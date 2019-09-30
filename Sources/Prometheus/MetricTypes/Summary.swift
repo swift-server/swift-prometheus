@@ -102,7 +102,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
             
             let labelsString = encodeLabels(self.labels, ["quantile"])
             output.append("\(self.name)_count\(labelsString) \(self.count.get())")
-            output.append("\(self.name)_sum\(labelsString) \(self.sum.get())")
+            output.append("\(self.name)_sum\(labelsString) \(format(self.sum.get().doubleValue))")
             
             self.subSummaries.forEach { subSum in
                 calculateQuantiles(quantiles: self.quantiles, values: subSum.values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
@@ -114,7 +114,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
                 
                 let labelsString = encodeLabels(subSum.labels, ["quantile"])
                 output.append("\(subSum.name)_count\(labelsString) \(subSum.count.get())")
-                output.append("\(subSum.name)_sum\(labelsString) \(subSum.sum.get())")
+                output.append("\(subSum.name)_sum\(labelsString) \(format(subSum.sum.get().doubleValue))")
                 subSum.labels.quantile = ""
             }
             
