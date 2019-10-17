@@ -150,8 +150,8 @@ final class PrometheusMetricsTests: XCTestCase {
         let summary = Timer(label: "my_summary", preferredDisplayUnit: .seconds)
         
         summary.recordSeconds(1)
-        summary.recordSeconds(2)
-        summary.recordSeconds(4)
+        summary.recordMilliseconds(2 * 1_000)
+        summary.recordNanoseconds(4 * 1_000_000_000)
         summary.recordSeconds(10000)
 
         let promise = self.eventLoop.makePromise(of: String.self)
