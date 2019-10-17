@@ -14,6 +14,7 @@ extension PrometheusMetricsTests {
         ("testHistogram", testHistogram),
         ("testMetricDestroying", testMetricDestroying),
         ("testSummary", testSummary),
+        ("testSummaryWithPreferredDisplayUnit", testSummaryWithPreferredDisplayUnit),
     ]
 }
 
@@ -25,6 +26,7 @@ extension SwiftPrometheusTests {
         ("testCounter", testCounter),
         ("testGauge", testGauge),
         ("testHistogram", testHistogram),
+        ("testMultipleCounter", testMultipleCounter),
         ("testSummary", testSummary),
     ]
 }

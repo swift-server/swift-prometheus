@@ -68,6 +68,10 @@ private class MetricsSummary: TimerHandler {
     let summary: PromSummary<Int64, DimensionSummaryLabels>
     let labels: DimensionSummaryLabels?
     
+    func preferDisplayUnit(_ unit: TimeUnit) {
+        self.summary.preferDisplayUnit(unit)
+    }
+    
     internal init(summary: PromSummary<Int64, DimensionSummaryLabels>, dimensions: [(String, String)]) {
         self.summary = summary
         guard !dimensions.isEmpty else {
