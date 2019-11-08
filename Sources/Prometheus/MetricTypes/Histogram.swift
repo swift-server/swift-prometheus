@@ -1,5 +1,34 @@
 import NIOConcurrencyHelpers
 
+enum Bucket {
+    /// Default buckets used by Histograms
+    public static let defaultBuckets = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, Double.greatestFiniteMagnitude]
+
+    public static func linear(start: Double, width: Double, count: Int) -> [Double] {
+        assert(count > 1, "Bucket.linear needs a count larger than 1")
+        var arr = [Double]()
+        var s = start
+        for x in 0..<count {
+            arr[x] = s
+            s += width
+        }
+        return arr
+    }
+    
+    public static func exponential(start: Double, factor: Double, count: Int) -> [Double] {
+        assert(count > 1, "Bucket.exponential needs a count larger than 1")
+        assert(start > 0, "Bucket.exponential needs a start larger than 0")
+        assert(factor > 1, "Bucket.exponential needs a factor larger than 1")
+        var arr = [Double]()
+        var s = start
+        for x in 0..<count {
+            arr[x] = s
+            s *= factor
+        }
+        return arr
+    }
+}
+
 /// Label type Histograms can use
 public protocol HistogramLabels: MetricLabels {
     /// Bucket
@@ -55,7 +84,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     ///     - labels: Labels for the Histogram
     ///     - buckets: Buckets to use for the Histogram
     ///     - p: Prometheus instance creating this Histogram
-    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = Prometheus.defaultBuckets, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = Bucket.defaultBuckets, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         
