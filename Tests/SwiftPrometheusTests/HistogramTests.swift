@@ -85,7 +85,7 @@ final class HistogramTests: XCTestCase {
         histogram.time {
             Thread.sleep(forTimeInterval: delay)
         }
-        // Using starts(with:) here since the exact subseconds might differ per-test :)
+        // Using starts(with:) here since the exact subseconds might differ per-test.
         XCTAssert(histogram.collect().starts(with: """
         # TYPE my_histogram histogram
         my_histogram_bucket{le="0.005"} 0.0

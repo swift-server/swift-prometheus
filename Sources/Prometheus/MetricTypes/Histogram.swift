@@ -1,5 +1,5 @@
 import NIOConcurrencyHelpers
-import Foundation
+import Dispatch
 
 /// Buckets are used by Histograms to bucket their values.
 ///
@@ -221,9 +221,10 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     ///     - body: Closure to run & record.
     @inlinable
     public func time<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
-        let start = Date()
+        let start = DispatchTime.now().uptimeNanoseconds
         defer {
-            self.observe(.init(Date().timeIntervalSince(start)), labels)
+            let delta = Double(DispatchTime.now().uptimeNanoseconds - start)
+            self.observe(.init(delta / 1_000_000_000), labels)
         }
         return try body()
     }
