@@ -1,4 +1,5 @@
 import NIOConcurrencyHelpers
+import Foundation
 
 /// Buckets are used by Histograms to bucket their values.
 ///
@@ -211,6 +212,20 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
                 }
             }
         }
+    }
+    
+    /// Time the duration of a closure and observe the resulting time in seconds.
+    ///
+    /// - parameters:
+    ///     - labels: Labels to attach to the resulting value.
+    ///     - body: Closure to run & record.
+    @inlinable
+    public func time<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
+        let start = Date()
+        defer {
+            self.observe(.init(Date().timeIntervalSince(start)), labels)
+        }
+        return try body()
     }
 }
 

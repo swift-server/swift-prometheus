@@ -8,6 +8,7 @@ extension HistogramTests {
     static let __allTests__HistogramTests = [
         ("testHistogramStandalone", testHistogramStandalone),
         ("testHistogramSwiftMetrics", testHistogramSwiftMetrics),
+        ("testHistogramTime", testHistogramTime),
     ]
 }
 

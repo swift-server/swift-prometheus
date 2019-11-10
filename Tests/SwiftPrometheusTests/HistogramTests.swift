@@ -79,6 +79,32 @@ final class HistogramTests: XCTestCase {
         """)
     }
     
+    func testHistogramTime() {
+        let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram")
+        let delay = 0.05
+        histogram.time {
+            Thread.sleep(forTimeInterval: delay)
+        }
+        // Using starts(with:) here since the exact subseconds might differ per-test :)
+        XCTAssert(histogram.collect().starts(with: """
+        # TYPE my_histogram histogram
+        my_histogram_bucket{le="0.005"} 0.0
+        my_histogram_bucket{le="0.01"} 0.0
+        my_histogram_bucket{le="0.025"} 0.0
+        my_histogram_bucket{le="0.05"} 0.0
+        my_histogram_bucket{le="0.1"} 1.0
+        my_histogram_bucket{le="0.25"} 1.0
+        my_histogram_bucket{le="0.5"} 1.0
+        my_histogram_bucket{le="1.0"} 1.0
+        my_histogram_bucket{le="2.5"} 1.0
+        my_histogram_bucket{le="5.0"} 1.0
+        my_histogram_bucket{le="10.0"} 1.0
+        my_histogram_bucket{le="+Inf"} 1.0
+        my_histogram_count 1.0
+        my_histogram_sum 0.05
+        """))
+    }
+    
     func testHistogramStandalone() {
         let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude], labels: BaseHistogramLabels.self)
         let histogramTwo = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude], labels: BaseHistogramLabels.self)
