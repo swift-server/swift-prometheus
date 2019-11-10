@@ -13,12 +13,8 @@ public enum PromMetricType: String {
 }
 
 public enum Prometheus {
-    /// Default buckets used by Histograms
-    public static let defaultBuckets = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, Double.greatestFiniteMagnitude]
-    
     /// Default quantiles used by Summaries
     public static let defaultQuantiles = [0.01, 0.05, 0.5, 0.9, 0.95, 0.99, 0.999]
-    
 }
 
 /// Metric protocol

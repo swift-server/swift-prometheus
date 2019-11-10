@@ -58,57 +58,6 @@ final class PrometheusMetricsTests: XCTestCase {
         """)
     }
 
-    func testHistogram() {
-        let recorder = Recorder(label: "my_histogram")
-        recorder.record(1)
-        recorder.record(2)
-        recorder.record(3)
-
-        let recorderTwo = Recorder(label: "my_histogram", dimensions: [("myValue", "labels")])
-        recorderTwo.record(3)
-
-        let promise = self.eventLoop.makePromise(of: String.self)
-        prom.collect(promise.succeed)
-        
-        XCTAssertEqual(try! promise.futureResult.wait(), """
-        # TYPE my_histogram histogram
-        my_histogram_bucket{le="0.005"} 0.0
-        my_histogram_bucket{le="0.01"} 0.0
-        my_histogram_bucket{le="0.025"} 0.0
-        my_histogram_bucket{le="0.05"} 0.0
-        my_histogram_bucket{le="0.075"} 0.0
-        my_histogram_bucket{le="0.1"} 0.0
-        my_histogram_bucket{le="0.25"} 0.0
-        my_histogram_bucket{le="0.5"} 0.0
-        my_histogram_bucket{le="0.75"} 0.0
-        my_histogram_bucket{le="1.0"} 1.0
-        my_histogram_bucket{le="2.5"} 2.0
-        my_histogram_bucket{le="5.0"} 4.0
-        my_histogram_bucket{le="7.5"} 4.0
-        my_histogram_bucket{le="10.0"} 4.0
-        my_histogram_bucket{le="+Inf"} 4.0
-        my_histogram_count 4.0
-        my_histogram_sum 9.0
-        my_histogram_bucket{myValue="labels", le="0.005"} 0.0
-        my_histogram_bucket{myValue="labels", le="0.01"} 0.0
-        my_histogram_bucket{myValue="labels", le="0.025"} 0.0
-        my_histogram_bucket{myValue="labels", le="0.05"} 0.0
-        my_histogram_bucket{myValue="labels", le="0.075"} 0.0
-        my_histogram_bucket{myValue="labels", le="0.1"} 0.0
-        my_histogram_bucket{myValue="labels", le="0.25"} 0.0
-        my_histogram_bucket{myValue="labels", le="0.5"} 0.0
-        my_histogram_bucket{myValue="labels", le="0.75"} 0.0
-        my_histogram_bucket{myValue="labels", le="1.0"} 0.0
-        my_histogram_bucket{myValue="labels", le="2.5"} 0.0
-        my_histogram_bucket{myValue="labels", le="5.0"} 1.0
-        my_histogram_bucket{myValue="labels", le="7.5"} 1.0
-        my_histogram_bucket{myValue="labels", le="10.0"} 1.0
-        my_histogram_bucket{myValue="labels", le="+Inf"} 1.0
-        my_histogram_count{myValue="labels"} 1.0
-        my_histogram_sum{myValue="labels"} 3.0
-        """)
-    }
-    
     func testSummary() {
         let summary = Timer(label: "my_summary")
         

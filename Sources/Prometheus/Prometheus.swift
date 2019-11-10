@@ -202,7 +202,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        buckets: [Double] = Prometheus.defaultBuckets,
+        buckets: Buckets = .defaultBuckets,
         labels: U.Type) -> PromHistogram<T, U>
     {
         if let histogram: PromHistogram<T, U> = getMetricInstance(with: name, andType: .histogram) {
@@ -233,7 +233,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        buckets: [Double] = Prometheus.defaultBuckets) -> PromHistogram<T, EmptyHistogramLabels>
+        buckets: Buckets = .defaultBuckets) -> PromHistogram<T, EmptyHistogramLabels>
     {
         return self.createHistogram(forType: type, named: name, helpText: helpText, buckets: buckets, labels: EmptyHistogramLabels.self)
     }

@@ -1,21 +1,72 @@
 import NIOConcurrencyHelpers
 
-enum Bucket {
+/// Buckets are used by Histograms to bucket their values.
+///
+/// See https://prometheus.io/docs/concepts/metric_types/#Histogram
+public struct Buckets: RawRepresentable {
+    /// Create a new `Buckets` instance.
+    ///
+    /// - Parameters:
+    ///     - rawValue: Double values to use for buckets
+    public init?(rawValue: [Double]) {
+        self.init(rawValue)
+    }
+    
+    /// Create a new `Buckets` instance.
+    ///
+    /// This initializer makes sure values are sorted and include the +Inf upper bucket.
+    /// When passing in an empty array, `Buckets.defaultBuckets` will be used instead.
+    ///
+    /// - Parameters:
+    ///     - r: Double values to use for buckets
+    public init(_ r: [Double]) {
+        if r.count < 1 {
+            self.rawValue = Buckets.defaultBuckets.rawValue
+            return
+        }
+        var r = r
+        if !r.contains(Double.greatestFiniteMagnitude) {
+            r.append(Double.greatestFiniteMagnitude)
+        }
+        // TODO: Decide if we want to fix these "programmer mistakes" or assert them.
+        r.sort(by: <)
+        assert(Array(Set(r)) == r, "Buckets contain duplicate values.")
+        self.rawValue = r
+    }
+    
+    /// The upper bounds
+    public var rawValue: [Double]
+    
+    /// See `RawRepresentable`
+    public typealias RawValue = [Double]
+    
     /// Default buckets used by Histograms
-    public static let defaultBuckets = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, Double.greatestFiniteMagnitude]
+    public static let defaultBuckets = Buckets([0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10])
 
-    public static func linear(start: Double, width: Double, count: Int) -> [Double] {
-        assert(count > 1, "Bucket.linear needs a count larger than 1")
+    /// Create linear buckets used by Histograms
+    ///
+    /// - Parameters:
+    ///     - start: Start value for your buckets. This will be the upper bound of your first bucket.
+    ///     - width: Width of each bucket.
+    ///     - count: Amount of buckets to generate, should be larger than zero. The +Inf bucket is not included in this count.
+    public static func linear(start: Double, width: Double, count: Int) -> Buckets {
+        assert(count >= 1, "Bucket.linear needs a count larger than 1")
         var arr = [Double]()
         var s = start
         for x in 0..<count {
             arr[x] = s
             s += width
         }
-        return arr
+        return Buckets(arr)
     }
     
-    public static func exponential(start: Double, factor: Double, count: Int) -> [Double] {
+    /// Create exponential buckets used by Histograms
+    ///
+    ///  - Parameters:
+    ///     - start: Start value for your buckets, should be larger than 0. This will be the upper bound of your first bucket.
+    ///     - factor: Factor to increase each upper bound by, based on the upper bound of the last bucket. Should be larger than 1.
+    ///     - count: Amount of buckets to generate, should be larger than zero. The +Inf bucket is not included in this count.
+    public static func exponential(start: Double, factor: Double, count: Int) -> Buckets {
         assert(count > 1, "Bucket.exponential needs a count larger than 1")
         assert(start > 0, "Bucket.exponential needs a start larger than 0")
         assert(factor > 1, "Bucket.exponential needs a factor larger than 1")
@@ -25,7 +76,7 @@ enum Bucket {
             arr[x] = s
             s *= factor
         }
-        return arr
+        return Buckets(arr)
     }
 }
 
@@ -84,7 +135,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     ///     - labels: Labels for the Histogram
     ///     - buckets: Buckets to use for the Histogram
     ///     - p: Prometheus instance creating this Histogram
-    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = Bucket.defaultBuckets, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: Buckets = .defaultBuckets, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         
@@ -94,11 +145,11 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         
         self.labels = labels
         
-        self.upperBounds = buckets
+        self.upperBounds = buckets.rawValue
         
         self.lock = Lock()
         
-        buckets.forEach { _ in
+        buckets.rawValue.forEach { _ in
             self.buckets.append(.init("\(name)_bucket", nil, 0, p))
         }
     }
@@ -187,7 +238,7 @@ extension PrometheusClient {
         if let histogram = histograms.first {
             return histogram
         } else {
-            let newHistogram = PromHistogram<T, U>(histogram.name, histogram.help, labels, histogram.upperBounds, self)
+            let newHistogram = PromHistogram<T, U>(histogram.name, histogram.help, labels, Buckets(histogram.upperBounds), self)
             histogram.subHistograms.append(newHistogram)
             return newHistogram
         }
