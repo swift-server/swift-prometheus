@@ -3,25 +3,16 @@ import NIOConcurrencyHelpers
 /// Buckets are used by Histograms to bucket their values.
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#Histogram
-public struct Buckets: RawRepresentable {
-    /// Create a new `Buckets` instance.
-    ///
-    /// - Parameters:
-    ///     - rawValue: Double values to use for buckets
-    public init?(rawValue: [Double]) {
-        self.init(rawValue)
+public struct Buckets: ExpressibleByArrayLiteral {
+    public typealias ArrayLiteralElement = Double
+    
+    public init(arrayLiteral elements: Double...) {
+        self.init(elements)
     }
     
-    /// Create a new `Buckets` instance.
-    ///
-    /// This initializer makes sure values are sorted and include the +Inf upper bucket.
-    /// When passing in an empty array, `Buckets.defaultBuckets` will be used instead.
-    ///
-    /// - Parameters:
-    ///     - r: Double values to use for buckets
-    public init(_ r: [Double]) {
+    fileprivate init (_ r: [Double]) {
         if r.count < 1 {
-            self.rawValue = Buckets.defaultBuckets.rawValue
+            self.buckets = Buckets.defaultBuckets.buckets
             return
         }
         var r = r
@@ -30,19 +21,16 @@ public struct Buckets: RawRepresentable {
         }
         // TODO: Decide if we want to fix these "programmer mistakes" or assert them.
         r.sort(by: <)
-        assert(Array(Set(r)) == r, "Buckets contain duplicate values.")
-        self.rawValue = r
+        assert(Array(Set(r)).sorted(by: <) == r, "Buckets contain duplicate values.")
+        self.buckets = r
     }
     
     /// The upper bounds
-    public var rawValue: [Double]
-    
-    /// See `RawRepresentable`
-    public typealias RawValue = [Double]
-    
+    public let buckets: [Double]
+        
     /// Default buckets used by Histograms
-    public static let defaultBuckets = Buckets([0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10])
-
+    public static let defaultBuckets: Buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+    
     /// Create linear buckets used by Histograms
     ///
     /// - Parameters:
@@ -145,11 +133,11 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         
         self.labels = labels
         
-        self.upperBounds = buckets.rawValue
+        self.upperBounds = buckets.buckets
         
         self.lock = Lock()
         
-        buckets.rawValue.forEach { _ in
+        buckets.buckets.forEach { _ in
             self.buckets.append(.init("\(name)_bucket", nil, 0, p))
         }
     }
@@ -224,7 +212,6 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
             }
         }
     }
-
 }
 
 extension PrometheusClient {

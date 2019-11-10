@@ -80,8 +80,8 @@ final class HistogramTests: XCTestCase {
     }
     
     func testHistogramStandalone() {
-        let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: Buckets([0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude]), labels: BaseHistogramLabels.self)
-        let histogramTwo = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: Buckets([0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude]), labels: BaseHistogramLabels.self)
+        let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude], labels: BaseHistogramLabels.self)
+        let histogramTwo = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude], labels: BaseHistogramLabels.self)
 
         histogram.observe(1)
         histogram.observe(2)
