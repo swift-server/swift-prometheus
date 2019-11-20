@@ -12,7 +12,7 @@ public struct Buckets: ExpressibleByArrayLiteral {
     }
     
     fileprivate init (_ r: [Double]) {
-        if r.count < 1 {
+        if r.isEmpty {
             self.buckets = Buckets.defaultBuckets.buckets
             return
         }
@@ -56,7 +56,7 @@ public struct Buckets: ExpressibleByArrayLiteral {
     ///     - factor: Factor to increase each upper bound by, based on the upper bound of the last bucket. Should be larger than 1.
     ///     - count: Amount of buckets to generate, should be larger than zero. The +Inf bucket is not included in this count.
     public static func exponential(start: Double, factor: Double, count: Int) -> Buckets {
-        assert(count > 1, "Bucket.exponential needs a count larger than 1")
+        assert(count > 1, "Bucket.exponential needs a count greater than 1")
         assert(start > 0, "Bucket.exponential needs a start larger than 0")
         assert(factor > 1, "Bucket.exponential needs a factor larger than 1")
         var arr = [Double]()
