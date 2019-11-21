@@ -1,4 +1,72 @@
 import NIOConcurrencyHelpers
+import Dispatch
+
+/// Buckets are used by Histograms to bucket their values.
+///
+/// See https://prometheus.io/docs/concepts/metric_types/#Histogram
+public struct Buckets: ExpressibleByArrayLiteral {
+    public typealias ArrayLiteralElement = Double
+    
+    public init(arrayLiteral elements: Double...) {
+        self.init(elements)
+    }
+    
+    fileprivate init (_ r: [Double]) {
+        if r.isEmpty {
+            self = Buckets.defaultBuckets
+            return
+        }
+        var r = r
+        if !r.contains(Double.greatestFiniteMagnitude) {
+            r.append(Double.greatestFiniteMagnitude)
+        }
+        assert(r == r.sorted(by: <), "Buckets are not in increasing order")
+        assert(Array(Set(r)).sorted(by: <) == r.sorted(by: <), "Buckets contain duplicate values.")
+        self.buckets = r
+    }
+    
+    /// The upper bounds
+    public let buckets: [Double]
+        
+    /// Default buckets used by Histograms
+    public static let defaultBuckets: Buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+    
+    /// Create linear buckets used by Histograms
+    ///
+    /// - Parameters:
+    ///     - start: Start value for your buckets. This will be the upper bound of your first bucket.
+    ///     - width: Width of each bucket.
+    ///     - count: Amount of buckets to generate, should be larger than zero. The +Inf bucket is not included in this count.
+    public static func linear(start: Double, width: Double, count: Int) -> Buckets {
+        assert(count >= 1, "Bucket.linear needs a count larger than 1")
+        var arr = [Double]()
+        var s = start
+        for x in 0..<count {
+            arr[x] = s
+            s += width
+        }
+        return Buckets(arr)
+    }
+    
+    /// Create exponential buckets used by Histograms
+    ///
+    ///  - Parameters:
+    ///     - start: Start value for your buckets, should be larger than 0. This will be the upper bound of your first bucket.
+    ///     - factor: Factor to increase each upper bound by, based on the upper bound of the last bucket. Should be larger than 1.
+    ///     - count: Amount of buckets to generate, should be larger than zero. The +Inf bucket is not included in this count.
+    public static func exponential(start: Double, factor: Double, count: Int) -> Buckets {
+        assert(count > 1, "Bucket.exponential needs a count greater than 1")
+        assert(start > 0, "Bucket.exponential needs a start larger than 0")
+        assert(factor > 1, "Bucket.exponential needs a factor larger than 1")
+        var arr = [Double]()
+        var s = start
+        for x in 0..<count {
+            arr[x] = s
+            s *= factor
+        }
+        return Buckets(arr)
+    }
+}
 
 /// Label type Histograms can use
 public protocol HistogramLabels: MetricLabels {
@@ -55,7 +123,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     ///     - labels: Labels for the Histogram
     ///     - buckets: Buckets to use for the Histogram
     ///     - p: Prometheus instance creating this Histogram
-    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: [Double] = Prometheus.defaultBuckets, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: Buckets = .defaultBuckets, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         
@@ -65,11 +133,11 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         
         self.labels = labels
         
-        self.upperBounds = buckets
+        self.upperBounds = buckets.buckets
         
         self.lock = Lock()
         
-        buckets.forEach { _ in
+        buckets.buckets.forEach { _ in
             self.buckets.append(.init("\(name)_bucket", nil, 0, p))
         }
     }
@@ -144,7 +212,21 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
             }
         }
     }
-
+    
+    /// Time the duration of a closure and observe the resulting time in seconds.
+    ///
+    /// - parameters:
+    ///     - labels: Labels to attach to the resulting value.
+    ///     - body: Closure to run & record.
+    @inlinable
+    public func time<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
+        let start = DispatchTime.now().uptimeNanoseconds
+        defer {
+            let delta = Double(DispatchTime.now().uptimeNanoseconds - start)
+            self.observe(.init(delta / 1_000_000_000), labels)
+        }
+        return try body()
+    }
 }
 
 extension PrometheusClient {
@@ -158,7 +240,7 @@ extension PrometheusClient {
         if let histogram = histograms.first {
             return histogram
         } else {
-            let newHistogram = PromHistogram<T, U>(histogram.name, histogram.help, labels, histogram.upperBounds, self)
+            let newHistogram = PromHistogram<T, U>(histogram.name, histogram.help, labels, Buckets(histogram.upperBounds), self)
             histogram.subHistograms.append(newHistogram)
             return newHistogram
         }

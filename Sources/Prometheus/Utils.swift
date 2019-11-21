@@ -59,6 +59,8 @@ extension Double {
 public protocol DoubleRepresentable: Numeric {
     /// Double value of the number
     var doubleValue: Double {get}
+    
+    init(_ double: Double)
 }
 
 /// Numbers that convert to other types

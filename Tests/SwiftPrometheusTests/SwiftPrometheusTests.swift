@@ -15,19 +15,6 @@ final class SwiftPrometheusTests: XCTestCase {
         }
     }
     
-    struct BaseHistogramLabels: HistogramLabels {
-        var le: String = ""
-        let myValue: String
-        
-        init() {
-            self.myValue = "*"
-        }
-        
-        init(myValue: String) {
-            self.myValue = myValue
-        }
-    }
-    
     struct BaseSummaryLabels: SummaryLabels {
         var quantile: String = ""
         let myValue: String
@@ -98,19 +85,6 @@ final class SwiftPrometheusTests: XCTestCase {
         XCTAssertEqual(gaugeTwo.get(), 21)
         
         XCTAssertEqual(gauge.collect(), "# HELP my_gauge Gauge for testing\n# TYPE my_gauge gauge\nmy_gauge 21\nmy_gauge{myValue=\"labels\"} 20")
-    }
-    
-    func testHistogram() {
-        let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude], labels: BaseHistogramLabels.self)
-        let histogramTwo = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude], labels: BaseHistogramLabels.self)
-
-        histogram.observe(1)
-        histogram.observe(2)
-        histogramTwo.observe(3)
-        
-        histogram.observe(3, .init(myValue: "labels"))
-
-        XCTAssertEqual(histogram.collect(), "# HELP my_histogram Histogram for testing\n# TYPE my_histogram histogram\nmy_histogram_bucket{myValue=\"*\", le=\"0.5\"} 0.0\nmy_histogram_bucket{myValue=\"*\", le=\"1.0\"} 1.0\nmy_histogram_bucket{myValue=\"*\", le=\"2.0\"} 2.0\nmy_histogram_bucket{myValue=\"*\", le=\"3.0\"} 4.0\nmy_histogram_bucket{myValue=\"*\", le=\"5.0\"} 4.0\nmy_histogram_bucket{myValue=\"*\", le=\"+Inf\"} 4.0\nmy_histogram_count{myValue=\"*\"} 4.0\nmy_histogram_sum{myValue=\"*\"} 9.0\nmy_histogram_bucket{myValue=\"labels\", le=\"0.5\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"1.0\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"2.0\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"3.0\"} 1.0\nmy_histogram_bucket{myValue=\"labels\", le=\"5.0\"} 1.0\nmy_histogram_bucket{myValue=\"labels\", le=\"+Inf\"} 1.0\nmy_histogram_count{myValue=\"labels\"} 1.0\nmy_histogram_sum{myValue=\"labels\"} 3.0")
     }
     
     func testSummary() {
