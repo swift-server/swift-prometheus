@@ -115,6 +115,25 @@ final class HistogramTests: XCTestCase {
         
         histogram.observe(3, .init(myValue: "labels"))
 
-        XCTAssertEqual(histogram.collect(), "# HELP my_histogram Histogram for testing\n# TYPE my_histogram histogram\nmy_histogram_bucket{myValue=\"*\", le=\"0.5\"} 0.0\nmy_histogram_bucket{myValue=\"*\", le=\"1.0\"} 1.0\nmy_histogram_bucket{myValue=\"*\", le=\"2.0\"} 2.0\nmy_histogram_bucket{myValue=\"*\", le=\"3.0\"} 4.0\nmy_histogram_bucket{myValue=\"*\", le=\"5.0\"} 4.0\nmy_histogram_bucket{myValue=\"*\", le=\"+Inf\"} 4.0\nmy_histogram_count{myValue=\"*\"} 4.0\nmy_histogram_sum{myValue=\"*\"} 9.0\nmy_histogram_bucket{myValue=\"labels\", le=\"0.5\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"1.0\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"2.0\"} 0.0\nmy_histogram_bucket{myValue=\"labels\", le=\"3.0\"} 1.0\nmy_histogram_bucket{myValue=\"labels\", le=\"5.0\"} 1.0\nmy_histogram_bucket{myValue=\"labels\", le=\"+Inf\"} 1.0\nmy_histogram_count{myValue=\"labels\"} 1.0\nmy_histogram_sum{myValue=\"labels\"} 3.0")
+        XCTAssertEqual(histogram.collect(), """
+        # HELP my_histogram Histogram for testing
+        # TYPE my_histogram histogram
+        my_histogram_bucket{myValue="*", le="0.5"} 0.0
+        my_histogram_bucket{myValue="*", le="1.0"} 1.0
+        my_histogram_bucket{myValue="*", le="2.0"} 2.0
+        my_histogram_bucket{myValue="*", le="3.0"} 4.0
+        my_histogram_bucket{myValue="*", le="5.0"} 4.0
+        my_histogram_bucket{myValue="*", le="+Inf"} 4.0
+        my_histogram_count{myValue="*"} 4.0
+        my_histogram_sum{myValue="*"} 9.0
+        my_histogram_bucket{myValue="labels", le="0.5"} 0.0
+        my_histogram_bucket{myValue="labels", le="1.0"} 0.0
+        my_histogram_bucket{myValue="labels", le="2.0"} 0.0
+        my_histogram_bucket{myValue="labels", le="3.0"} 1.0
+        my_histogram_bucket{myValue="labels", le="5.0"} 1.0
+        my_histogram_bucket{myValue="labels", le="+Inf"} 1.0
+        my_histogram_count{myValue="labels"} 1.0
+        my_histogram_sum{myValue="labels"} 3.0
+        """)
     }
 }

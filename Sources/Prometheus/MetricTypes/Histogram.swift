@@ -13,16 +13,15 @@ public struct Buckets: ExpressibleByArrayLiteral {
     
     fileprivate init (_ r: [Double]) {
         if r.isEmpty {
-            self.buckets = Buckets.defaultBuckets.buckets
+            self = Buckets.defaultBuckets
             return
         }
         var r = r
         if !r.contains(Double.greatestFiniteMagnitude) {
             r.append(Double.greatestFiniteMagnitude)
         }
-        // TODO: Decide if we want to fix these "programmer mistakes" or assert them.
-        r.sort(by: <)
-        assert(Array(Set(r)).sorted(by: <) == r, "Buckets contain duplicate values.")
+        assert(r == r.sorted(by: <), "Buckets are not in increasing order")
+        assert(Array(Set(r)).sorted(by: <) == r.sorted(by: <), "Buckets contain duplicate values.")
         self.buckets = r
     }
     
