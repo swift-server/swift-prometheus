@@ -1,5 +1,6 @@
 import NIOConcurrencyHelpers
 import enum CoreMetrics.TimeUnit
+import Dispatch
 
 /// Label type Summaries can use
 public protocol SummaryLabels: MetricLabels {
@@ -166,6 +167,21 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
             self.sum.inc(value)
             self.values.append(value)
         }
+    }
+    
+    /// Time the duration of a closure and observe the resulting time in seconds.
+    ///
+    /// - parameters:
+    ///     - labels: Labels to attach to the resulting value.
+    ///     - body: Closure to run & record.
+    @inlinable
+    public func time<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
+        let start = DispatchTime.now().uptimeNanoseconds
+        defer {
+            let delta = Double(DispatchTime.now().uptimeNanoseconds - start)
+            self.observe(.init(delta / 1_000_000_000), labels)
+        }
+        return try body()
     }
 }
 
