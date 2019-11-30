@@ -66,27 +66,6 @@ final class SwiftPrometheusTests: XCTestCase {
         }
     }
     
-    func testGauge() {
-        let gauge = prom.createGauge(forType: Int.self, named: "my_gauge", helpText: "Gauge for testing", initialValue: 10, withLabelType: BaseLabels.self)
-        XCTAssertEqual(gauge.get(), 10)
-        gauge.inc(10)
-        XCTAssertEqual(gauge.get(), 20)
-        gauge.dec(12)
-        XCTAssertEqual(gauge.get(), 8)
-        gauge.set(20)
-        gauge.inc(10, BaseLabels(myValue: "labels"))
-        XCTAssertEqual(gauge.get(), 20)
-        XCTAssertEqual(gauge.get(BaseLabels(myValue: "labels")), 20)
-
-        let gaugeTwo = prom.createGauge(forType: Int.self, named: "my_gauge", helpText: "Gauge for testing", initialValue: 10, withLabelType: BaseLabels.self)
-        XCTAssertEqual(gaugeTwo.get(), 20)
-        gaugeTwo.inc()
-        XCTAssertEqual(gauge.get(), 21)
-        XCTAssertEqual(gaugeTwo.get(), 21)
-        
-        XCTAssertEqual(gauge.collect(), "# HELP my_gauge Gauge for testing\n# TYPE my_gauge gauge\nmy_gauge 21\nmy_gauge{myValue=\"labels\"} 20")
-    }
-    
     func testSummary() {
         let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99], labels: BaseSummaryLabels.self)
         let summaryTwo = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99], labels: BaseSummaryLabels.self)

@@ -61,17 +61,19 @@ public protocol DoubleRepresentable: Numeric {
     var doubleValue: Double {get}
     
     init(_ double: Double)
+    
+    init(_ int: Int)
 }
 
 /// Numbers that convert to other types
 public protocol ConvertibleNumberType: DoubleRepresentable {}
 public extension ConvertibleNumberType {
     /// Number as a Float
-    var floatValue: Float {get {return Float(doubleValue)}}
+    var floatValue: Float { return Float(doubleValue) }
     /// Number as an Int
-    var intValue: Int {get {return lrint(doubleValue)}}
+    var intValue: Int { return lrint(doubleValue) }
     /// Number as a CGFloat
-    var CGFloatValue: CGFloat {get {return CGFloat(doubleValue)}}
+    var CGFloatValue: CGFloat { return CGFloat(doubleValue) }
 }
 
 /// Double Representable Conformance

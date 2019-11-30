@@ -115,8 +115,6 @@ for _ in 0...Int.random(in: 100...1000) {
 let elg = MultiThreadedEventLoopGroup(numberOfThreads: 1)
 let prom = elg.next().makePromise(of: String.self)
 
-prom.futureResult.whenSuccess {
-    print($0)
-}
-
 try! MetricsSystem.prometheus().collect(prom.succeed)
+
+print(try! prom.futureResult.wait())

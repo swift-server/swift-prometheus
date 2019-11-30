@@ -38,26 +38,6 @@ final class PrometheusMetricsTests: XCTestCase {
         """)
     }
 
-    func testGauge() {
-        let gauge = Gauge(label: "my_gauge")
-        
-        gauge.record(10)
-        gauge.record(12)
-        gauge.record(20)
-        
-        let gaugeTwo = Gauge(label: "my_gauge", dimensions: [("myValue", "labels")])
-        gaugeTwo.record(10)
-
-        let promise = self.eventLoop.makePromise(of: String.self)
-        prom.collect(promise.succeed)
-        
-        XCTAssertEqual(try! promise.futureResult.wait(), """
-        # TYPE my_gauge gauge
-        my_gauge 20.0
-        my_gauge{myValue=\"labels\"} 10.0
-        """)
-    }
-
     func testSummary() {
         let summary = Timer(label: "my_summary")
         
