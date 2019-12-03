@@ -109,8 +109,10 @@ Prometheus itself is designed to "pull" metrics from a destination. Following th
 By default, this should be accessible on your main serving port, at the `/metrics` endpoint. An example in [Vapor](https://vapor.codes) syntax looks like:
 
 ```swift
-router.get("/metrics") { request -> String in
-    return myProm.collect()
+router.get("/metrics") { request -> EventLoopFuture<String> in
+    let promise = request.eventLoop.newPromise(of: String.self)
+    myProm.collect(into: promise)
+    return promise.futureResult
 }
 ```
 
