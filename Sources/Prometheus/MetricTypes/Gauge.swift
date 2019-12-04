@@ -1,9 +1,11 @@
+import struct Foundation.Date
+import Dispatch
 import NIOConcurrencyHelpers
 
 /// Prometheus Gauge metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#gauge
-public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, PrometheusHandled {
+public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: PromMetric, PrometheusHandled {
     /// Prometheus instance that created this Gauge
     internal weak var prometheus: PrometheusClient?
     
@@ -68,12 +70,61 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, Prom
         }
     }
     
+    /// Sets the Gauge to the current unixtime in seconds
+    ///
+    /// - Parameters:
+    ///     - labels: Labels to attach to the value
+    ///
+    /// - Returns: The value of the Gauge attached to the provided labels
+    @discardableResult
+    public func setToCurrentTime(_ labels: Labels? = nil) -> NumType {
+        return self.set(.init(Date().timeIntervalSince1970), labels)
+    }
+    
+    /// Tracks in progress blocks of code or functions.
+    ///
+    ///     func someFunc() -> String { return "ABC" }
+    ///     let newFunc = myGauge.trackInprogress(someFunc)
+    ///     newFunc() // returns "ABC" and increments & decrements Gauge
+    ///
+    /// - Parameters:
+    ///     - labels: Labels to attach to the value
+    ///     - body: Function to wrap progress tracker around
+    ///
+    /// - Returns: The same type of function passed in for `body`, but wrapped to track progress.
+    @inlinable
+    public func trackInProgress<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) -> (() throws -> T) {
+        return {
+            self.inc()
+            defer {
+                self.dec()
+            }
+            return try body()
+        }
+    }
+    /// Time the execution duration of a closure and observe the resulting time in seconds.
+    ///
+    /// - parameters:
+    ///     - labels: Labels to attach to the resulting value.
+    ///     - body: Closure to run & record execution time of.
+    @inlinable
+    public func time<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
+        let start = DispatchTime.now().uptimeNanoseconds
+        defer {
+            let delta = Double(DispatchTime.now().uptimeNanoseconds - start)
+            self.set(.init(delta / 1_000_000_000), labels)
+        }
+        return try body()
+    }
+    
+    
     /// Sets the Gauge
     ///
     /// - Parameters:
     ///     - amount: Amount to set the gauge to
     ///     - labels: Labels to attach to the value
     ///
+    /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
     public func set(_ amount: NumType, _ labels: Labels? = nil) -> NumType {
         return self.lock.withLock {
@@ -92,8 +143,8 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, Prom
     /// - Parameters:
     ///     - amount: Amount to increment the Gauge with
     ///     - labels: Labels to attach to the value
-    ///     - done: Completion handler
     ///
+    /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
     public func inc(_ amount: NumType, _ labels: Labels? = nil) -> NumType {
         return self.lock.withLock {
@@ -113,8 +164,8 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, Prom
     ///
     /// - Parameters:
     ///     - labels: Labels to attach to the value
-    ///     - done: Completion handler
     ///
+    /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
     public func inc(_ labels: Labels? = nil) -> NumType {
         return self.inc(1, labels)
@@ -125,8 +176,8 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, Prom
     /// - Parameters:
     ///     - amount: Amount to decrement the Gauge with
     ///     - labels: Labels to attach to the value
-    ///     - done: Completion handler
     ///
+    /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
     public func dec(_ amount: NumType, _ labels: Labels? = nil) -> NumType {
         return self.lock.withLock {
@@ -147,6 +198,7 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, Prom
     /// - Parameters:
     ///     - labels: Labels to attach to the value
     ///
+    /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
     public func dec(_ labels: Labels? = nil) -> NumType {
         return self.dec(1, labels)
@@ -158,7 +210,6 @@ public class PromGauge<NumType: Numeric, Labels: MetricLabels>: PromMetric, Prom
     ///     - labels: Labels to get the value for
     ///
     /// - Returns: The value of the Gauge attached to the provided labels
-    ///
     public func get(_ labels: Labels? = nil) -> NumType {
         return self.lock.withLock {
             if let labels = labels {
