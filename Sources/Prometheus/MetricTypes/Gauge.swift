@@ -93,7 +93,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     ///
     /// - Returns: The same type of function passed in for `body`, but wrapped to track progress.
     @inlinable
-    public func trackInprogress<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) -> (() throws -> T) {
+    public func trackInProgress<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) -> (() throws -> T) {
         return {
             self.inc()
             defer {
@@ -102,11 +102,11 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
             return try body()
         }
     }
-    /// Time the duration of a closure and observe the resulting time in seconds.
+    /// Time the execution duration of a closure and observe the resulting time in seconds.
     ///
     /// - parameters:
     ///     - labels: Labels to attach to the resulting value.
-    ///     - body: Closure to run & record.
+    ///     - body: Closure to run & record execution time of.
     @inlinable
     public func time<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
         let start = DispatchTime.now().uptimeNanoseconds
