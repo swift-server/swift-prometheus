@@ -125,10 +125,10 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         }
     }
     
-	// Updated for SwiftMetrics 2.0 to be unit agnostic if displayUnit is set or default to nanoseconds.
+    // Updated for SwiftMetrics 2.0 to be unit agnostic if displayUnit is set or default to nanoseconds.
     private func format(_ v: Double) -> Double {
-		let displayUnitScale = self.displayUnit?.scaleFromNanoseconds ?? 1
-		return v / Double(displayUnitScale)
+        let displayUnitScale = self.displayUnit?.scaleFromNanoseconds ?? 1
+        return v / Double(displayUnitScale)
     }
     
     internal func preferDisplayUnit(_ unit: TimeUnit) {
