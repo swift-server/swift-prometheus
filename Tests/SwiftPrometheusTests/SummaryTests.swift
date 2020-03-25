@@ -77,7 +77,7 @@ final class SummaryTests: XCTestCase {
         summary.recordSeconds(1)
         summary.recordMilliseconds(2 * 1_000)
         summary.recordMicroseconds(3 * 1_000_000)
-		summary.recordNanoseconds(4 * 1_000_000_000)
+        summary.recordNanoseconds(4 * 1_000_000_000)
         summary.recordSeconds(10000)
 
         let promise = self.eventLoop.makePromise(of: String.self)
