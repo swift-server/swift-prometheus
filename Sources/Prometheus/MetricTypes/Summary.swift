@@ -1,5 +1,5 @@
 import NIOConcurrencyHelpers
-import enum CoreMetrics.TimeUnit
+import struct CoreMetrics.TimeUnit
 import Dispatch
 
 /// Label type Summaries can use
@@ -125,16 +125,10 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         }
     }
     
+	// Updated for SwiftMetrics 2.0 to be unit agnostic if displayUnit is set or default to nanoseconds.
     private func format(_ v: Double) -> Double {
-        guard let displayUnit = self.displayUnit else { return v }
-        switch displayUnit {
-        case .days: return (v / 1_000_000_000) * 60 * 60 * 24
-        case .hours: return (v / 1_000_000_000) * 60 * 60
-        case .minutes: return (v / 1_000_000_000) * 60
-        case .seconds: return v / 1_000_000_000
-        case .milliseconds: return v / 1_000_000
-        case .nanoseconds: return v
-        }
+		let displayUnitScale = self.displayUnit?.scaleFromNanoseconds ?? 1
+		return v / Double(displayUnitScale)
     }
     
     internal func preferDisplayUnit(_ unit: TimeUnit) {
