@@ -106,12 +106,12 @@ counter.inc(12, .init(route: "/"))
 
 Prometheus itself is designed to "pull" metrics from a destination. Following this pattern, SwiftPrometheus is designed to expose metrics, as opposed to submitted/exporting them directly to Prometheus itself. SwiftPrometheus produces a formatted string that Prometheus can parse, which can be integrated into your own application.
 
-By default, this should be accessible on your main serving port, at the `/metrics` endpoint. An example in [Vapor](https://vapor.codes) syntax looks like:
+By default, this should be accessible on your main serving port, at the `/metrics` endpoint. An example in [Vapor](https://vapor.codes)  4 syntax looks like:
 
 ```swift
-router.get("/metrics") { request -> EventLoopFuture<String> in
-    let promise = request.eventLoop.newPromise(of: String.self)
-    myProm.collect(into: promise)
+app.get("metrics") { req -> EventLoopFuture<String> in
+    let promise = req.eventLoop.makePromise(of: String.self)
+    try MetricsSystem.prometheus().collect(into: promise)
     return promise.futureResult
 }
 ```
