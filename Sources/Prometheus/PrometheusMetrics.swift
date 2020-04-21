@@ -86,6 +86,22 @@ private class MetricsSummary: TimerHandler {
     }
 }
 
+public protocol LabelSanitizer {
+    func sanitize(_ label: String) -> String
+}
+
+public struct PrometheusLabelSanitizer: LabelSanitizer {
+    let allowedCharacters = "abcdefghijklmnopqrstuvwxyz0123456789_:"
+    
+    public init() { }
+
+    public func sanitize(_ label: String) -> String {
+        return String(label
+            .lowercased()
+            .map { (c: Character) -> Character in if allowedCharacters.contains(c) { return c }; return "_" })
+    }
+}
+
 extension PrometheusClient: MetricsFactory {
     public func destroyCounter(_ handler: CounterHandler) {
         guard let handler = handler as? MetricsCounter else { return }
@@ -107,6 +123,7 @@ extension PrometheusClient: MetricsFactory {
     }
     
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
+        let label = self.sanitizers.reduce(label) { $1.sanitize($0) }
         let createHandler = { (counter: PromCounter) -> CounterHandler in
             return MetricsCounter(counter: counter, dimensions: dimensions)
         }
@@ -117,10 +134,12 @@ extension PrometheusClient: MetricsFactory {
     }
     
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
+        let label = self.sanitizers.reduce(label) { $1.sanitize($0) }
         return aggregate ? makeHistogram(label: label, dimensions: dimensions) : makeGauge(label: label, dimensions: dimensions)
     }
     
     private func makeGauge(label: String, dimensions: [(String, String)]) -> RecorderHandler {
+        let label = self.sanitizers.reduce(label) { $1.sanitize($0) }
         let createHandler = { (gauge: PromGauge) -> RecorderHandler in
             return MetricsGauge(gauge: gauge, dimensions: dimensions)
         }
@@ -131,6 +150,7 @@ extension PrometheusClient: MetricsFactory {
     }
     
     private func makeHistogram(label: String, dimensions: [(String, String)]) -> RecorderHandler {
+        let label = self.sanitizers.reduce(label) { $1.sanitize($0) }
         let createHandler = { (histogram: PromHistogram) -> RecorderHandler in
             return MetricsHistogram(histogram: histogram, dimensions: dimensions)
         }
@@ -141,6 +161,7 @@ extension PrometheusClient: MetricsFactory {
     }
     
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
+        let label = self.sanitizers.reduce(label) { $1.sanitize($0) }
         let createHandler = { (summary: PromSummary) -> TimerHandler in
             return MetricsSummary(summary: summary, dimensions: dimensions)
         }
