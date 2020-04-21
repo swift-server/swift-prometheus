@@ -86,10 +86,24 @@ private class MetricsSummary: TimerHandler {
     }
 }
 
+/// Used to sanitize labels if required.
+///
+///     let sanitizer: LabelSanitizer = ...
+///     let prometheusLabel = sanitizer.sanitize(nonPrometheusLabel)
+///
+/// By default `PrometheusLabelSanitizer` is used by `PrometheusClient`
 public protocol LabelSanitizer {
+    /// Sanitize the passed in label to a Prometheus accepted value.
+    ///
+    /// - parameters:
+    ///     - label: The created label that needs to be sanitized.
+    ///
+    /// - returns: A sanitized string that a Prometheus backend will accept.
     func sanitize(_ label: String) -> String
 }
 
+/// Default implementation of `LabelSanitizer` that sanitizes any characters not
+/// allowed by Prometheus to an underscore (`_`).
 public struct PrometheusLabelSanitizer: LabelSanitizer {
     let allowedCharacters = "abcdefghijklmnopqrstuvwxyz0123456789_:"
     
