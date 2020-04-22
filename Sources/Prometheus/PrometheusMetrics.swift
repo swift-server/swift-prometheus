@@ -86,7 +86,10 @@ private class MetricsSummary: TimerHandler {
     }
 }
 
-/// Used to sanitize labels if required.
+/// Used to sanitize labels into a format compatible with Prometheus label requirements.
+/// Useful when using `PrometheusMetrics` via `SwiftMetrics` with clients which do not necessarily know 
+/// about prometheus label formats, and may be using e.g. `.` or upper-case letters in labels (which Prometheus 
+/// does not allow).
 ///
 ///     let sanitizer: LabelSanitizer = ...
 ///     let prometheusLabel = sanitizer.sanitize(nonPrometheusLabel)
