@@ -18,13 +18,13 @@ public class PrometheusClient {
     
     /// Sanitizers used to clean up label values provided through
     /// swift-metrics.
-    public let sanitizers: [LabelSanitizer]
+    public let sanitizer: LabelSanitizer
     
     /// Create a PrometheusClient instance
-    public init(_ sanitizers: [LabelSanitizer] = [PrometheusLabelSanitizer()]) {
+    public init(labelSanitizer sanitizer: LabelSanitizer = PrometheusLabelSanitizer()) {
         self.metrics = []
         self.metricTypeMap = [:]
-        self.sanitizers = sanitizers
+        self.sanitizer = sanitizer
         self.lock = Lock()
     }
     
