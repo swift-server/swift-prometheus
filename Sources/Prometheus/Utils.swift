@@ -1,5 +1,9 @@
 import Foundation
 
+#if os(iOS) || os(watchOS) || os(tvOS)
+import CoreGraphics
+#endif
+
 /// Empty labels class
 public struct EmptyLabels: MetricLabels {
     /// Creates empty labels
