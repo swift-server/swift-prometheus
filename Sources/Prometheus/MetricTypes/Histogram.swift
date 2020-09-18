@@ -42,7 +42,7 @@ public struct Buckets: ExpressibleByArrayLiteral {
         var arr = [Double]()
         var s = start
         for x in 0..<count {
-            arr[x] = s
+            arr.append(s)
             s += width
         }
         return Buckets(arr)
@@ -61,7 +61,7 @@ public struct Buckets: ExpressibleByArrayLiteral {
         var arr = [Double]()
         var s = start
         for x in 0..<count {
-            arr[x] = s
+            arr.append(s)
             s *= factor
         }
         return Buckets(arr)
