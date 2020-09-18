@@ -34,7 +34,7 @@ final class PrometheusMetricsTests: XCTestCase {
         XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_counter counter
         my_counter 10
-        my_counter{myValue=\"labels\"} 10
+        my_counter{myValue=\"labels\"} 10\n
         """)
     }
 
@@ -65,7 +65,44 @@ final class PrometheusMetricsTests: XCTestCase {
         """)
     }
 
-    func testCollectAFewMetricsIntoBuffer() {
+    func testEmptyCollectIsConsistent() throws {
+        let promise = self.eventLoop.makePromise(of: ByteBuffer.self)
+        prom.collect(promise.succeed)
+        var buffer = try promise.futureResult.wait()
+
+        let stringPromise = self.eventLoop.makePromise(of: String.self)
+        prom.collect(stringPromise.succeed)
+        let collectedToString = try stringPromise.futureResult.wait()
+
+        let collectedToBuffer = buffer.readString(length: buffer.readableBytes)
+        XCTAssertEqual(collectedToBuffer, "")
+        XCTAssertEqual(collectedToBuffer, collectedToString)
+    }
+
+    func testCollectIsConsistent() throws {
+        let counter = Counter(label: "my_counter")
+        counter.increment(by: 10)
+        let counterTwo = Counter(label: "my_counter", dimensions: [("myValue", "labels")])
+        counterTwo.increment(by: 10)
+
+        let promise = self.eventLoop.makePromise(of: ByteBuffer.self)
+        prom.collect(promise.succeed)
+        var buffer = try promise.futureResult.wait()
+
+        let stringPromise = self.eventLoop.makePromise(of: String.self)
+        prom.collect(stringPromise.succeed)
+        let collectedToString = try stringPromise.futureResult.wait()
+
+        let collectedToBuffer = buffer.readString(length: buffer.readableBytes)
+        XCTAssertEqual(collectedToBuffer, """
+        # TYPE my_counter counter
+        my_counter 10
+        my_counter{myValue=\"labels\"} 10\n
+        """)
+        XCTAssertEqual(collectedToBuffer, collectedToString)
+    }
+
+    func testCollectAFewMetricsIntoBuffer() throws {
         let counter = Counter(label: "my_counter")
         counter.increment(by: 10)
         let counterA = Counter(label: "my_counter", dimensions: [("a", "aaa"), ("x", "x")])
@@ -75,7 +112,7 @@ final class PrometheusMetricsTests: XCTestCase {
 
         let promise = self.eventLoop.makePromise(of: ByteBuffer.self)
         prom.collect(promise.succeed)
-        var buffer = try! promise.futureResult.wait()
+        var buffer = try promise.futureResult.wait()
 
         XCTAssertEqual(buffer.readString(length: buffer.readableBytes),
             """
@@ -105,8 +142,7 @@ final class PrometheusMetricsTests: XCTestCase {
             my_counter 10
             my_counter{x="x", a="aaa"} 4
             # TYPE my_gauge gauge
-            my_gauge 100.0
+            my_gauge 100.0\n
             """)
     }
 }
-
