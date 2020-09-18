@@ -36,7 +36,7 @@ public class PrometheusClient {
     ///     - succeed: Closure that will be called with a newline separated string with metrics for all Metrics this PrometheusClient handles
     public func collect(_ succeed: (String) -> ()) {
         self.lock.withLock {
-            succeed(self.metrics.map { $0.collect() }.joined(separator: "\n"))
+            succeed("\(self.metrics.map { $0.collect() }.joined(separator: "\n"))\n")
         }
     }
     
