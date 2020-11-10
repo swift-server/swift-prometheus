@@ -72,8 +72,6 @@ public extension ConvertibleNumberType {
     var floatValue: Float { return Float(doubleValue) }
     /// Number as an Int
     var intValue: Int { return lrint(doubleValue) }
-    /// Number as a CGFloat
-    var CGFloatValue: CGFloat { return CGFloat(doubleValue) }
 }
 
 /// Double Representable Conformance
