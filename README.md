@@ -111,7 +111,13 @@ By default, this should be accessible on your main serving port, at the `/metric
 ```swift
 app.get("metrics") { req -> EventLoopFuture<String> in
     let promise = req.eventLoop.makePromise(of: String.self)
-    try MetricsSystem.prometheus().collect(into: promise)
+    DispatchQueue.global().async {
+        do {
+            try MetricsSystem.prometheus().collect(into: promise)
+        } catch {
+            promise.fail(error)
+        }
+    }
     return promise.futureResult
 }
 ```
