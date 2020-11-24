@@ -44,7 +44,10 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     
     /// Values in this Summary
     private var values: [NumType] = []
-    
+
+    /// Number of last values used to calculate quantiles
+    internal let capacity: Int
+
     /// Quantiles used by this Summary
     internal let quantiles: [Double]
     
@@ -60,9 +63,10 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     ///     - name: Name of the Summary
     ///     - help: Help text of the Summary
     ///     - labels: Labels for the Summary
+    ///     - capacity: Number of last values used to calculate quantiles
     ///     - quantiles: Quantiles to use for the Summary
     ///     - p: Prometheus instance creating this Summary
-    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ quantiles: [Double] = Prometheus.defaultQuantiles, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ capacity: Int = Prometheus.defaultSummaryCapacity, _ quantiles: [Double] = Prometheus.defaultQuantiles, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         
@@ -74,6 +78,8 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         
         self.count = .init("\(self.name)_count", nil, 0, p)
         
+        self.capacity = capacity
+
         self.quantiles = quantiles
         
         self.labels = labels
@@ -160,6 +166,9 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
             self.count.inc(1)
             self.sum.inc(value)
             self.values.append(value)
+            if self.values.count > self.capacity {
+                self.values.remove(at: 0)
+            }
         }
     }
     
@@ -190,7 +199,7 @@ extension PrometheusClient {
         if let summary = summaries.first {
             return summary
         } else {
-            let newSummary = PromSummary<T, U>(summary.name, summary.help, labels, summary.quantiles, self)
+            let newSummary = PromSummary<T, U>(summary.name, summary.help, labels, summary.capacity, summary.quantiles, self)
             summary.subSummaries.append(newSummary)
             return newSummary
         }

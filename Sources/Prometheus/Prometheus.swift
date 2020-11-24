@@ -251,6 +251,7 @@ public class PrometheusClient {
     ///     - type: The type the summary will observe
     ///     - name: Name of the summary
     ///     - helpText: Help text for the summary. Usually a short description
+    ///     - capacity: Number of (last) observations used to calculate quantiles
     ///     - quantiles: Quantiles to caluculate
     ///     - labels: Labels to give this summary. Can be left out to default to no labels
     ///
@@ -259,6 +260,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
+        capacity: Int = Prometheus.defaultSummaryCapacity,
         quantiles: [Double] = Prometheus.defaultQuantiles,
         labels: U.Type) -> PromSummary<T, U>
     {
@@ -270,7 +272,7 @@ public class PrometheusClient {
             if let type = metricTypeMap[name] {
                 precondition(type == .summary, "Label \(name) was associated with \(type) before. Can not be used for a summary now.")
             }
-            let summary = PromSummary<T, U>(name, helpText, U(), quantiles, self)
+            let summary = PromSummary<T, U>(name, helpText, U(), capacity, quantiles, self)
             self.metricTypeMap[name] = .summary
             self.metrics.append(summary)
             return summary
