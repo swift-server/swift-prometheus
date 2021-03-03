@@ -1,9 +1,5 @@
 import Foundation
 
-#if os(iOS) || os(watchOS) || os(tvOS)
-import CoreGraphics
-#endif
-
 /// Empty labels class
 public struct EmptyLabels: MetricLabels {
     /// Creates empty labels
@@ -76,8 +72,6 @@ public extension ConvertibleNumberType {
     var floatValue: Float { return Float(doubleValue) }
     /// Number as an Int
     var intValue: Int { return lrint(doubleValue) }
-    /// Number as a CGFloat
-    var CGFloatValue: CGFloat { return CGFloat(doubleValue) }
 }
 
 /// Double Representable Conformance
@@ -90,8 +84,6 @@ extension FixedWidthInteger {
 
 /// Double Representable Conformance
 extension Double: ConvertibleNumberType { public var doubleValue: Double { return self }}
-/// Double Representable Conformance
-extension CGFloat: ConvertibleNumberType { public var doubleValue: Double { return Double(self) }}
 /// Double Representable Conformance
 extension Float: ConvertibleNumberType { public var doubleValue: Double { return Double(self) }}
 /// Double Representable Conformance
