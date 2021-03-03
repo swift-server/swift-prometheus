@@ -41,7 +41,7 @@ public struct Buckets: ExpressibleByArrayLiteral {
         assert(count >= 1, "Bucket.linear needs a count larger than 1")
         var arr = [Double]()
         var s = start
-        for x in 0..<count {
+        for _ in 0..<count {
             arr.append(s)
             s += width
         }
@@ -60,7 +60,7 @@ public struct Buckets: ExpressibleByArrayLiteral {
         assert(factor > 1, "Bucket.exponential needs a factor larger than 1")
         var arr = [Double]()
         var s = start
-        for x in 0..<count {
+        for _ in 0..<count {
             arr.append(s)
             s *= factor
         }
