@@ -67,7 +67,7 @@ final class SummaryTests: XCTestCase {
         my_summary{quantile="0.99", myValue="labels"} 123.0
         my_summary{quantile="0.999", myValue="labels"} 123.0
         my_summary_count{myValue="labels"} 1
-        my_summary_sum{myValue="labels"} 123.0
+        my_summary_sum{myValue="labels"} 123.0\n
         """)
     }
     
@@ -93,7 +93,7 @@ final class SummaryTests: XCTestCase {
         my_summary{quantile="0.99"} 10000.0
         my_summary{quantile="0.999"} 10000.0
         my_summary_count 5
-        my_summary_sum 10010.0
+        my_summary_sum 10010.0\n
         """)
     }
     
