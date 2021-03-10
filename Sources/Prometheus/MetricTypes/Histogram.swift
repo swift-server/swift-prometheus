@@ -39,12 +39,7 @@ public struct Buckets: ExpressibleByArrayLiteral {
     ///     - count: Amount of buckets to generate, should be larger than zero. The +Inf bucket is not included in this count.
     public static func linear(start: Double, width: Double, count: Int) -> Buckets {
         assert(count >= 1, "Bucket.linear needs a count larger than 1")
-        var arr = [Double]()
-        var s = start
-        for x in 0..<count {
-            arr[x] = s
-            s += width
-        }
+        let arr = (0..<count).map { Double(start) + Double($0) * Double(width) }
         return Buckets(arr)
     }
     
@@ -60,8 +55,8 @@ public struct Buckets: ExpressibleByArrayLiteral {
         assert(factor > 1, "Bucket.exponential needs a factor larger than 1")
         var arr = [Double]()
         var s = start
-        for x in 0..<count {
-            arr[x] = s
+        for _ in 0..<count {
+            arr.append(s)
             s *= factor
         }
         return Buckets(arr)
