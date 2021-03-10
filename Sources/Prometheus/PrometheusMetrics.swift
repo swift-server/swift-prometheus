@@ -236,25 +236,25 @@ private struct StringCodingKey: CodingKey {
 
 
 /// Helper for dimensions
-private struct DimensionLabels: MetricLabels {
+public struct DimensionLabels: MetricLabels {
     let dimensions: [(String, String)]
     
-    init() {
+    public init() {
         self.dimensions = []
     }
     
-    init(_ dimensions: [(String, String)]) {
+    public init(_ dimensions: [(String, String)]) {
         self.dimensions = dimensions
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
         try self.dimensions.forEach {
             try container.encode($0.1, forKey: .init($0.0))
         }
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
     }
     
@@ -262,31 +262,33 @@ private struct DimensionLabels: MetricLabels {
         return dimensions.map { $0.0 }.joined(separator: "-")
     }
     
-    static func == (lhs: DimensionLabels, rhs: DimensionLabels) -> Bool {
+    public static func == (lhs: DimensionLabels, rhs: DimensionLabels) -> Bool {
         return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"}
     }
 }
 
 /// Helper for dimensions
-private struct DimensionHistogramLabels: HistogramLabels {
+/// swift-metrics api doesn't allow setting buckets explicitly.
+/// If default buckets don't fit, this Labels implementation is a nice default to create Prometheus metric types wtih
+public struct DimensionHistogramLabels: HistogramLabels {
     /// Bucket
-    var le: String
+    public var le: String
     /// Dimensions
     let dimensions: [(String, String)]
     
     /// Empty init
-    init() {
+    public init() {
         self.le = ""
         self.dimensions = []
     }
     
     /// Init with dimensions
-    init(_ dimensions: [(String, String)]) {
+    public init(_ dimensions: [(String, String)]) {
         self.le = ""
         self.dimensions = dimensions
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
         try self.dimensions.forEach {
             try container.encode($0.1, forKey: .init($0.0))
@@ -294,7 +296,7 @@ private struct DimensionHistogramLabels: HistogramLabels {
         try container.encode(le, forKey: .init("le"))
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
         hasher.combine(le)
     }
@@ -303,31 +305,31 @@ private struct DimensionHistogramLabels: HistogramLabels {
         return dimensions.map { $0.0 }.joined(separator: "-")
     }
     
-    static func == (lhs: DimensionHistogramLabels, rhs: DimensionHistogramLabels) -> Bool {
+    public static func == (lhs: DimensionHistogramLabels, rhs: DimensionHistogramLabels) -> Bool {
         return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"} && rhs.le == lhs.le
     }
 }
 
 /// Helper for dimensions
-private struct DimensionSummaryLabels: SummaryLabels {
+public struct DimensionSummaryLabels: SummaryLabels {
     /// Quantile
-    var quantile: String
+    public var quantile: String
     /// Dimensions
     let dimensions: [(String, String)]
     
     /// Empty init
-    init() {
+    public init() {
         self.quantile = ""
         self.dimensions = []
     }
     
     /// Init with dimensions
-    init(_ dimensions: [(String, String)]) {
+    public init(_ dimensions: [(String, String)]) {
         self.quantile = ""
         self.dimensions = dimensions
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
         try self.dimensions.forEach {
             try container.encode($0.1, forKey: .init($0.0))
@@ -335,7 +337,7 @@ private struct DimensionSummaryLabels: SummaryLabels {
         try container.encode(quantile, forKey: .init("quantile"))
     }
     
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
         hasher.combine(quantile)
     }
@@ -344,7 +346,7 @@ private struct DimensionSummaryLabels: SummaryLabels {
         return dimensions.map { $0.0 }.joined(separator: "-")
     }
     
-    static func == (lhs: DimensionSummaryLabels, rhs: DimensionSummaryLabels) -> Bool {
+    public static func == (lhs: DimensionSummaryLabels, rhs: DimensionSummaryLabels) -> Bool {
         return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"} && rhs.quantile == lhs.quantile
     }
 }
