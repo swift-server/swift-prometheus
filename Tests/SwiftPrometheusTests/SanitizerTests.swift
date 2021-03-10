@@ -46,7 +46,7 @@ final class SanitizerTests: XCTestCase {
         prom.collect(into: promise)
         XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE test_counter counter
-        test_counter 10
+        test_counter 10\n
         """)
     }
 }
