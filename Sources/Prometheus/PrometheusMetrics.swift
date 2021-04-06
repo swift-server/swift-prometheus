@@ -64,6 +64,37 @@ private class MetricsHistogram: RecorderHandler {
     }
 }
 
+/// This is a `swift-metrics` timer backed by a Prometheus' `PromHistogram` implementation.
+/// This is superior to `Summary` backed timer as `Summary` emits a set of quantiles, which will be impossible to correctly aggregate when one wants to render a percentile for a set of multiple instances.
+/// `Histogram` aggregation is possible with some fancy server-side math.
+class MetricsHistogramTimer: TimerHandler {
+    let histogram: PromHistogram<Int64, DimensionHistogramLabels>
+    let labels: DimensionHistogramLabels?
+    // this class is a lightweight wrapper around heavy prometheus metric type. This class is not cached and each time
+    // created anew. This allows us to use variable timeUnit without locking.
+    var timeUnit: TimeUnit?
+
+    init(histogram: PromHistogram<Int64, DimensionHistogramLabels>, dimensions: [(String, String)]) {
+        self.histogram = histogram
+        if !dimensions.isEmpty {
+            self.labels = DimensionHistogramLabels(dimensions)
+        } else {
+            self.labels = nil
+        }
+    }
+
+    // this is questionable as display unit here affects how the data is stored, and not how it's observed.
+    // should we delete it and tell preferDisplayUnit is not supported?
+    func preferDisplayUnit(_ unit: TimeUnit) {
+        self.timeUnit = unit
+    }
+
+    func recordNanoseconds(_ duration: Int64) {
+        // histogram can't be configured with timeUnits, so we have to modify incoming data
+        histogram.observe(duration / Int64(timeUnit?.scaleFromNanoseconds ?? 1), labels)
+    }
+}
+
 private class MetricsSummary: TimerHandler {
     let summary: PromSummary<Int64, DimensionSummaryLabels>
     let labels: DimensionSummaryLabels?
@@ -94,7 +125,7 @@ private class MetricsSummary: TimerHandler {
 ///     let sanitizer: LabelSanitizer = ...
 ///     let prometheusLabel = sanitizer.sanitize(nonPrometheusLabel)
 ///
-/// By default `PrometheusLabelSanitizer` is used by `PrometheusClient`
+/// By default `PrometheusLabelSanitizer` is used by `PrometheusMetricsFactory`
 public protocol LabelSanitizer {
     /// Sanitize the passed in label to a Prometheus accepted value.
     ///
@@ -121,73 +152,116 @@ public struct PrometheusLabelSanitizer: LabelSanitizer {
     }
 }
 
-extension PrometheusClient: MetricsFactory {
+public enum PrometheusTimerImplementation {
+    case summary(defaultQuantiles: [Double] = Prometheus.defaultQuantiles)
+    case histogram(defaultBuckets: Buckets = Buckets.defaultBuckets)
+}
+
+public struct PrometheusMetricsFactory: MetricsFactory {
+
+    /// Prometheus client to bridge swift-metrics API to.
+    private let prometheusClient: PrometheusClient
+
+    private let configuration: PrometheusMetricsConfiguration
+
+    public init(prometheusClient: PrometheusClient,
+                configuration: PrometheusMetricsConfiguration = PrometheusMetricsConfiguration()) {
+        self.prometheusClient = prometheusClient
+        self.configuration = configuration
+    }
+
     public func destroyCounter(_ handler: CounterHandler) {
         guard let handler = handler as? MetricsCounter else { return }
-        self.removeMetric(handler.counter)
+        prometheusClient.removeMetric(handler.counter)
     }
     
     public func destroyRecorder(_ handler: RecorderHandler) {
         if let handler = handler as? MetricsGauge {
-            self.removeMetric(handler.gauge)
+            prometheusClient.removeMetric(handler.gauge)
         }
         if let handler = handler as? MetricsHistogram {
-            self.removeMetric(handler.histogram)
+            prometheusClient.removeMetric(handler.histogram)
         }
     }
-    
+
     public func destroyTimer(_ handler: TimerHandler) {
-        guard let handler = handler as? MetricsSummary else { return }
-        self.removeMetric(handler.summary)
+        switch self.configuration.timerImplementation {
+        case .summary:
+            guard let handler = handler as? MetricsSummary else { return }
+            prometheusClient.removeMetric(handler.summary)
+        case .histogram:
+            guard let handler = handler as? MetricsHistogramTimer else { return }
+            prometheusClient.removeMetric(handler.histogram)
+        }
     }
     
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
-        let label = self.sanitizer.sanitize(label)
+        let label = configuration.labelSanitizer.sanitize(label)
         let createHandler = { (counter: PromCounter) -> CounterHandler in
             return MetricsCounter(counter: counter, dimensions: dimensions)
         }
-        if let counter: PromCounter<Int64, DimensionLabels> = self.getMetricInstance(with: label, andType: .counter) {
+        if let counter: PromCounter<Int64, DimensionLabels> = prometheusClient.getMetricInstance(with: label, andType: .counter) {
             return createHandler(counter)
         }
-        return createHandler(self.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self))
+        return createHandler(prometheusClient.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self))
     }
     
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
-        let label = self.sanitizer.sanitize(label)
+        let label = configuration.labelSanitizer.sanitize(label)
         return aggregate ? makeHistogram(label: label, dimensions: dimensions) : makeGauge(label: label, dimensions: dimensions)
     }
     
     private func makeGauge(label: String, dimensions: [(String, String)]) -> RecorderHandler {
-        let label = self.sanitizer.sanitize(label)
+        let label = configuration.labelSanitizer.sanitize(label)
         let createHandler = { (gauge: PromGauge) -> RecorderHandler in
             return MetricsGauge(gauge: gauge, dimensions: dimensions)
         }
-        if let gauge: PromGauge<Double, DimensionLabels> = self.getMetricInstance(with: label, andType: .gauge) {
+        if let gauge: PromGauge<Double, DimensionLabels> = prometheusClient.getMetricInstance(with: label, andType: .gauge) {
             return createHandler(gauge)
         }
-        return createHandler(createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self))
+        return createHandler(prometheusClient.createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self))
     }
     
     private func makeHistogram(label: String, dimensions: [(String, String)]) -> RecorderHandler {
-        let label = self.sanitizer.sanitize(label)
+        let label = configuration.labelSanitizer.sanitize(label)
         let createHandler = { (histogram: PromHistogram) -> RecorderHandler in
             return MetricsHistogram(histogram: histogram, dimensions: dimensions)
         }
-        if let histogram: PromHistogram<Double, DimensionHistogramLabels> = self.getMetricInstance(with: label, andType: .histogram) {
+        if let histogram: PromHistogram<Double, DimensionHistogramLabels> = prometheusClient.getMetricInstance(with: label, andType: .histogram) {
             return createHandler(histogram)
         }
-        return createHandler(createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self))
+        return createHandler(prometheusClient.createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self))
     }
     
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
-        let label = self.sanitizer.sanitize(label)
+        switch configuration.timerImplementation {
+        case .summary(let quantiles):
+            return self.makeSummaryTimer(label: label, dimensions: dimensions, quantiles: quantiles)
+        case .histogram(let buckets):
+            return self.makeHistogramTimer(label: label, dimensions: dimensions, buckets: buckets)
+        }
+    }
+
+    private func makeSummaryTimer(label: String, dimensions: [(String, String)], quantiles: [Double]) -> TimerHandler {
+        let label = configuration.labelSanitizer.sanitize(label)
         let createHandler = { (summary: PromSummary) -> TimerHandler in
             return MetricsSummary(summary: summary, dimensions: dimensions)
         }
-        if let summary: PromSummary<Int64, DimensionSummaryLabels> = self.getMetricInstance(with: label, andType: .summary) {
+        if let summary: PromSummary<Int64, DimensionSummaryLabels> = prometheusClient.getMetricInstance(with: label, andType: .summary) {
             return createHandler(summary)
         }
-        return createHandler(createSummary(forType: Int64.self, named: label, labels: DimensionSummaryLabels.self))
+        return createHandler(prometheusClient.createSummary(forType: Int64.self, named: label, quantiles: quantiles, labels: DimensionSummaryLabels.self))
+    }
+
+    private func makeHistogramTimer(label: String, dimensions: [(String, String)], buckets: Buckets) -> TimerHandler {
+        let createHandler = { (histogram: PromHistogram) -> TimerHandler in
+            MetricsHistogramTimer(histogram: histogram, dimensions: dimensions)
+        }
+        // PromHistogram should be reused when created for the same label, so we try to look it up
+        if let histogram: PromHistogram<Int64, DimensionHistogramLabels> = prometheusClient.getMetricInstance(with: label, andType: .histogram) {
+            return createHandler(histogram)
+        }
+        return createHandler(prometheusClient.createHistogram(forType: Int64.self, named: label, buckets: buckets, labels: DimensionHistogramLabels.self))
     }
 }
 

@@ -4,7 +4,7 @@ import NIO
 
 let myProm = PrometheusClient()
 
-MetricsSystem.bootstrap(myProm)
+MetricsSystem.bootstrap(PrometheusMetricsFactory(prometheusClient: myProm))
 
 for _ in 0...Int.random(in: 10...100) {
     let c = Counter(label: "test")

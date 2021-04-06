@@ -14,7 +14,7 @@ final class PrometheusMetricsTests: XCTestCase {
     override func setUp() {
         self.prom = PrometheusClient()
         self.group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        MetricsSystem.bootstrapInternal(prom)
+        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(prometheusClient: prom))
     }
     
     override func tearDown() {
@@ -144,5 +144,67 @@ final class PrometheusMetricsTests: XCTestCase {
             # TYPE my_gauge gauge
             my_gauge 100.0\n
             """)
+    }
+
+    func testHistogramBackedTimer() {
+        let prom = PrometheusClient()
+        var config = PrometheusMetricsConfiguration()
+        config.timerImplementation = .histogram()
+        let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom, configuration: config)
+        metricsFactory.makeTimer(label: "duration_nanos", dimensions: []).recordNanoseconds(1)
+        guard let histogram: PromHistogram<Int64, DimensionHistogramLabels> = prom.getMetricInstance(with: "duration_nanos", andType: .histogram) else {
+            XCTFail("Timer should be backed by Histogram")
+            return
+        }
+        let result = histogram.collect()
+        let buckets = result.split(separator: "\n").filter { $0.contains("duration_nanos_bucket") }
+        // we should have 64 buckets for histogram without labels
+        XCTAssertFalse(buckets.isEmpty, "default histogram backed timer buckets")
+    }
+
+    func testHistogramBackedTimer_scaleFromNanoseconds() {
+        let prom = PrometheusClient()
+        var config = PrometheusMetricsConfiguration()
+        config.timerImplementation = .histogram()
+        let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom, configuration: config)
+        let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
+        timer.preferDisplayUnit(.microseconds)
+        timer.recordNanoseconds(1)
+        guard let histogram: PromHistogram<Int64, DimensionHistogramLabels> = prom.getMetricInstance(with: "duration_nanos", andType: .histogram) else {
+            XCTFail("Timer should be backed by Histogram")
+            return
+        }
+        let result = histogram.collect()
+        let buckets = result.split(separator: "\n").filter { $0.contains("duration_nanos_bucket") }
+        // we should have 64 buckets for histogram without labels
+        XCTAssertFalse(buckets.isEmpty, "default histogram backed timer buckets")
+
+        result.split(separator: "\n").filter { $0.contains("duration_nanos_bucket") }.forEach {
+            // every bucket getting the value would mean that incoming value of 1000 nanos was scaled to 1 microsecond
+            XCTAssertTrue($0.hasSuffix(" 1"))
+        }
+    }
+
+    func testDestroyHistogramTimer() {
+        let prom = PrometheusClient()
+        var config = PrometheusMetricsConfiguration()
+        config.timerImplementation = .histogram()
+        let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom, configuration: config)
+        let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
+        timer.recordNanoseconds(1)
+        metricsFactory.destroyTimer(timer)
+        let histogram: PromHistogram<Int64, DimensionHistogramLabels>? = prom.getMetricInstance(with: "duration_nanos", andType: .histogram)
+        XCTAssertNil(histogram)
+    }
+    func testDestroySummaryTimer() {
+        let prom = PrometheusClient()
+        var config = PrometheusMetricsConfiguration()
+        config.timerImplementation = .summary()
+        let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom)
+        let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
+        timer.recordNanoseconds(1)
+        metricsFactory.destroyTimer(timer)
+        let summary: PromSummary<Int64, DimensionSummaryLabels>? = prom.getMetricInstance(with: "duration_nanos", andType: .summary)
+        XCTAssertNil(summary)
     }
 }

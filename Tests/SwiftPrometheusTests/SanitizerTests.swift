@@ -38,7 +38,7 @@ final class SanitizerTests: XCTestCase {
     
     func testIntegratedSanitizer() throws {
         let prom = PrometheusClient()
-        MetricsSystem.bootstrapInternal(prom)
+        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(prometheusClient: prom))
         
         CoreMetrics.Counter(label: "Test.Counter").increment(by: 10)
         
