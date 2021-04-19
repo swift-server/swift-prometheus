@@ -152,20 +152,19 @@ public struct PrometheusLabelSanitizer: LabelSanitizer {
     }
 }
 
-public enum PrometheusTimerImplementation {
-    case summary(defaultQuantiles: [Double] = Prometheus.defaultQuantiles)
-    case histogram(defaultBuckets: Buckets = Buckets.defaultBuckets)
-}
-
+/// A bridge between PrometheusClient and swift-metrics. Prometheus types don't map perfectly on swift-metrics API,
+/// which makes bridge implementation non trivial. This class defines how exactly swift-metrics types should be backed
+/// with Prometheus types, e.g. how to sanitize labels, what buckets/quantiles to use for recorder/timer, etc.
 public struct PrometheusMetricsFactory: MetricsFactory {
 
     /// Prometheus client to bridge swift-metrics API to.
     private let prometheusClient: PrometheusClient
 
-    private let configuration: PrometheusMetricsConfiguration
+    /// Bridge configuration.
+    private let configuration: PrometheusMetricsFactory.Configuration
 
     public init(prometheusClient: PrometheusClient,
-                configuration: PrometheusMetricsConfiguration = PrometheusMetricsConfiguration()) {
+                configuration: PrometheusMetricsFactory.Configuration = PrometheusMetricsFactory.Configuration()) {
         self.prometheusClient = prometheusClient
         self.configuration = configuration
     }
@@ -185,7 +184,7 @@ public struct PrometheusMetricsFactory: MetricsFactory {
     }
 
     public func destroyTimer(_ handler: TimerHandler) {
-        switch self.configuration.timerImplementation {
+        switch self.configuration.timerImplementation._wrapped {
         case .summary:
             guard let handler = handler as? MetricsSummary else { return }
             prometheusClient.removeMetric(handler.summary)
@@ -234,7 +233,7 @@ public struct PrometheusMetricsFactory: MetricsFactory {
     }
     
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
-        switch configuration.timerImplementation {
+        switch configuration.timerImplementation._wrapped {
         case .summary(let quantiles):
             return self.makeSummaryTimer(label: label, dimensions: dimensions, quantiles: quantiles)
         case .histogram(let buckets):
@@ -242,6 +241,8 @@ public struct PrometheusMetricsFactory: MetricsFactory {
         }
     }
 
+    /// There's two different ways to back swift-api `Timer` with Prometheus classes.
+    /// This method creates `Summary` backed timer implementation
     private func makeSummaryTimer(label: String, dimensions: [(String, String)], quantiles: [Double]) -> TimerHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let createHandler = { (summary: PromSummary) -> TimerHandler in
@@ -253,6 +254,8 @@ public struct PrometheusMetricsFactory: MetricsFactory {
         return createHandler(prometheusClient.createSummary(forType: Int64.self, named: label, quantiles: quantiles, labels: DimensionSummaryLabels.self))
     }
 
+    /// There's two different ways to back swift-api `Timer` with Prometheus classes.
+    /// This method creates `Histogram` backed timer implementation
     private func makeHistogramTimer(label: String, dimensions: [(String, String)], buckets: Buckets) -> TimerHandler {
         let createHandler = { (histogram: PromHistogram) -> TimerHandler in
             MetricsHistogramTimer(histogram: histogram, dimensions: dimensions)

@@ -148,7 +148,7 @@ final class PrometheusMetricsTests: XCTestCase {
 
     func testHistogramBackedTimer() {
         let prom = PrometheusClient()
-        var config = PrometheusMetricsConfiguration()
+        var config = PrometheusMetricsFactory.Configuration()
         config.timerImplementation = .histogram()
         let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom, configuration: config)
         metricsFactory.makeTimer(label: "duration_nanos", dimensions: []).recordNanoseconds(1)
@@ -164,7 +164,7 @@ final class PrometheusMetricsTests: XCTestCase {
 
     func testHistogramBackedTimer_scaleFromNanoseconds() {
         let prom = PrometheusClient()
-        var config = PrometheusMetricsConfiguration()
+        var config = PrometheusMetricsFactory.Configuration()
         config.timerImplementation = .histogram()
         let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom, configuration: config)
         let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
@@ -187,7 +187,7 @@ final class PrometheusMetricsTests: XCTestCase {
 
     func testDestroyHistogramTimer() {
         let prom = PrometheusClient()
-        var config = PrometheusMetricsConfiguration()
+        var config = PrometheusMetricsFactory.Configuration()
         config.timerImplementation = .histogram()
         let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom, configuration: config)
         let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
@@ -198,7 +198,7 @@ final class PrometheusMetricsTests: XCTestCase {
     }
     func testDestroySummaryTimer() {
         let prom = PrometheusClient()
-        var config = PrometheusMetricsConfiguration()
+        var config = PrometheusMetricsFactory.Configuration()
         config.timerImplementation = .summary()
         let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom)
         let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
