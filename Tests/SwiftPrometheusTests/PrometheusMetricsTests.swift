@@ -14,7 +14,7 @@ final class PrometheusMetricsTests: XCTestCase {
     override func setUp() {
         self.prom = PrometheusClient()
         self.group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(prometheusClient: prom))
+        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(client: prom))
     }
     
     override func tearDown() {
@@ -150,7 +150,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let prom = PrometheusClient()
         var config = PrometheusMetricsFactory.Configuration()
         config.timerImplementation = .histogram()
-        let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom, configuration: config)
+        let metricsFactory = PrometheusMetricsFactory(client: prom, configuration: config)
         metricsFactory.makeTimer(label: "duration_nanos", dimensions: []).recordNanoseconds(1)
         guard let histogram: PromHistogram<Int64, DimensionHistogramLabels> = prom.getMetricInstance(with: "duration_nanos", andType: .histogram) else {
             XCTFail("Timer should be backed by Histogram")
@@ -166,7 +166,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let prom = PrometheusClient()
         var config = PrometheusMetricsFactory.Configuration()
         config.timerImplementation = .histogram()
-        let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom, configuration: config)
+        let metricsFactory = PrometheusMetricsFactory(client: prom, configuration: config)
         let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
         timer.preferDisplayUnit(.microseconds)
         timer.recordNanoseconds(1)
@@ -189,7 +189,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let prom = PrometheusClient()
         var config = PrometheusMetricsFactory.Configuration()
         config.timerImplementation = .histogram()
-        let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom, configuration: config)
+        let metricsFactory = PrometheusMetricsFactory(client: prom, configuration: config)
         let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
         timer.recordNanoseconds(1)
         metricsFactory.destroyTimer(timer)
@@ -200,7 +200,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let prom = PrometheusClient()
         var config = PrometheusMetricsFactory.Configuration()
         config.timerImplementation = .summary()
-        let metricsFactory = PrometheusMetricsFactory(prometheusClient: prom)
+        let metricsFactory = PrometheusMetricsFactory(client: prom)
         let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
         timer.recordNanoseconds(1)
         metricsFactory.destroyTimer(timer)

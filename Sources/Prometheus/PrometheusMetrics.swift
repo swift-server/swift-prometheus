@@ -158,28 +158,28 @@ public struct PrometheusLabelSanitizer: LabelSanitizer {
 public struct PrometheusMetricsFactory: MetricsFactory {
 
     /// Prometheus client to bridge swift-metrics API to.
-    private let prometheusClient: PrometheusClient
+    private let client: PrometheusClient
 
     /// Bridge configuration.
-    private let configuration: PrometheusMetricsFactory.Configuration
+    private let configuration: Configuration
 
-    public init(prometheusClient: PrometheusClient,
-                configuration: PrometheusMetricsFactory.Configuration = PrometheusMetricsFactory.Configuration()) {
-        self.prometheusClient = prometheusClient
+    public init(client: PrometheusClient,
+                configuration: Configuration = Configuration()) {
+        self.client = client
         self.configuration = configuration
     }
 
     public func destroyCounter(_ handler: CounterHandler) {
         guard let handler = handler as? MetricsCounter else { return }
-        prometheusClient.removeMetric(handler.counter)
+        client.removeMetric(handler.counter)
     }
     
     public func destroyRecorder(_ handler: RecorderHandler) {
         if let handler = handler as? MetricsGauge {
-            prometheusClient.removeMetric(handler.gauge)
+            client.removeMetric(handler.gauge)
         }
         if let handler = handler as? MetricsHistogram {
-            prometheusClient.removeMetric(handler.histogram)
+            client.removeMetric(handler.histogram)
         }
     }
 
@@ -187,10 +187,10 @@ public struct PrometheusMetricsFactory: MetricsFactory {
         switch self.configuration.timerImplementation._wrapped {
         case .summary:
             guard let handler = handler as? MetricsSummary else { return }
-            prometheusClient.removeMetric(handler.summary)
+            client.removeMetric(handler.summary)
         case .histogram:
             guard let handler = handler as? MetricsHistogramTimer else { return }
-            prometheusClient.removeMetric(handler.histogram)
+            client.removeMetric(handler.histogram)
         }
     }
     
@@ -199,10 +199,10 @@ public struct PrometheusMetricsFactory: MetricsFactory {
         let createHandler = { (counter: PromCounter) -> CounterHandler in
             return MetricsCounter(counter: counter, dimensions: dimensions)
         }
-        if let counter: PromCounter<Int64, DimensionLabels> = prometheusClient.getMetricInstance(with: label, andType: .counter) {
+        if let counter: PromCounter<Int64, DimensionLabels> = client.getMetricInstance(with: label, andType: .counter) {
             return createHandler(counter)
         }
-        return createHandler(prometheusClient.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self))
+        return createHandler(client.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self))
     }
     
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
@@ -215,10 +215,10 @@ public struct PrometheusMetricsFactory: MetricsFactory {
         let createHandler = { (gauge: PromGauge) -> RecorderHandler in
             return MetricsGauge(gauge: gauge, dimensions: dimensions)
         }
-        if let gauge: PromGauge<Double, DimensionLabels> = prometheusClient.getMetricInstance(with: label, andType: .gauge) {
+        if let gauge: PromGauge<Double, DimensionLabels> = client.getMetricInstance(with: label, andType: .gauge) {
             return createHandler(gauge)
         }
-        return createHandler(prometheusClient.createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self))
+        return createHandler(client.createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self))
     }
     
     private func makeHistogram(label: String, dimensions: [(String, String)]) -> RecorderHandler {
@@ -226,10 +226,10 @@ public struct PrometheusMetricsFactory: MetricsFactory {
         let createHandler = { (histogram: PromHistogram) -> RecorderHandler in
             return MetricsHistogram(histogram: histogram, dimensions: dimensions)
         }
-        if let histogram: PromHistogram<Double, DimensionHistogramLabels> = prometheusClient.getMetricInstance(with: label, andType: .histogram) {
+        if let histogram: PromHistogram<Double, DimensionHistogramLabels> = client.getMetricInstance(with: label, andType: .histogram) {
             return createHandler(histogram)
         }
-        return createHandler(prometheusClient.createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self))
+        return createHandler(client.createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self))
     }
     
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
@@ -248,10 +248,10 @@ public struct PrometheusMetricsFactory: MetricsFactory {
         let createHandler = { (summary: PromSummary) -> TimerHandler in
             return MetricsSummary(summary: summary, dimensions: dimensions)
         }
-        if let summary: PromSummary<Int64, DimensionSummaryLabels> = prometheusClient.getMetricInstance(with: label, andType: .summary) {
+        if let summary: PromSummary<Int64, DimensionSummaryLabels> = client.getMetricInstance(with: label, andType: .summary) {
             return createHandler(summary)
         }
-        return createHandler(prometheusClient.createSummary(forType: Int64.self, named: label, quantiles: quantiles, labels: DimensionSummaryLabels.self))
+        return createHandler(client.createSummary(forType: Int64.self, named: label, quantiles: quantiles, labels: DimensionSummaryLabels.self))
     }
 
     /// There's two different ways to back swift-api `Timer` with Prometheus classes.
@@ -261,10 +261,10 @@ public struct PrometheusMetricsFactory: MetricsFactory {
             MetricsHistogramTimer(histogram: histogram, dimensions: dimensions)
         }
         // PromHistogram should be reused when created for the same label, so we try to look it up
-        if let histogram: PromHistogram<Int64, DimensionHistogramLabels> = prometheusClient.getMetricInstance(with: label, andType: .histogram) {
+        if let histogram: PromHistogram<Int64, DimensionHistogramLabels> = client.getMetricInstance(with: label, andType: .histogram) {
             return createHandler(histogram)
         }
-        return createHandler(prometheusClient.createHistogram(forType: Int64.self, named: label, buckets: buckets, labels: DimensionHistogramLabels.self))
+        return createHandler(client.createHistogram(forType: Int64.self, named: label, buckets: buckets, labels: DimensionHistogramLabels.self))
     }
 }
 
