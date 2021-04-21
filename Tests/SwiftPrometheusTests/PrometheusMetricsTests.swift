@@ -158,7 +158,6 @@ final class PrometheusMetricsTests: XCTestCase {
         }
         let result = histogram.collect()
         let buckets = result.split(separator: "\n").filter { $0.contains("duration_nanos_bucket") }
-        // we should have 64 buckets for histogram without labels
         XCTAssertFalse(buckets.isEmpty, "default histogram backed timer buckets")
     }
 
@@ -169,18 +168,18 @@ final class PrometheusMetricsTests: XCTestCase {
         let metricsFactory = PrometheusMetricsFactory(client: prom, configuration: config)
         let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
         timer.preferDisplayUnit(.microseconds)
-        timer.recordNanoseconds(1)
+        // 1 microsecond
+        timer.recordNanoseconds(1000)
         guard let histogram: PromHistogram<Int64, DimensionHistogramLabels> = prom.getMetricInstance(with: "duration_nanos", andType: .histogram) else {
             XCTFail("Timer should be backed by Histogram")
             return
         }
         let result = histogram.collect()
         let buckets = result.split(separator: "\n").filter { $0.contains("duration_nanos_bucket") }
-        // we should have 64 buckets for histogram without labels
         XCTAssertFalse(buckets.isEmpty, "default histogram backed timer buckets")
 
-        result.split(separator: "\n").filter { $0.contains("duration_nanos_bucket") }.forEach {
-            // every bucket getting the value would mean that incoming value of 1000 nanos was scaled to 1 microsecond
+        result.split(separator: "\n").filter { $0.contains("duration_nanos_sum") }.forEach {
+            // histogram sum having value of 1 would mean 1000 nanos was scaled to 1 microsecond
             XCTAssertTrue($0.hasSuffix(" 1"))
         }
     }
