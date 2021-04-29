@@ -64,15 +64,9 @@ private class MetricsHistogram: RecorderHandler {
     }
 }
 
-/// This is a `swift-metrics` timer backed by a Prometheus' `PromHistogram` implementation.
-/// This is superior to `Summary` backed timer as `Summary` emits a set of quantiles, which will be impossible to correctly aggregate when one wants to render a percentile for a set of multiple instances.
-/// `Histogram` aggregation is possible with some fancy server-side math.
 class MetricsHistogramTimer: TimerHandler {
     let histogram: PromHistogram<Int64, DimensionHistogramLabels>
     let labels: DimensionHistogramLabels?
-    // this class is a lightweight wrapper around heavy prometheus metric type. This class is not cached and each time
-    // created anew. This allows us to use variable timeUnit without locking.
-    var timeUnit: TimeUnit?
 
     init(histogram: PromHistogram<Int64, DimensionHistogramLabels>, dimensions: [(String, String)]) {
         self.histogram = histogram
@@ -83,15 +77,8 @@ class MetricsHistogramTimer: TimerHandler {
         }
     }
 
-    // this is questionable as display unit here affects how the data is stored, and not how it's observed.
-    // should we delete it and tell preferDisplayUnit is not supported?
-    func preferDisplayUnit(_ unit: TimeUnit) {
-        self.timeUnit = unit
-    }
-
     func recordNanoseconds(_ duration: Int64) {
-        // histogram can't be configured with timeUnits, so we have to modify incoming data
-        histogram.observe(duration / Int64(timeUnit?.scaleFromNanoseconds ?? 1), labels)
+        return histogram.observe(duration, labels)
     }
 }
 
@@ -113,7 +100,7 @@ private class MetricsSummary: TimerHandler {
     }
     
     func recordNanoseconds(_ duration: Int64) {
-        summary.observe(duration, labels)
+        return summary.observe(duration, labels)
     }
 }
 

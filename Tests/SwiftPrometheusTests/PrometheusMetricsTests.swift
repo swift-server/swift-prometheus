@@ -161,29 +161,6 @@ final class PrometheusMetricsTests: XCTestCase {
         XCTAssertFalse(buckets.isEmpty, "default histogram backed timer buckets")
     }
 
-    func testHistogramBackedTimer_scaleFromNanoseconds() {
-        let prom = PrometheusClient()
-        var config = PrometheusMetricsFactory.Configuration()
-        config.timerImplementation = .histogram()
-        let metricsFactory = PrometheusMetricsFactory(client: prom, configuration: config)
-        let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
-        timer.preferDisplayUnit(.microseconds)
-        // 1 microsecond
-        timer.recordNanoseconds(1000)
-        guard let histogram: PromHistogram<Int64, DimensionHistogramLabels> = prom.getMetricInstance(with: "duration_nanos", andType: .histogram) else {
-            XCTFail("Timer should be backed by Histogram")
-            return
-        }
-        let result = histogram.collect()
-        let buckets = result.split(separator: "\n").filter { $0.contains("duration_nanos_bucket") }
-        XCTAssertFalse(buckets.isEmpty, "default histogram backed timer buckets")
-
-        result.split(separator: "\n").filter { $0.contains("duration_nanos_sum") }.forEach {
-            // histogram sum having value of 1 would mean 1000 nanos was scaled to 1 microsecond
-            XCTAssertTrue($0.hasSuffix(" 1"))
-        }
-    }
-
     func testDestroyHistogramTimer() {
         let prom = PrometheusClient()
         var config = PrometheusMetricsFactory.Configuration()

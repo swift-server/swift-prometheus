@@ -13,11 +13,11 @@ extension PrometheusMetricsFactory {
         }
 
         public static func summary(defaultQuantiles: [Double] = Prometheus.defaultQuantiles) -> TimerImplementation {
-            TimerImplementation(.summary(defaultQuantiles: defaultQuantiles))
+            return TimerImplementation(.summary(defaultQuantiles: defaultQuantiles))
         }
 
         public static func histogram(defaultBuckets: Buckets = Buckets.defaultBuckets) -> TimerImplementation {
-            TimerImplementation(.histogram(defaultBuckets: defaultBuckets))
+            return TimerImplementation(.histogram(defaultBuckets: defaultBuckets))
         }
     }
 
@@ -32,14 +32,14 @@ extension PrometheusMetricsFactory {
         public var timerImplementation: PrometheusMetricsFactory.TimerImplementation
 
         /// Default buckets for `Recorder` with aggregation.
-        public var defaultHistogramBuckets: Buckets
+        public var defaultRecorderBuckets: Buckets
 
         public init(labelSanitizer: LabelSanitizer = PrometheusLabelSanitizer(),
                     timerImplementation: PrometheusMetricsFactory.TimerImplementation = .summary(),
-                    defaultHistogramBuckets: Buckets = .defaultBuckets) {
+                    defaultRecorderBuckets: Buckets = .defaultBuckets) {
             self.labelSanitizer = labelSanitizer
             self.timerImplementation = timerImplementation
-            self.defaultHistogramBuckets = defaultHistogramBuckets
+            self.defaultRecorderBuckets = defaultRecorderBuckets
         }
     }
 }
