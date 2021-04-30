@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>PromGauge Class Reference</title>
+    <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
+    <meta charset="utf-8">
+    <script src="../js/jquery.min.js" defer></script>
+    <script src="../js/jazzy.js" defer></script>
+    
+    <script src="../js/lunr.min.js" defer></script>
+    <script src="../js/typeahead.jquery.js" defer></script>
+    <script src="../js/jazzy.search.js" defer></script>
+  </head>
+  <body>
+
+    <a name="//apple_ref/swift/Class/PromGauge" class="dashAnchor"></a>
+
+    <a title="PromGauge Class Reference"></a>
+
+    <header class="header">
+      <p class="header-col header-col--primary">
+        <a class="header-link" href="../index.html">
+           Docs
+        </a>
+         (92% documented)
+      </p>
+    
+      <p class="header-col--secondary">
+        <form role="search" action="../search.json">
+          <input type="text" placeholder="Search documentation" data-typeahead>
+        </form>
+      </p>
+    
+        <p class="header-col header-col--secondary">
+          <a class="header-link" href="https://github.com/MrLotU/SwiftPrometheus">
+            <img class="header-icon" src="../img/gh.png"/>
+            View on GitHub
+          </a>
+        </p>
+    
+        <p class="header-col header-col--secondary">
+          <a class="header-link" href="dash-feed://https%3A%2F%2Fmrlotu%2Egithub%2Eio%2FSwiftPrometheus%2Fdocsets%2F%2Exml">
+            <img class="header-icon" src="../img/dash.png"/>
+            Install in Dash
+          </a>
+        </p>
+    </header>
+
+    <p class="breadcrumbs">
+      <a class="breadcrumb" href="../index.html"> Reference</a>
+      <img class="carat" src="../img/carat.png" />
+      PromGauge Class Reference
+    </p>
+
+    <div class="content-wrapper">
+      <nav class="navigation">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="../Classes.html">Classes</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Classes/PromCounter.html">PromCounter</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Classes/PromGauge.html">PromGauge</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Classes/PromHistogram.html">PromHistogram</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Classes/PromSummary.html">PromSummary</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Classes/PrometheusClient.html">PrometheusClient</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="../Enums.html">Enumerations</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Enums/PromMetricType.html">PromMetricType</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Enums/Prometheus.html">Prometheus</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Enums/PrometheusError.html">PrometheusError</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="../Extensions.html">Extensions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions/Double.html">Double</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions/FixedWidthInteger.html">FixedWidthInteger</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions/Float.html">Float</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:Si">Int</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s5Int16V">Int16</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s5Int32V">Int32</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s5Int64V">Int64</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s4Int8V">Int8</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions/MetricsSystem.html">MetricsSystem</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:Su">UInt</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s6UInt16V">UInt16</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s6UInt32V">UInt32</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s6UInt64V">UInt64</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s5UInt8V">UInt8</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="../Protocols.html">Protocols</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/ConvertibleNumberType.html">ConvertibleNumberType</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/DoubleRepresentable.html">DoubleRepresentable</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/HistogramLabels.html">HistogramLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/LabelSanitizer.html">LabelSanitizer</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/MetricLabels.html">MetricLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/PromMetric.html">PromMetric</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/SummaryLabels.html">SummaryLabels</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="../Structs.html">Structures</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/Buckets.html">Buckets</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/DimensionHistogramLabels.html">DimensionHistogramLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/DimensionLabels.html">DimensionLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/DimensionSummaryLabels.html">DimensionSummaryLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/EmptyHistogramLabels.html">EmptyHistogramLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/EmptyLabels.html">EmptyLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/EmptySummaryLabels.html">EmptySummaryLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/PrometheusLabelSanitizer.html">PrometheusLabelSanitizer</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/PrometheusMetricsFactory.html">PrometheusMetricsFactory</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/PrometheusMetricsFactory/TimerImplementation.html">– TimerImplementation</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/PrometheusMetricsFactory/Configuration.html">– Configuration</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+
+        <section class="section">
+          <div class="section-content top-matter">
+            <h1>PromGauge</h1>
+              <div class="declaration">
+                <div class="language">
+                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">class</span> <span class="kt">PromGauge</span><span class="o">&lt;</span><span class="kt">NumType</span><span class="p">,</span> <span class="kt">Labels</span><span class="o">&gt;</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/PromMetric.html">PromMetric</a></span><span class="p">,</span> <span class="kt">PrometheusHandled</span> <span class="k">where</span> <span class="kt">NumType</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/DoubleRepresentable.html">DoubleRepresentable</a></span><span class="p">,</span> <span class="kt">Labels</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/MetricLabels.html">MetricLabels</a></span></code></pre>
+
+                </div>
+              </div>
+            <p>Prometheus Gauge metric</p>
+
+<p>See <a href="https://prometheus.io/docs/concepts/metric_types/#gauge">https://prometheus.io/docs/concepts/metric_types/#gauge</a></p>
+
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-content">
+            <div class="task-group">
+              <ul class="item-container">
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC4nameSSvp"></a>
+                    <a name="//apple_ref/swift/Property/name" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC4nameSSvp">name</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Name of the Gauge, required</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L13">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC4helpSSSgvp"></a>
+                    <a name="//apple_ref/swift/Property/help" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC4helpSSSgvp">help</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Help text of the Gauge, optional</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">help</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L15">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC5_typeAA0B10MetricTypeOvp"></a>
+                    <a name="//apple_ref/swift/Property/_type" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC5_typeAA0B10MetricTypeOvp">_type</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Type of the metric, used for formatting</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">_type</span><span class="p">:</span> <span class="kt"><a href="../Enums/PromMetricType.html">PromMetricType</a></span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L18">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC7collectSSyF"></a>
+                    <a name="//apple_ref/swift/Method/collect()" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC7collectSSyF">collect()</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Gets the metric string for this Gauge</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">collect</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kt">String</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Newline separated Prometheus formatted metric string</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L53-L71">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC16setToCurrentTimeyxq_SgF"></a>
+                    <a name="//apple_ref/swift/Method/setToCurrentTime(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC16setToCurrentTimeyxq_SgF">setToCurrentTime(_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Sets the Gauge to the current unixtime in seconds</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">@discardableResult</span>
+<span class="kd">public</span> <span class="kd">func</span> <span class="nf">setToCurrentTime</span><span class="p">(</span><span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">NumType</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to attach to the value</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>The value of the Gauge attached to the provided labels</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L80-L82">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC15trackInProgressyqd__yKcq_Sg_qd__yKctlF"></a>
+                    <a name="//apple_ref/swift/Method/trackInProgress(_:_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC15trackInProgressyqd__yKcq_Sg_qd__yKctlF">trackInProgress(_:<wbr>_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Tracks in progress blocks of code or functions.</p>
+<pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">someFunc</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kt">String</span> <span class="p">{</span> <span class="k">return</span> <span class="s">"ABC"</span> <span class="p">}</span>
+<span class="k">let</span> <span class="nv">newFunc</span> <span class="o">=</span> <span class="n">myGauge</span><span class="o">.</span><span class="nf">trackInprogress</span><span class="p">(</span><span class="n">someFunc</span><span class="p">)</span>
+<span class="nf">newFunc</span><span class="p">()</span> <span class="c1">// returns "ABC" and increments &amp; decrements Gauge</span>
+</code></pre>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">@inlinable</span>
+<span class="kd">public</span> <span class="kd">func</span> <span class="n">trackInProgress</span><span class="o">&lt;</span><span class="kt">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span> <span class="n">_</span> <span class="nv">body</span><span class="p">:</span> <span class="kd">@escaping</span> <span class="p">()</span> <span class="k">throws</span> <span class="o">-&gt;</span> <span class="kt">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(()</span> <span class="k">throws</span> <span class="o">-&gt;</span> <span class="kt">T</span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to attach to the value</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>body</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Function to wrap progress tracker around</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>The same type of function passed in for <code>body</code>, but wrapped to track progress.</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L96-L104">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC4timeyqd__q_Sg_qd__yKctKlF"></a>
+                    <a name="//apple_ref/swift/Method/time(_:_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC4timeyqd__q_Sg_qd__yKctKlF">time(_:<wbr>_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Time the execution duration of a closure and observe the resulting time in seconds.</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">@inlinable</span>
+<span class="kd">public</span> <span class="kd">func</span> <span class="n">time</span><span class="o">&lt;</span><span class="kt">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span> <span class="n">_</span> <span class="nv">body</span><span class="p">:</span> <span class="kd">@escaping</span> <span class="p">()</span> <span class="k">throws</span> <span class="o">-&gt;</span> <span class="kt">T</span><span class="p">)</span> <span class="k">rethrows</span> <span class="o">-&gt;</span> <span class="kt">T</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to attach to the resulting value.</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>body</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Closure to run &amp; record execution time of.</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L111-L118">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC3setyxx_q_SgtF"></a>
+                    <a name="//apple_ref/swift/Method/set(_:_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC3setyxx_q_SgtF">set(_:<wbr>_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Sets the Gauge</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">@discardableResult</span>
+<span class="kd">public</span> <span class="kd">func</span> <span class="nf">set</span><span class="p">(</span><span class="n">_</span> <span class="nv">amount</span><span class="p">:</span> <span class="kt">NumType</span><span class="p">,</span> <span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">NumType</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>amount</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Amount to set the gauge to</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to attach to the value</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>The value of the Gauge attached to the provided labels</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L129-L139">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC3incyxx_q_SgtF"></a>
+                    <a name="//apple_ref/swift/Method/inc(_:_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC3incyxx_q_SgtF">inc(_:<wbr>_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Increments the Gauge</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">@discardableResult</span>
+<span class="kd">public</span> <span class="kd">func</span> <span class="nf">inc</span><span class="p">(</span><span class="n">_</span> <span class="nv">amount</span><span class="p">:</span> <span class="kt">NumType</span><span class="p">,</span> <span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">NumType</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>amount</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Amount to increment the Gauge with</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to attach to the value</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>The value of the Gauge attached to the provided labels</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L149-L161">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC3incyxq_SgF"></a>
+                    <a name="//apple_ref/swift/Method/inc(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC3incyxq_SgF">inc(_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Increments the Gauge</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">@discardableResult</span>
+<span class="kd">public</span> <span class="kd">func</span> <span class="nf">inc</span><span class="p">(</span><span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">NumType</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to attach to the value</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>The value of the Gauge attached to the provided labels</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L170-L172">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC3decyxx_q_SgtF"></a>
+                    <a name="//apple_ref/swift/Method/dec(_:_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC3decyxx_q_SgtF">dec(_:<wbr>_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Decrements the Gauge</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">@discardableResult</span>
+<span class="kd">public</span> <span class="kd">func</span> <span class="nf">dec</span><span class="p">(</span><span class="n">_</span> <span class="nv">amount</span><span class="p">:</span> <span class="kt">NumType</span><span class="p">,</span> <span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">NumType</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>amount</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Amount to decrement the Gauge with</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to attach to the value</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>The value of the Gauge attached to the provided labels</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L182-L194">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC3decyxq_SgF"></a>
+                    <a name="//apple_ref/swift/Method/dec(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC3decyxq_SgF">dec(_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Decrements the Gauge</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">@discardableResult</span>
+<span class="kd">public</span> <span class="kd">func</span> <span class="nf">dec</span><span class="p">(</span><span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">NumType</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to attach to the value</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>The value of the Gauge attached to the provided labels</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L203-L205">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus9PromGaugeC3getyxq_SgF"></a>
+                    <a name="//apple_ref/swift/Method/get(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus9PromGaugeC3getyxq_SgF">get(_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Gets the value of the Gauge</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">get</span><span class="p">(</span><span class="n">_</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">NumType</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to get the value for</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>The value of the Gauge attached to the provided labels</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Gauge.swift#L213-L221">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+      </article>
+    </div>
+    <section class="footer">
+      <p>&copy; 2021 <a class="link" href="https://github.com/MrLotU" target="_blank" rel="external">MrLotU</a>. All rights reserved. (Last updated: 2021-04-30)</p>
+      <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.13.3</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+    </section>
+  </body>
+</div>
+</html>

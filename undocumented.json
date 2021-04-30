@@ -1,0 +1,89 @@
+{
+  "warnings": [
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/MetricTypes/PromMetric.swift",
+      "line": 15,
+      "symbol": "Prometheus",
+      "symbol_kind": "source.lang.swift.decl.enum",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/Prometheus.swift",
+      "line": 71,
+      "symbol": "PrometheusClient.removeMetric(_:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/Prometheus.swift",
+      "line": 79,
+      "symbol": "PrometheusClient.getMetricInstance(with:andType:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/PrometheusMetrics.swift",
+      "line": 133,
+      "symbol": "PrometheusLabelSanitizer.init()",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/PrometheusMetrics.swift",
+      "line": 153,
+      "symbol": "PrometheusMetricsFactory.init(client:configuration:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/PrometheusMetrics.swift",
+      "line": 310,
+      "symbol": "DimensionLabels.init(_:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/PrometheusMetricsConfiguration.swift",
+      "line": 3,
+      "symbol": "PrometheusMetricsFactory.TimerImplementation",
+      "symbol_kind": "source.lang.swift.decl.struct",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/PrometheusMetricsConfiguration.swift",
+      "line": 15,
+      "symbol": "PrometheusMetricsFactory.TimerImplementation.summary(defaultQuantiles:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.static",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/PrometheusMetricsConfiguration.swift",
+      "line": 19,
+      "symbol": "PrometheusMetricsFactory.TimerImplementation.histogram(defaultBuckets:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.static",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/PrometheusMetricsConfiguration.swift",
+      "line": 37,
+      "symbol": "PrometheusMetricsFactory.Configuration.init(labelSanitizer:timerImplementation:defaultRecorderBuckets:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/Utils.swift",
+      "line": 63,
+      "symbol": "DoubleRepresentable.init(_:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    },
+    {
+      "file": "/Users/lotu/Documents/SwiftPrometheus/Sources/Prometheus/Utils.swift",
+      "line": 65,
+      "symbol": "DoubleRepresentable.init(_:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    }
+  ],
+  "source_directory": "/Users/lotu/Documents/SwiftPrometheus"
+}

@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>PrometheusClient Class Reference</title>
+    <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
+    <meta charset="utf-8">
+    <script src="../js/jquery.min.js" defer></script>
+    <script src="../js/jazzy.js" defer></script>
+    
+    <script src="../js/lunr.min.js" defer></script>
+    <script src="../js/typeahead.jquery.js" defer></script>
+    <script src="../js/jazzy.search.js" defer></script>
+  </head>
+  <body>
+
+    <a name="//apple_ref/swift/Class/PrometheusClient" class="dashAnchor"></a>
+
+    <a title="PrometheusClient Class Reference"></a>
+
+    <header class="header">
+      <p class="header-col header-col--primary">
+        <a class="header-link" href="../index.html">
+           Docs
+        </a>
+         (92% documented)
+      </p>
+    
+      <p class="header-col--secondary">
+        <form role="search" action="../search.json">
+          <input type="text" placeholder="Search documentation" data-typeahead>
+        </form>
+      </p>
+    
+        <p class="header-col header-col--secondary">
+          <a class="header-link" href="https://github.com/MrLotU/SwiftPrometheus">
+            <img class="header-icon" src="../img/gh.png"/>
+            View on GitHub
+          </a>
+        </p>
+    
+        <p class="header-col header-col--secondary">
+          <a class="header-link" href="dash-feed://https%3A%2F%2Fmrlotu%2Egithub%2Eio%2FSwiftPrometheus%2Fdocsets%2F%2Exml">
+            <img class="header-icon" src="../img/dash.png"/>
+            Install in Dash
+          </a>
+        </p>
+    </header>
+
+    <p class="breadcrumbs">
+      <a class="breadcrumb" href="../index.html"> Reference</a>
+      <img class="carat" src="../img/carat.png" />
+      PrometheusClient Class Reference
+    </p>
+
+    <div class="content-wrapper">
+      <nav class="navigation">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="../Classes.html">Classes</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Classes/PromCounter.html">PromCounter</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Classes/PromGauge.html">PromGauge</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Classes/PromHistogram.html">PromHistogram</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Classes/PromSummary.html">PromSummary</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Classes/PrometheusClient.html">PrometheusClient</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="../Enums.html">Enumerations</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Enums/PromMetricType.html">PromMetricType</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Enums/Prometheus.html">Prometheus</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Enums/PrometheusError.html">PrometheusError</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="../Extensions.html">Extensions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions/Double.html">Double</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions/FixedWidthInteger.html">FixedWidthInteger</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions/Float.html">Float</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:Si">Int</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s5Int16V">Int16</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s5Int32V">Int32</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s5Int64V">Int64</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s4Int8V">Int8</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions/MetricsSystem.html">MetricsSystem</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:Su">UInt</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s6UInt16V">UInt16</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s6UInt32V">UInt32</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s6UInt64V">UInt64</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Extensions.html#/s:s5UInt8V">UInt8</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="../Protocols.html">Protocols</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/ConvertibleNumberType.html">ConvertibleNumberType</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/DoubleRepresentable.html">DoubleRepresentable</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/HistogramLabels.html">HistogramLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/LabelSanitizer.html">LabelSanitizer</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/MetricLabels.html">MetricLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/PromMetric.html">PromMetric</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Protocols/SummaryLabels.html">SummaryLabels</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="../Structs.html">Structures</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/Buckets.html">Buckets</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/DimensionHistogramLabels.html">DimensionHistogramLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/DimensionLabels.html">DimensionLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/DimensionSummaryLabels.html">DimensionSummaryLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/EmptyHistogramLabels.html">EmptyHistogramLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/EmptyLabels.html">EmptyLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/EmptySummaryLabels.html">EmptySummaryLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/PrometheusLabelSanitizer.html">PrometheusLabelSanitizer</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/PrometheusMetricsFactory.html">PrometheusMetricsFactory</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/PrometheusMetricsFactory/TimerImplementation.html">– TimerImplementation</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="../Structs/PrometheusMetricsFactory/Configuration.html">– Configuration</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+
+        <section class="section">
+          <div class="section-content top-matter">
+            <h1>PrometheusClient</h1>
+              <div class="declaration">
+                <div class="language">
+                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">class</span> <span class="kt">PrometheusClient</span></code></pre>
+
+                </div>
+              </div>
+            <p>Prometheus class</p>
+
+<p>See <a href="https://prometheus.io/docs/introduction/overview/">https://prometheus.io/docs/introduction/overview/</a></p>
+
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-content">
+            <div class="task-group">
+              <ul class="item-container">
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientCACycfc"></a>
+                    <a name="//apple_ref/swift/Method/init()" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientCACycfc">init()</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Create a PrometheusClient instance</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="nf">init</span><span class="p">()</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L20-L24">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="task-group">
+              <div class="task-name-container">
+                <a name="/Collection"></a>
+                <a name="//apple_ref/swift/Section/Collection" class="dashAnchor"></a>
+                <div class="section-name-container">
+                  <a class="section-name-link" href="#/Collection"></a>
+                  <h3 class="section-name"><p>Collection</p>
+</h3>
+                </div>
+              </div>
+              <ul class="item-container">
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC7collectyyySSXEF"></a>
+                    <a name="//apple_ref/swift/Method/collect(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC7collectyyySSXEF">collect(_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates prometheus formatted metrics</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">collect</span><span class="p">(</span><span class="n">_</span> <span class="nv">succeed</span><span class="p">:</span> <span class="p">(</span><span class="kt">String</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">())</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>succeed</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Closure that will be called with a newline separated string with metrics for all Metrics this PrometheusClient handles</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L32-L36">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC7collect4intoy3NIO16EventLoopPromiseVySSG_tF"></a>
+                    <a name="//apple_ref/swift/Method/collect(into:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC7collect4intoy3NIO16EventLoopPromiseVySSG_tF">collect(into:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates prometheus formatted metrics</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">collect</span><span class="p">(</span><span class="n">into</span> <span class="nv">promise</span><span class="p">:</span> <span class="kt">EventLoopPromise</span><span class="o">&lt;</span><span class="kt">String</span><span class="o">&gt;</span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>promise</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Promise that will succeed with a newline separated string with metrics for all Metrics this PrometheusClient handles</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L42-L44">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC7collectyyy3NIO10ByteBufferVXEF"></a>
+                    <a name="//apple_ref/swift/Method/collect(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC7collectyyy3NIO10ByteBufferVXEF">collect(_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates prometheus formatted metrics</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">collect</span><span class="p">(</span><span class="n">_</span> <span class="nv">succeed</span><span class="p">:</span> <span class="p">(</span><span class="kt">ByteBuffer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">())</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>succeed</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Closure that will be called with a <code>ByteBuffer</code> containing a newline separated string with metrics for all Metrics this PrometheusClient handles</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L50-L59">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC7collect4intoy3NIO16EventLoopPromiseVyAF10ByteBufferVG_tF"></a>
+                    <a name="//apple_ref/swift/Method/collect(into:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC7collect4intoy3NIO16EventLoopPromiseVyAF10ByteBufferVG_tF">collect(into:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates prometheus formatted metrics</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">collect</span><span class="p">(</span><span class="n">into</span> <span class="nv">promise</span><span class="p">:</span> <span class="kt">EventLoopPromise</span><span class="o">&lt;</span><span class="kt">ByteBuffer</span><span class="o">&gt;</span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>promise</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Promise that will succeed with a <code>ByteBuffer</code> containing a newline separated string with metrics for all Metrics this PrometheusClient handles</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L65-L67">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="task-group">
+              <div class="task-name-container">
+                <a name="/Metric%20Access"></a>
+                <a name="//apple_ref/swift/Section/Metric Access" class="dashAnchor"></a>
+                <div class="section-name-container">
+                  <a class="section-name-link" href="#/Metric%20Access"></a>
+                  <h3 class="section-name"><p>Metric Access</p>
+</h3>
+                </div>
+              </div>
+              <ul class="item-container">
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC12removeMetricyyAA04PromD0_pF"></a>
+                    <a name="//apple_ref/swift/Method/removeMetric(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC12removeMetricyyAA04PromD0_pF">removeMetric(_:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">removeMetric</span><span class="p">(</span><span class="n">_</span> <span class="nv">metric</span><span class="p">:</span> <span class="kt"><a href="../Protocols/PromMetric.html">PromMetric</a></span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L71-L77">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC17getMetricInstance4with7andTypexSgSS_AA04PromdH0OtAA0iD0RzlF"></a>
+                    <a name="//apple_ref/swift/Method/getMetricInstance(with:andType:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC17getMetricInstance4with7andTypexSgSS_AA04PromdH0OtAA0iD0RzlF">getMetricInstance(with:<wbr>andType:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">getMetricInstance</span><span class="o">&lt;</span><span class="kt">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">with</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span> <span class="n">andType</span> <span class="nv">type</span><span class="p">:</span> <span class="kt"><a href="../Enums/PromMetricType.html">PromMetricType</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">T</span><span class="p">?</span> <span class="k">where</span> <span class="kt">T</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/PromMetric.html">PromMetric</a></span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L79-L83">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="task-group">
+              <div class="task-name-container">
+                <a name="/Counter"></a>
+                <a name="//apple_ref/swift/Section/Counter" class="dashAnchor"></a>
+                <div class="section-name-container">
+                  <a class="section-name-link" href="#/Counter"></a>
+                  <h3 class="section-name"><p>Counter</p>
+</h3>
+                </div>
+              </div>
+              <ul class="item-container">
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC13createCounter7forType5named8helpText12initialValue09withLabelF0AA04PromD0Cyxq_Gxm_S2SSgxq_mtSjRzAA12MetricLabelsR_r0_lF"></a>
+                    <a name="//apple_ref/swift/Method/createCounter(forType:named:helpText:initialValue:withLabelType:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC13createCounter7forType5named8helpText12initialValue09withLabelF0AA04PromD0Cyxq_Gxm_S2SSgxq_mtSjRzAA12MetricLabelsR_r0_lF">createCounter(forType:<wbr>named:<wbr>helpText:<wbr>initialValue:<wbr>withLabelType:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates a counter with the given values</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">createCounter</span><span class="o">&lt;</span><span class="kt">T</span><span class="p">:</span> <span class="kt">Numeric</span><span class="p">,</span> <span class="kt">U</span><span class="p">:</span> <span class="kt"><a href="../Protocols/MetricLabels.html">MetricLabels</a></span><span class="o">&gt;</span><span class="p">(</span>
+    <span class="n">forType</span> <span class="nv">type</span><span class="p">:</span> <span class="kt">T</span><span class="o">.</span><span class="k">Type</span><span class="p">,</span>
+    <span class="n">named</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="nv">helpText</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span>
+    <span class="nv">initialValue</span><span class="p">:</span> <span class="kt">T</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">withLabelType</span> <span class="nv">labelType</span><span class="p">:</span> <span class="kt">U</span><span class="o">.</span><span class="k">Type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Classes/PromCounter.html">PromCounter</a></span><span class="o">&lt;</span><span class="kt">T</span><span class="p">,</span> <span class="kt">U</span><span class="o">&gt;</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>type</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Type the counter will count</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>name</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Name of the counter</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>helpText</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Help text for the counter. Usually a short description</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>initialValue</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>An initial value to set the counter to, defaults to 0</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labelType</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Type of labels this counter can use. Can be left out to default to no labels</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Counter instance</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L97-L117">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC13createCounter7forType5named8helpText12initialValueAA04PromD0CyxAA11EmptyLabelsVGxm_S2SSgxtSjRzlF"></a>
+                    <a name="//apple_ref/swift/Method/createCounter(forType:named:helpText:initialValue:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC13createCounter7forType5named8helpText12initialValueAA04PromD0CyxAA11EmptyLabelsVGxm_S2SSgxtSjRzlF">createCounter(forType:<wbr>named:<wbr>helpText:<wbr>initialValue:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates a counter with the given values</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">createCounter</span><span class="o">&lt;</span><span class="kt">T</span><span class="p">:</span> <span class="kt">Numeric</span><span class="o">&gt;</span><span class="p">(</span>
+    <span class="n">forType</span> <span class="nv">type</span><span class="p">:</span> <span class="kt">T</span><span class="o">.</span><span class="k">Type</span><span class="p">,</span>
+    <span class="n">named</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="nv">helpText</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span>
+    <span class="nv">initialValue</span><span class="p">:</span> <span class="kt">T</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Classes/PromCounter.html">PromCounter</a></span><span class="o">&lt;</span><span class="kt">T</span><span class="p">,</span> <span class="kt"><a href="../Structs/EmptyLabels.html">EmptyLabels</a></span><span class="o">&gt;</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>type</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Type the counter will count</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>name</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Name of the counter</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>helpText</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Help text for the counter. Usually a short description</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>initialValue</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>An initial value to set the counter to, defaults to 0</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Counter instance</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L128-L135">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="task-group">
+              <div class="task-name-container">
+                <a name="/Gauge"></a>
+                <a name="//apple_ref/swift/Section/Gauge" class="dashAnchor"></a>
+                <div class="section-name-container">
+                  <a class="section-name-link" href="#/Gauge"></a>
+                  <h3 class="section-name"><p>Gauge</p>
+</h3>
+                </div>
+              </div>
+              <ul class="item-container">
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC11createGauge7forType5named8helpText12initialValue09withLabelF0AA04PromD0Cyxq_Gxm_S2SSgxq_mtAA19DoubleRepresentableRzAA12MetricLabelsR_r0_lF"></a>
+                    <a name="//apple_ref/swift/Method/createGauge(forType:named:helpText:initialValue:withLabelType:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC11createGauge7forType5named8helpText12initialValue09withLabelF0AA04PromD0Cyxq_Gxm_S2SSgxq_mtAA19DoubleRepresentableRzAA12MetricLabelsR_r0_lF">createGauge(forType:<wbr>named:<wbr>helpText:<wbr>initialValue:<wbr>withLabelType:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates a gauge with the given values</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">createGauge</span><span class="o">&lt;</span><span class="kt">T</span><span class="p">:</span> <span class="kt">Numeric</span><span class="p">,</span> <span class="kt">U</span><span class="p">:</span> <span class="kt"><a href="../Protocols/MetricLabels.html">MetricLabels</a></span><span class="o">&gt;</span><span class="p">(</span>
+    <span class="n">forType</span> <span class="nv">type</span><span class="p">:</span> <span class="kt">T</span><span class="o">.</span><span class="k">Type</span><span class="p">,</span>
+    <span class="n">named</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="nv">helpText</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span>
+    <span class="nv">initialValue</span><span class="p">:</span> <span class="kt">T</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">withLabelType</span> <span class="nv">labelType</span><span class="p">:</span> <span class="kt">U</span><span class="o">.</span><span class="k">Type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Classes/PromGauge.html">PromGauge</a></span><span class="o">&lt;</span><span class="kt">T</span><span class="p">,</span> <span class="kt">U</span><span class="o">&gt;</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>type</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Type the gauge will hold</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>name</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Name of the gauge</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>helpText</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Help text for the gauge. Usually a short description</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>initialValue</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>An initial value to set the gauge to, defaults to 0</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labelType</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Type of labels this gauge can use. Can be left out to default to no labels</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Gauge instance</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L149-L169">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC11createGauge7forType5named8helpText12initialValueAA04PromD0CyxAA11EmptyLabelsVGxm_S2SSgxtAA19DoubleRepresentableRzlF"></a>
+                    <a name="//apple_ref/swift/Method/createGauge(forType:named:helpText:initialValue:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC11createGauge7forType5named8helpText12initialValueAA04PromD0CyxAA11EmptyLabelsVGxm_S2SSgxtAA19DoubleRepresentableRzlF">createGauge(forType:<wbr>named:<wbr>helpText:<wbr>initialValue:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates a gauge with the given values</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">createGauge</span><span class="o">&lt;</span><span class="kt">T</span><span class="p">:</span> <span class="kt">Numeric</span><span class="o">&gt;</span><span class="p">(</span>
+    <span class="n">forType</span> <span class="nv">type</span><span class="p">:</span> <span class="kt">T</span><span class="o">.</span><span class="k">Type</span><span class="p">,</span>
+    <span class="n">named</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="nv">helpText</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span>
+    <span class="nv">initialValue</span><span class="p">:</span> <span class="kt">T</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Classes/PromGauge.html">PromGauge</a></span><span class="o">&lt;</span><span class="kt">T</span><span class="p">,</span> <span class="kt"><a href="../Structs/EmptyLabels.html">EmptyLabels</a></span><span class="o">&gt;</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>type</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Type the gauge will count</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>name</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Name of the gauge</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>helpText</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Help text for the gauge. Usually a short description</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>initialValue</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>An initial value to set the gauge to, defaults to 0</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Gauge instance</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L180-L187">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="task-group">
+              <div class="task-name-container">
+                <a name="/Histogram"></a>
+                <a name="//apple_ref/swift/Section/Histogram" class="dashAnchor"></a>
+                <div class="section-name-container">
+                  <a class="section-name-link" href="#/Histogram"></a>
+                  <h3 class="section-name"><p>Histogram</p>
+</h3>
+                </div>
+              </div>
+              <ul class="item-container">
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC15createHistogram7forType5named8helpText7buckets6labelsAA04PromD0Cyxq_Gxm_S2SSgAA7BucketsVq_mtAA19DoubleRepresentableRzAA0D6LabelsR_r0_lF"></a>
+                    <a name="//apple_ref/swift/Method/createHistogram(forType:named:helpText:buckets:labels:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC15createHistogram7forType5named8helpText7buckets6labelsAA04PromD0Cyxq_Gxm_S2SSgAA7BucketsVq_mtAA19DoubleRepresentableRzAA0D6LabelsR_r0_lF">createHistogram(forType:<wbr>named:<wbr>helpText:<wbr>buckets:<wbr>labels:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates a histogram with the given values</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">createHistogram</span><span class="o">&lt;</span><span class="kt">T</span><span class="p">:</span> <span class="kt">Numeric</span><span class="p">,</span> <span class="kt">U</span><span class="p">:</span> <span class="kt"><a href="../Protocols/HistogramLabels.html">HistogramLabels</a></span><span class="o">&gt;</span><span class="p">(</span>
+    <span class="n">forType</span> <span class="nv">type</span><span class="p">:</span> <span class="kt">T</span><span class="o">.</span><span class="k">Type</span><span class="p">,</span>
+    <span class="n">named</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="nv">helpText</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span>
+    <span class="nv">buckets</span><span class="p">:</span> <span class="kt"><a href="../Structs/Buckets.html">Buckets</a></span> <span class="o">=</span> <span class="o">.</span><span class="n">defaultBuckets</span><span class="p">,</span>
+    <span class="nv">labels</span><span class="p">:</span> <span class="kt">U</span><span class="o">.</span><span class="k">Type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Classes/PromHistogram.html">PromHistogram</a></span><span class="o">&lt;</span><span class="kt">T</span><span class="p">,</span> <span class="kt">U</span><span class="o">&gt;</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>type</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>The type the histogram will observe</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>name</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Name of the histogram</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>helpText</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Help text for the histogram. Usually a short description</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>buckets</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Buckets to divide values over</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to give this histogram. Can be left out to default to no labels</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Histogram instance</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L201-L221">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC15createHistogram7forType5named8helpText7bucketsAA04PromD0CyxAA05EmptyD6LabelsVGxm_S2SSgAA7BucketsVtAA19DoubleRepresentableRzlF"></a>
+                    <a name="//apple_ref/swift/Method/createHistogram(forType:named:helpText:buckets:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC15createHistogram7forType5named8helpText7bucketsAA04PromD0CyxAA05EmptyD6LabelsVGxm_S2SSgAA7BucketsVtAA19DoubleRepresentableRzlF">createHistogram(forType:<wbr>named:<wbr>helpText:<wbr>buckets:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates a histogram with the given values</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">createHistogram</span><span class="o">&lt;</span><span class="kt">T</span><span class="p">:</span> <span class="kt">Numeric</span><span class="o">&gt;</span><span class="p">(</span>
+    <span class="n">forType</span> <span class="nv">type</span><span class="p">:</span> <span class="kt">T</span><span class="o">.</span><span class="k">Type</span><span class="p">,</span>
+    <span class="n">named</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="nv">helpText</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span>
+    <span class="nv">buckets</span><span class="p">:</span> <span class="kt"><a href="../Structs/Buckets.html">Buckets</a></span> <span class="o">=</span> <span class="o">.</span><span class="n">defaultBuckets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Classes/PromHistogram.html">PromHistogram</a></span><span class="o">&lt;</span><span class="kt">T</span><span class="p">,</span> <span class="kt"><a href="../Structs/EmptyHistogramLabels.html">EmptyHistogramLabels</a></span><span class="o">&gt;</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>type</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>The type the histogram will observe</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>name</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Name of the histogram</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>helpText</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Help text for the histogram. Usually a short description</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>buckets</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Buckets to divide values over</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Histogram instance</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L232-L239">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div class="task-group">
+              <div class="task-name-container">
+                <a name="/Summary"></a>
+                <a name="//apple_ref/swift/Section/Summary" class="dashAnchor"></a>
+                <div class="section-name-container">
+                  <a class="section-name-link" href="#/Summary"></a>
+                  <h3 class="section-name"><p>Summary</p>
+</h3>
+                </div>
+              </div>
+              <ul class="item-container">
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC13createSummary7forType5named8helpText9quantiles6labelsAA04PromD0Cyxq_Gxm_S2SSgSaySdGq_mtAA19DoubleRepresentableRzAA0D6LabelsR_r0_lF"></a>
+                    <a name="//apple_ref/swift/Method/createSummary(forType:named:helpText:quantiles:labels:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC13createSummary7forType5named8helpText9quantiles6labelsAA04PromD0Cyxq_Gxm_S2SSgSaySdGq_mtAA19DoubleRepresentableRzAA0D6LabelsR_r0_lF">createSummary(forType:<wbr>named:<wbr>helpText:<wbr>quantiles:<wbr>labels:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates a summary with the given values</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">createSummary</span><span class="o">&lt;</span><span class="kt">T</span><span class="p">:</span> <span class="kt">Numeric</span><span class="p">,</span> <span class="kt">U</span><span class="p">:</span> <span class="kt"><a href="../Protocols/SummaryLabels.html">SummaryLabels</a></span><span class="o">&gt;</span><span class="p">(</span>
+    <span class="n">forType</span> <span class="nv">type</span><span class="p">:</span> <span class="kt">T</span><span class="o">.</span><span class="k">Type</span><span class="p">,</span>
+    <span class="n">named</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="nv">helpText</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span>
+    <span class="nv">quantiles</span><span class="p">:</span> <span class="p">[</span><span class="kt">Double</span><span class="p">]</span> <span class="o">=</span> <span class="kt"><a href="../Enums/Prometheus.html">Prometheus</a></span><span class="o">.</span><span class="n">defaultQuantiles</span><span class="p">,</span>
+    <span class="nv">labels</span><span class="p">:</span> <span class="kt">U</span><span class="o">.</span><span class="k">Type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Classes/PromSummary.html">PromSummary</a></span><span class="o">&lt;</span><span class="kt">T</span><span class="p">,</span> <span class="kt">U</span><span class="o">&gt;</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>type</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>The type the summary will observe</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>name</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Name of the summary</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>helpText</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Help text for the summary. Usually a short description</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>quantiles</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Quantiles to caluculate</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>labels</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Labels to give this summary. Can be left out to default to no labels</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Summary instance</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L253-L273">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus0A6ClientC13createSummary7forType5named8helpText9quantilesAA04PromD0CyxAA05EmptyD6LabelsVGxm_S2SSgSaySdGtAA19DoubleRepresentableRzlF"></a>
+                    <a name="//apple_ref/swift/Method/createSummary(forType:named:helpText:quantiles:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus0A6ClientC13createSummary7forType5named8helpText9quantilesAA04PromD0CyxAA05EmptyD6LabelsVGxm_S2SSgSaySdGtAA19DoubleRepresentableRzlF">createSummary(forType:<wbr>named:<wbr>helpText:<wbr>quantiles:<wbr>)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Creates a summary with the given values</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="n">createSummary</span><span class="o">&lt;</span><span class="kt">T</span><span class="p">:</span> <span class="kt">Numeric</span><span class="o">&gt;</span><span class="p">(</span>
+    <span class="n">forType</span> <span class="nv">type</span><span class="p">:</span> <span class="kt">T</span><span class="o">.</span><span class="k">Type</span><span class="p">,</span>
+    <span class="n">named</span> <span class="nv">name</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+    <span class="nv">helpText</span><span class="p">:</span> <span class="kt">String</span><span class="p">?</span> <span class="o">=</span> <span class="kc">nil</span><span class="p">,</span>
+    <span class="nv">quantiles</span><span class="p">:</span> <span class="p">[</span><span class="kt">Double</span><span class="p">]</span> <span class="o">=</span> <span class="kt"><a href="../Enums/Prometheus.html">Prometheus</a></span><span class="o">.</span><span class="n">defaultQuantiles</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Classes/PromSummary.html">PromSummary</a></span><span class="o">&lt;</span><span class="kt">T</span><span class="p">,</span> <span class="kt"><a href="../Structs/EmptySummaryLabels.html">EmptySummaryLabels</a></span><span class="o">&gt;</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>type</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>The type the summary will observe</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>name</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Name of the summary</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>helpText</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Help text for the summary. Usually a short description</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>quantiles</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>Quantiles to caluculate</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>Summary instance</p>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Prometheus.swift#L284-L291">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+      </article>
+    </div>
+    <section class="footer">
+      <p>&copy; 2021 <a class="link" href="https://github.com/MrLotU" target="_blank" rel="external">MrLotU</a>. All rights reserved. (Last updated: 2021-04-30)</p>
+      <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.13.3</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+    </section>
+  </body>
+</div>
+</html>

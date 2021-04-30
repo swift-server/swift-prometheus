@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Protocols  Reference</title>
+    <link rel="stylesheet" type="text/css" href="css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="css/highlight.css" />
+    <meta charset="utf-8">
+    <script src="js/jquery.min.js" defer></script>
+    <script src="js/jazzy.js" defer></script>
+    
+    <script src="js/lunr.min.js" defer></script>
+    <script src="js/typeahead.jquery.js" defer></script>
+    <script src="js/jazzy.search.js" defer></script>
+  </head>
+  <body>
+
+    <a name="//apple_ref/swift/Section/Protocols" class="dashAnchor"></a>
+
+    <a title="Protocols  Reference"></a>
+
+    <header class="header">
+      <p class="header-col header-col--primary">
+        <a class="header-link" href="index.html">
+           Docs
+        </a>
+         (92% documented)
+      </p>
+    
+      <p class="header-col--secondary">
+        <form role="search" action="search.json">
+          <input type="text" placeholder="Search documentation" data-typeahead>
+        </form>
+      </p>
+    
+        <p class="header-col header-col--secondary">
+          <a class="header-link" href="https://github.com/MrLotU/SwiftPrometheus">
+            <img class="header-icon" src="img/gh.png"/>
+            View on GitHub
+          </a>
+        </p>
+    
+        <p class="header-col header-col--secondary">
+          <a class="header-link" href="dash-feed://https%3A%2F%2Fmrlotu%2Egithub%2Eio%2FSwiftPrometheus%2Fdocsets%2F%2Exml">
+            <img class="header-icon" src="img/dash.png"/>
+            Install in Dash
+          </a>
+        </p>
+    </header>
+
+    <p class="breadcrumbs">
+      <a class="breadcrumb" href="index.html"> Reference</a>
+      <img class="carat" src="img/carat.png" />
+      Protocols  Reference
+    </p>
+
+    <div class="content-wrapper">
+      <nav class="navigation">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="Classes.html">Classes</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Classes/PromCounter.html">PromCounter</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Classes/PromGauge.html">PromGauge</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Classes/PromHistogram.html">PromHistogram</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Classes/PromSummary.html">PromSummary</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Classes/PrometheusClient.html">PrometheusClient</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="Enums.html">Enumerations</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Enums/PromMetricType.html">PromMetricType</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Enums/Prometheus.html">Prometheus</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Enums/PrometheusError.html">PrometheusError</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="Extensions.html">Extensions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions/Double.html">Double</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions/FixedWidthInteger.html">FixedWidthInteger</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions/Float.html">Float</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions.html#/s:Si">Int</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions.html#/s:s5Int16V">Int16</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions.html#/s:s5Int32V">Int32</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions.html#/s:s5Int64V">Int64</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions.html#/s:s4Int8V">Int8</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions/MetricsSystem.html">MetricsSystem</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions.html#/s:Su">UInt</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions.html#/s:s6UInt16V">UInt16</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions.html#/s:s6UInt32V">UInt32</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions.html#/s:s6UInt64V">UInt64</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Extensions.html#/s:s5UInt8V">UInt8</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="Protocols.html">Protocols</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Protocols/ConvertibleNumberType.html">ConvertibleNumberType</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Protocols/DoubleRepresentable.html">DoubleRepresentable</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Protocols/HistogramLabels.html">HistogramLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Protocols/LabelSanitizer.html">LabelSanitizer</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Protocols/MetricLabels.html">MetricLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Protocols/PromMetric.html">PromMetric</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Protocols/SummaryLabels.html">SummaryLabels</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a class="nav-group-name-link" href="Structs.html">Structures</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/Buckets.html">Buckets</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/DimensionHistogramLabels.html">DimensionHistogramLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/DimensionLabels.html">DimensionLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/DimensionSummaryLabels.html">DimensionSummaryLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/EmptyHistogramLabels.html">EmptyHistogramLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/EmptyLabels.html">EmptyLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/EmptySummaryLabels.html">EmptySummaryLabels</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/PrometheusLabelSanitizer.html">PrometheusLabelSanitizer</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/PrometheusMetricsFactory.html">PrometheusMetricsFactory</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/PrometheusMetricsFactory/TimerImplementation.html">– TimerImplementation</a>
+              </li>
+              <li class="nav-group-task">
+                <a class="nav-group-task-link" href="Structs/PrometheusMetricsFactory/Configuration.html">– Configuration</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+
+        <section class="section">
+          <div class="section-content top-matter">
+            <h1>Protocols</h1>
+            <p>The following protocols are available globally.</p>
+
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-content">
+            <div class="task-group">
+              <ul class="item-container">
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus15HistogramLabelsP"></a>
+                    <a name="//apple_ref/swift/Protocol/HistogramLabels" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus15HistogramLabelsP">HistogramLabels</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Label type Histograms can use</p>
+
+                        <a href="Protocols/HistogramLabels.html" class="slightly-smaller">See more</a>
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">protocol</span> <span class="kt">HistogramLabels</span> <span class="p">:</span> <span class="kt"><a href="Protocols/MetricLabels.html">MetricLabels</a></span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Histogram.swift#L67-L70">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus10PromMetricP"></a>
+                    <a name="//apple_ref/swift/Protocol/PromMetric" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus10PromMetricP">PromMetric</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Metric protocol</p>
+
+<p>See <a href="https://prometheus.io/docs/concepts/metric_types/">https://prometheus.io/docs/concepts/metric_types/</a></p>
+
+                        <a href="Protocols/PromMetric.html" class="slightly-smaller">See more</a>
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">protocol</span> <span class="kt">PromMetric</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/PromMetric.swift#L23-L33">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus12MetricLabelsP"></a>
+                    <a name="//apple_ref/swift/Protocol/MetricLabels" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus12MetricLabelsP">MetricLabels</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Base MetricLabels protocol</p>
+
+<p>MetricLabels are used to enrich &amp; specify metrics.</p>
+<pre class="highlight swift"><code><span class="kd">struct</span> <span class="kt">Labels</span><span class="p">:</span> <span class="kt">MetricLabels</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="nv">status</span><span class="p">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">"unknown"</span>
+<span class="p">}</span>
+<span class="k">let</span> <span class="nv">counter</span> <span class="o">=</span> <span class="n">myProm</span><span class="o">.</span><span class="nf">createCounter</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">counter</span><span class="o">.</span><span class="nf">inc</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">(</span><span class="nv">status</span><span class="p">:</span> <span class="s">"failure"</span><span class="p">)</span>
+<span class="n">counter</span><span class="o">.</span><span class="nf">inc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nv">labels</span><span class="p">:</span> <span class="kt">Labels</span><span class="p">(</span><span class="nv">status</span><span class="p">:</span> <span class="s">"success"</span><span class="p">)</span>
+</code></pre>
+
+<p>Will result in the following Prometheus output:</p>
+<pre class="highlight swift"><code><span class="cp"># TYPE my_counter counter</span>
+<span class="n">my_counter</span> <span class="mi">0</span>
+<span class="n">my_counter</span><span class="p">{</span><span class="n">status</span><span class="o">=</span><span class="s">"unknown"</span><span class="p">}</span> <span class="mi">0</span>
+<span class="n">my_counter</span><span class="p">{</span><span class="n">status</span><span class="o">=</span><span class="s">"failure"</span><span class="p">}</span> <span class="mi">12</span>
+<span class="n">my_counter</span><span class="p">{</span><span class="n">status</span><span class="o">=</span><span class="s">"success"</span><span class="p">}</span> <span class="mi">1</span>
+</code></pre>
+
+                        <a href="Protocols/MetricLabels.html" class="slightly-smaller">See more</a>
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">protocol</span> <span class="kt">MetricLabels</span> <span class="p">:</span> <span class="kt">Encodable</span><span class="p">,</span> <span class="kt">Hashable</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/PromMetric.swift#L68-L71">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus13SummaryLabelsP"></a>
+                    <a name="//apple_ref/swift/Protocol/SummaryLabels" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus13SummaryLabelsP">SummaryLabels</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Label type Summaries can use</p>
+
+                        <a href="Protocols/SummaryLabels.html" class="slightly-smaller">See more</a>
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">protocol</span> <span class="kt">SummaryLabels</span> <span class="p">:</span> <span class="kt"><a href="Protocols/MetricLabels.html">MetricLabels</a></span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/MetricTypes/Summary.swift#L6-L9">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus14LabelSanitizerP"></a>
+                    <a name="//apple_ref/swift/Protocol/LabelSanitizer" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus14LabelSanitizerP">LabelSanitizer</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Used to sanitize labels into a format compatible with Prometheus label requirements.
+Useful when using <code>PrometheusMetrics</code> via <code>SwiftMetrics</code> with clients which do not necessarily know 
+about prometheus label formats, and may be using e.g. <code>.</code> or upper-case letters in labels (which Prometheus 
+does not allow).</p>
+<pre class="highlight swift"><code><span class="k">let</span> <span class="nv">sanitizer</span><span class="p">:</span> <span class="kt">LabelSanitizer</span> <span class="o">=</span> <span class="o">...</span>
+<span class="k">let</span> <span class="nv">prometheusLabel</span> <span class="o">=</span> <span class="n">sanitizer</span><span class="o">.</span><span class="nf">sanitize</span><span class="p">(</span><span class="n">nonPrometheusLabel</span><span class="p">)</span>
+</code></pre>
+
+<p>By default <code><a href="Structs/PrometheusLabelSanitizer.html">PrometheusLabelSanitizer</a></code> is used by <code><a href="Structs/PrometheusMetricsFactory.html">PrometheusMetricsFactory</a></code></p>
+
+                        <a href="Protocols/LabelSanitizer.html" class="slightly-smaller">See more</a>
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">protocol</span> <span class="kt">LabelSanitizer</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/PrometheusMetrics.swift#L116-L124">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus19DoubleRepresentableP"></a>
+                    <a name="//apple_ref/swift/Protocol/DoubleRepresentable" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus19DoubleRepresentableP">DoubleRepresentable</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Numbers that can be represented as Double instances</p>
+
+                        <a href="Protocols/DoubleRepresentable.html" class="slightly-smaller">See more</a>
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">protocol</span> <span class="kt">DoubleRepresentable</span> <span class="p">:</span> <span class="kt">Numeric</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Utils.swift#L59-L66">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:10Prometheus21ConvertibleNumberTypeP"></a>
+                    <a name="//apple_ref/swift/Protocol/ConvertibleNumberType" class="dashAnchor"></a>
+                    <a class="token" href="#/s:10Prometheus21ConvertibleNumberTypeP">ConvertibleNumberType</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Numbers that convert to other types</p>
+
+                        <a href="Protocols/ConvertibleNumberType.html" class="slightly-smaller">See more</a>
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">protocol</span> <span class="kt">ConvertibleNumberType</span> <span class="p">:</span> <span class="kt"><a href="Protocols/DoubleRepresentable.html">DoubleRepresentable</a></span></code></pre>
+
+                        </div>
+                      </div>
+                      <div class="slightly-smaller">
+                        <a href="https://github.com/MrLotU/SwiftPrometheus/tree/master//Sources/Prometheus/Utils.swift#L69">Show on GitHub</a>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+      </article>
+    </div>
+    <section class="footer">
+      <p>&copy; 2021 <a class="link" href="https://github.com/MrLotU" target="_blank" rel="external">MrLotU</a>. All rights reserved. (Last updated: 2021-04-30)</p>
+      <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.13.3</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+    </section>
+  </body>
+</div>
+</html>
