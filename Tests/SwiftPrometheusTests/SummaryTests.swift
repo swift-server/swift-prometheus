@@ -26,7 +26,7 @@ final class SummaryTests: XCTestCase {
     override func setUp() {
         self.prom = PrometheusClient()
         self.group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        MetricsSystem.bootstrapInternal(prom)
+        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(client: prom))
     }
     
     override func tearDown() {

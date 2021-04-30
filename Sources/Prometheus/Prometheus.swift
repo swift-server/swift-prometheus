@@ -16,15 +16,10 @@ public class PrometheusClient {
     /// Lock used for thread safety
     private let lock: Lock
     
-    /// Sanitizers used to clean up label values provided through
-    /// swift-metrics.
-    public let sanitizer: LabelSanitizer
-    
     /// Create a PrometheusClient instance
-    public init(labelSanitizer sanitizer: LabelSanitizer = PrometheusLabelSanitizer()) {
+    public init() {
         self.metrics = []
         self.metricTypeMap = [:]
-        self.sanitizer = sanitizer
         self.lock = Lock()
     }
     
