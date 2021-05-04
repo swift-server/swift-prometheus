@@ -21,6 +21,13 @@ final class PrometheusMetricsTests: XCTestCase {
         self.prom = nil
         try! self.group.syncShutdownGracefully()
     }
+
+    func testGetPrometheus() {
+        MetricsSystem.bootstrapInternal(NOOPMetricsHandler.instance)
+        XCTAssertThrowsError(try MetricsSystem.prometheus())
+        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(client: self.prom))
+        XCTAssertNoThrow(try MetricsSystem.prometheus())
+    }
     
     func testCounter() {
         let counter = Counter(label: "my_counter")

@@ -139,13 +139,21 @@ public struct PrometheusLabelSanitizer: LabelSanitizer {
     }
 }
 
+/// Defines the base for a bridge between PrometheusClient and swift-metrics.
+/// Used by `SwiftMetrics.prometheus()` to get an instance of `PromtheusClient` from `MetricsSystem`
+///
+/// Any custom implementation of `MetricsFactory` using `PrometheusClient` should conform to this implementation.
+public protocol PrometheusWrappedMetricsFactory: MetricsFactory {
+    var client: PrometheusClient { get }
+}
+
 /// A bridge between PrometheusClient and swift-metrics. Prometheus types don't map perfectly on swift-metrics API,
 /// which makes bridge implementation non trivial. This class defines how exactly swift-metrics types should be backed
 /// with Prometheus types, e.g. how to sanitize labels, what buckets/quantiles to use for recorder/timer, etc.
-public struct PrometheusMetricsFactory: MetricsFactory {
+public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
 
     /// Prometheus client to bridge swift-metrics API to.
-    private let client: PrometheusClient
+    public let client: PrometheusClient
 
     /// Bridge configuration.
     private let configuration: Configuration
@@ -262,10 +270,10 @@ public extension MetricsSystem {
     /// - Throws: `PrometheusError.PrometheusFactoryNotBootstrapped`
     ///             if no `PrometheusClient` was used to bootstrap `MetricsSystem`
     static func prometheus() throws -> PrometheusClient {
-        guard let prom = self.factory as? PrometheusClient else {
+        guard let prom = self.factory as? PrometheusWrappedMetricsFactory else {
             throw PrometheusError.prometheusFactoryNotBootstrapped(bootstrappedWith: "\(self.factory)")
         }
-        return prom
+        return prom.client
     }
 }
 
