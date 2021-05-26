@@ -121,14 +121,19 @@ final class PrometheusMetricsTests: XCTestCase {
         prom.collect(promise.succeed)
         var buffer = try promise.futureResult.wait()
 
-        XCTAssertEqual(buffer.readString(length: buffer.readableBytes),
-            """
-            # TYPE my_counter counter
-            my_counter 10
-            my_counter{x="x", a="aaa"} 4
-            # TYPE my_gauge gauge
-            my_gauge 100.0\n
-            """)
+        let collected = buffer.readString(length: buffer.readableBytes)!
+
+        // We can't guarantee order so check the output contains the expected metrics.
+        XCTAssertTrue(collected.contains("""
+                                         # TYPE my_counter counter
+                                         my_counter 10
+                                         my_counter{x="x", a="aaa"} 4
+                                         """))
+
+        XCTAssertTrue(collected.contains("""
+                                         # TYPE my_gauge gauge
+                                         my_gauge 100.0
+                                         """))
     }
 
     func testCollectAFewMetricsIntoString() {
@@ -141,16 +146,19 @@ final class PrometheusMetricsTests: XCTestCase {
 
         let promise = self.eventLoop.makePromise(of: String.self)
         prom.collect(promise.succeed)
-        let string = try! promise.futureResult.wait()
+        let collected = try! promise.futureResult.wait()
 
-        XCTAssertEqual(string,
-            """
-            # TYPE my_counter counter
-            my_counter 10
-            my_counter{x="x", a="aaa"} 4
-            # TYPE my_gauge gauge
-            my_gauge 100.0\n
-            """)
+        // We can't guarantee order so check the output contains the expected metrics.
+        XCTAssertTrue(collected.contains("""
+                                         # TYPE my_counter counter
+                                         my_counter 10
+                                         my_counter{x="x", a="aaa"} 4
+                                         """))
+
+        XCTAssertTrue(collected.contains("""
+                                         # TYPE my_gauge gauge
+                                         my_gauge 100.0
+                                         """))
     }
 
     func testHistogramBackedTimer() {
