@@ -138,6 +138,10 @@ app.get("metrics") { req -> EventLoopFuture<String> in
 }
 ```
 
+## Security
+
+Please see [SECURITY.md](SECURITY.md) for details on the security process.
+
 # Contributing
 
 All contributions are most welcome!
