@@ -323,8 +323,6 @@ private struct StringCodingKey: CodingKey {
     }
 }
 
-
-
 /// Helper for dimensions
 public struct DimensionLabels: MetricLabels {
     let dimensions: [(String, String)]
@@ -339,21 +337,24 @@ public struct DimensionLabels: MetricLabels {
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
-        try self.dimensions.forEach {
-            try container.encode($0.1, forKey: .init($0.0))
+        for (key, value) in self.dimensions {
+            try container.encode(value, forKey: .init(key))
         }
     }
     
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
+        for (key, value) in dimensions {
+            hasher.combine(key)
+            hasher.combine(value)
+        }
     }
-    
-    fileprivate var identifiers: String {
-        return dimensions.map { $0.0 }.joined(separator: "-")
-    }
-    
+
     public static func == (lhs: DimensionLabels, rhs: DimensionLabels) -> Bool {
-        return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"}
+        guard lhs.dimensions.count == rhs.dimensions.count else { return false }
+        for index in 0..<lhs.dimensions.count {
+            guard lhs.dimensions[index] == rhs.dimensions[index] else { return false }
+        }
+        return false
     }
 }
 
@@ -364,39 +365,26 @@ public struct DimensionHistogramLabels: HistogramLabels {
     /// Bucket
     public var le: String
     /// Dimensions
-    let dimensions: [(String, String)]
+    let labels: DimensionLabels
     
     /// Empty init
     public init() {
         self.le = ""
-        self.dimensions = []
+        self.labels = DimensionLabels()
     }
     
     /// Init with dimensions
     public init(_ dimensions: [(String, String)]) {
         self.le = ""
-        self.dimensions = dimensions
+        self.labels = DimensionLabels(dimensions)
     }
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
-        try self.dimensions.forEach {
-            try container.encode($0.1, forKey: .init($0.0))
+        for (key, value) in self.labels.dimensions {
+            try container.encode(value, forKey: .init(key))
         }
         try container.encode(le, forKey: .init("le"))
-    }
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
-        hasher.combine(le)
-    }
-    
-    fileprivate var identifiers: String {
-        return dimensions.map { $0.0 }.joined(separator: "-")
-    }
-    
-    public static func == (lhs: DimensionHistogramLabels, rhs: DimensionHistogramLabels) -> Bool {
-        return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"} && rhs.le == lhs.le
     }
 }
 
@@ -405,38 +393,25 @@ public struct DimensionSummaryLabels: SummaryLabels {
     /// Quantile
     public var quantile: String
     /// Dimensions
-    let dimensions: [(String, String)]
-    
+    let labels: DimensionLabels
+
     /// Empty init
     public init() {
         self.quantile = ""
-        self.dimensions = []
+        self.labels = DimensionLabels()
     }
     
     /// Init with dimensions
     public init(_ dimensions: [(String, String)]) {
         self.quantile = ""
-        self.dimensions = dimensions
+        self.labels = DimensionLabels(dimensions)
     }
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
-        try self.dimensions.forEach {
-            try container.encode($0.1, forKey: .init($0.0))
+        for (key, value) in self.labels.dimensions {
+            try container.encode(value, forKey: .init(key))
         }
         try container.encode(quantile, forKey: .init("quantile"))
-    }
-    
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
-        hasher.combine(quantile)
-    }
-    
-    fileprivate var identifiers: String {
-        return dimensions.map { $0.0 }.joined(separator: "-")
-    }
-    
-    public static func == (lhs: DimensionSummaryLabels, rhs: DimensionSummaryLabels) -> Bool {
-        return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"} && rhs.quantile == lhs.quantile
     }
 }
