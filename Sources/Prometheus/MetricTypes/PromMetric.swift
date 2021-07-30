@@ -44,7 +44,7 @@ extension PromMetric {
 
 /// Adding a prometheus instance to all metrics
 internal protocol PrometheusHandled {
-    /// Promtheus client handling this metric
+    /// Prometheus client handling this metric
     var prometheus: PrometheusClient? { get }
 }
 

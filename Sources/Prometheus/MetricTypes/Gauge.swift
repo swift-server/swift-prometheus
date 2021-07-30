@@ -70,7 +70,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
         }
     }
     
-    /// Sets the Gauge to the current unixtime in seconds
+    /// Sets the Gauge to the current unix-time in seconds
     ///
     /// - Parameters:
     ///     - labels: Labels to attach to the value
@@ -84,7 +84,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     /// Tracks in progress blocks of code or functions.
     ///
     ///     func someFunc() -> String { return "ABC" }
-    ///     let newFunc = myGauge.trackInprogress(someFunc)
+    ///     let newFunc = myGauge.trackInProgress(someFunc)
     ///     newFunc() // returns "ABC" and increments & decrements Gauge
     ///
     /// - Parameters:

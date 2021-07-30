@@ -183,7 +183,7 @@ public struct PrometheusLabelSanitizer: LabelSanitizer {
 }
 
 /// Defines the base for a bridge between PrometheusClient and swift-metrics.
-/// Used by `SwiftMetrics.prometheus()` to get an instance of `PromtheusClient` from `MetricsSystem`
+/// Used by `SwiftMetrics.prometheus()` to get an instance of `PrometheusClient` from `MetricsSystem`
 ///
 /// Any custom implementation of `MetricsFactory` using `PrometheusClient` should conform to this implementation.
 public protocol PrometheusWrappedMetricsFactory: MetricsFactory {
@@ -360,7 +360,7 @@ public struct DimensionLabels: MetricLabels {
 
 /// Helper for dimensions
 /// swift-metrics api doesn't allow setting buckets explicitly.
-/// If default buckets don't fit, this Labels implementation is a nice default to create Prometheus metric types wtih
+/// If default buckets don't fit, this Labels implementation is a nice default to create Prometheus metric types with
 public struct DimensionHistogramLabels: HistogramLabels {
     /// Bucket
     public var le: String
