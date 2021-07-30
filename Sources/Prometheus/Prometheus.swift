@@ -240,7 +240,7 @@ public class PrometheusClient {
     ///     - type: The type the summary will observe
     ///     - name: Name of the summary
     ///     - helpText: Help text for the summary. Usually a short description
-    ///     - quantiles: Quantiles to caluculate
+    ///     - quantiles: Quantiles to calculate
     ///     - labels: Labels to give this summary. Can be left out to default to no labels
     ///
     /// - Returns: Summary instance
@@ -269,7 +269,7 @@ public class PrometheusClient {
     ///     - type: The type the summary will observe
     ///     - name: Name of the summary
     ///     - helpText: Help text for the summary. Usually a short description
-    ///     - quantiles: Quantiles to caluculate
+    ///     - quantiles: Quantiles to calculate
     ///
     /// - Returns: Summary instance
     public func createSummary<T: Numeric>(
@@ -284,8 +284,8 @@ public class PrometheusClient {
 
 /// Prometheus specific errors
 public enum PrometheusError: Error {
-    /// Thrown when a user tries to retrive
-    /// a `PromtheusClient` from `MetricsSystem`
+    /// Thrown when a user tries to retrieve
+    /// a `PrometheusClient` from `MetricsSystem`
     /// but there was no `PrometheusClient` bootstrapped
     case prometheusFactoryNotBootstrapped(bootstrappedWith: String)
 }
