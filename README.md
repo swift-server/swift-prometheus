@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/MrLotU/SwiftPrometheus.svg?style=svg)](https://circleci.com/gh/MrLotU/SwiftPrometheus)[![Swift 5.0](https://img.shields.io/badge/swift-5.0-orange.svg?style=flat)](http://swift.org)
+[![CircleCI](https://circleci.com/gh/MrLotU/SwiftPrometheus.svg?style=svg)](https://circleci.com/gh/MrLotU/SwiftPrometheus)[![Swift 5.2](https://img.shields.io/badge/swift-5.2-orange.svg?style=flat)](http://swift.org)
 
 # SwiftPrometheus, Prometheus client for Swift
 
