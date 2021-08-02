@@ -45,6 +45,22 @@ final class PrometheusMetricsTests: XCTestCase {
         """)
     }
 
+    func testFloatingPointCounter() {
+        let counter = FloatingPointCounter(label: "my_fp_counter")
+        counter.increment(by: 3.5)
+        let counterTwo = FloatingPointCounter(label: "my_fp_counter", dimensions: [("myValue", "labels")])
+        counterTwo.increment(by: 10.4)
+
+        let promise = self.eventLoop.makePromise(of: String.self)
+        prom.collect(promise.succeed)
+
+        XCTAssertEqual(try! promise.futureResult.wait(), """
+        # TYPE my_fp_counter counter
+        my_fp_counter 3.5
+        my_fp_counter{myValue=\"labels\"} 10.4\n
+        """)
+    }
+
     func testMetricDestroying() {
         let counter = Counter(label: "my_counter")
         counter.increment()

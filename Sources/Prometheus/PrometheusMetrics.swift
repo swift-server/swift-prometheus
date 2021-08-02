@@ -20,6 +20,26 @@ private class MetricsCounter: CounterHandler {
     func reset() { }
 }
 
+private class MetricsFloatingPointCounter: FloatingPointCounterHandler {
+    let counter: PromCounter<Double, DimensionLabels>
+    let labels: DimensionLabels?
+
+    internal init(counter: PromCounter<Double, DimensionLabels>, dimensions: [(String, String)]) {
+        self.counter = counter
+        guard !dimensions.isEmpty else {
+            labels = nil
+            return
+        }
+        self.labels = DimensionLabels(dimensions)
+    }
+
+    func increment(by: Double) {
+        self.counter.inc(by, labels)
+    }
+
+    func reset() { }
+}
+
 private class MetricsGauge: RecorderHandler {
     let gauge: PromGauge<Double, DimensionLabels>
     let labels: DimensionLabels?
@@ -211,6 +231,11 @@ public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
         guard let handler = handler as? MetricsCounter else { return }
         client.removeMetric(handler.counter)
     }
+
+    public func destroyFloatingPointCounter(_ handler: FloatingPointCounterHandler) {
+        guard let handler = handler as? MetricsFloatingPointCounter else { return }
+        client.removeMetric(handler.counter)
+    }
     
     public func destroyRecorder(_ handler: RecorderHandler) {
         if let handler = handler as? MetricsGauge {
@@ -236,6 +261,12 @@ public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
         let label = configuration.labelSanitizer.sanitize(label)
         let counter = client.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self)
         return MetricsCounter(counter: counter, dimensions: dimensions)
+    }
+
+    public func makeFloatingPointCounter(label: String, dimensions: [(String, String)]) -> FloatingPointCounterHandler {
+        let label = configuration.labelSanitizer.sanitize(label)
+        let counter = client.createCounter(forType: Double.self, named: label, withLabelType: DimensionLabels.self)
+        return MetricsFloatingPointCounter(counter: counter, dimensions: dimensions)
     }
     
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
