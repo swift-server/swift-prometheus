@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/MrLotU/SwiftPrometheus.svg?style=svg)](https://circleci.com/gh/MrLotU/SwiftPrometheus)[![Swift 5.0](https://img.shields.io/badge/swift-5.0-orange.svg?style=flat)](http://swift.org)
+[![CircleCI](https://circleci.com/gh/MrLotU/SwiftPrometheus.svg?style=svg)](https://circleci.com/gh/MrLotU/SwiftPrometheus)[![Swift 5.2](https://img.shields.io/badge/swift-5.2-orange.svg?style=flat)](http://swift.org)
 
 # SwiftPrometheus, Prometheus client for Swift
 
@@ -26,6 +26,22 @@ let myProm = PrometheusClient()
 
 ## Usage with SwiftMetrics
 _For more details about swift-metrics, please view [the GitHub repo](https://github.com/apple/swift-metrics)._
+
+Starting with SwiftPrometheus [1.0.0-alpha.10](https://github.com/MrLotU/SwiftPrometheus/releases/tag/1.0.0-alpha.10) `MetricsSystem` is no longer directly configured with a `PrometheusClient`.
+
+Instead, create a `PrometheusMetricsFactory` instance wrapping a `PrometheusClient`.
+
+```swift
+let myProm = PrometheusClient()
+MetricsSystem.bootstrap(PrometheusMetricsFactory(client: myProm))
+```
+
+Along with a `PrometheusClient`, `PrometheusMetricsFactory` can take a `Configuration` object setting the following properties:
+- A `LabelSanitizer` used to sanitize metric names to valid Prometheus values. A default implementation is provided.
+- The Prometheus metric type to use for swift-metrics' `Timer`. Can be a `Histogram` or a `Summary`. Note that when using `Histogram`, `preferredDisplayUnit` will not be observed.
+- Default buckets for use by aggregating swift-metrics `Recorder` instances.
+
+### Before Alpha 10
 
 To use SwiftPrometheus with swift-metrics, you need to configure the backend inside the `MetricsSystem`:
 
@@ -121,6 +137,10 @@ app.get("metrics") { req -> EventLoopFuture<String> in
     return promise.futureResult
 }
 ```
+
+## Security
+
+Please see [SECURITY.md](SECURITY.md) for details on the security process.
 
 # Contributing
 

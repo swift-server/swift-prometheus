@@ -14,12 +14,19 @@ final class PrometheusMetricsTests: XCTestCase {
     override func setUp() {
         self.prom = PrometheusClient()
         self.group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        MetricsSystem.bootstrapInternal(prom)
+        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(client: prom))
     }
     
     override func tearDown() {
         self.prom = nil
         try! self.group.syncShutdownGracefully()
+    }
+
+    func testGetPrometheus() {
+        MetricsSystem.bootstrapInternal(NOOPMetricsHandler.instance)
+        XCTAssertThrowsError(try MetricsSystem.prometheus())
+        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(client: self.prom))
+        XCTAssertNoThrow(try MetricsSystem.prometheus())
     }
     
     func testCounter() {
@@ -34,7 +41,7 @@ final class PrometheusMetricsTests: XCTestCase {
         XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_counter counter
         my_counter 10
-        my_counter{myValue=\"labels\"} 10
+        my_counter{myValue=\"labels\"} 10\n
         """)
     }
 
@@ -65,7 +72,44 @@ final class PrometheusMetricsTests: XCTestCase {
         """)
     }
 
-    func testCollectAFewMetricsIntoBuffer() {
+    func testEmptyCollectIsConsistent() throws {
+        let promise = self.eventLoop.makePromise(of: ByteBuffer.self)
+        prom.collect(promise.succeed)
+        var buffer = try promise.futureResult.wait()
+
+        let stringPromise = self.eventLoop.makePromise(of: String.self)
+        prom.collect(stringPromise.succeed)
+        let collectedToString = try stringPromise.futureResult.wait()
+
+        let collectedToBuffer = buffer.readString(length: buffer.readableBytes)
+        XCTAssertEqual(collectedToBuffer, "")
+        XCTAssertEqual(collectedToBuffer, collectedToString)
+    }
+
+    func testCollectIsConsistent() throws {
+        let counter = Counter(label: "my_counter")
+        counter.increment(by: 10)
+        let counterTwo = Counter(label: "my_counter", dimensions: [("myValue", "labels")])
+        counterTwo.increment(by: 10)
+
+        let promise = self.eventLoop.makePromise(of: ByteBuffer.self)
+        prom.collect(promise.succeed)
+        var buffer = try promise.futureResult.wait()
+
+        let stringPromise = self.eventLoop.makePromise(of: String.self)
+        prom.collect(stringPromise.succeed)
+        let collectedToString = try stringPromise.futureResult.wait()
+
+        let collectedToBuffer = buffer.readString(length: buffer.readableBytes)
+        XCTAssertEqual(collectedToBuffer, """
+        # TYPE my_counter counter
+        my_counter 10
+        my_counter{myValue=\"labels\"} 10\n
+        """)
+        XCTAssertEqual(collectedToBuffer, collectedToString)
+    }
+
+    func testCollectAFewMetricsIntoBuffer() throws {
         let counter = Counter(label: "my_counter")
         counter.increment(by: 10)
         let counterA = Counter(label: "my_counter", dimensions: [("a", "aaa"), ("x", "x")])
@@ -75,16 +119,21 @@ final class PrometheusMetricsTests: XCTestCase {
 
         let promise = self.eventLoop.makePromise(of: ByteBuffer.self)
         prom.collect(promise.succeed)
-        var buffer = try! promise.futureResult.wait()
+        var buffer = try promise.futureResult.wait()
 
-        XCTAssertEqual(buffer.readString(length: buffer.readableBytes),
-            """
-            # TYPE my_counter counter
-            my_counter 10
-            my_counter{x="x", a="aaa"} 4
-            # TYPE my_gauge gauge
-            my_gauge 100.0\n
-            """)
+        let collected = buffer.readString(length: buffer.readableBytes)!
+
+        // We can't guarantee order so check the output contains the expected metrics.
+        XCTAssertTrue(collected.contains("""
+                                         # TYPE my_counter counter
+                                         my_counter 10
+                                         my_counter{x="x", a="aaa"} 4
+                                         """))
+
+        XCTAssertTrue(collected.contains("""
+                                         # TYPE my_gauge gauge
+                                         my_gauge 100.0
+                                         """))
     }
 
     func testCollectAFewMetricsIntoString() {
@@ -97,16 +146,66 @@ final class PrometheusMetricsTests: XCTestCase {
 
         let promise = self.eventLoop.makePromise(of: String.self)
         prom.collect(promise.succeed)
-        let string = try! promise.futureResult.wait()
+        let collected = try! promise.futureResult.wait()
 
-        XCTAssertEqual(string,
-            """
-            # TYPE my_counter counter
-            my_counter 10
-            my_counter{x="x", a="aaa"} 4
-            # TYPE my_gauge gauge
-            my_gauge 100.0
-            """)
+        // We can't guarantee order so check the output contains the expected metrics.
+        XCTAssertTrue(collected.contains("""
+                                         # TYPE my_counter counter
+                                         my_counter 10
+                                         my_counter{x="x", a="aaa"} 4
+                                         """))
+
+        XCTAssertTrue(collected.contains("""
+                                         # TYPE my_gauge gauge
+                                         my_gauge 100.0
+                                         """))
+    }
+
+    func testHistogramBackedTimer() {
+        let prom = PrometheusClient()
+        var config = PrometheusMetricsFactory.Configuration()
+        config.timerImplementation = .histogram()
+        let metricsFactory = PrometheusMetricsFactory(client: prom, configuration: config)
+        metricsFactory.makeTimer(label: "duration_nanos", dimensions: []).recordNanoseconds(1)
+        guard let histogram: PromHistogram<Int64, DimensionHistogramLabels> = prom.getMetricInstance(with: "duration_nanos", andType: .histogram) else {
+            XCTFail("Timer should be backed by Histogram")
+            return
+        }
+        let result = histogram.collect()
+        let buckets = result.split(separator: "\n").filter { $0.contains("duration_nanos_bucket") }
+        XCTAssertFalse(buckets.isEmpty, "default histogram backed timer buckets")
+    }
+
+    func testDestroyHistogramTimer() {
+        let prom = PrometheusClient()
+        var config = PrometheusMetricsFactory.Configuration()
+        config.timerImplementation = .histogram()
+        let metricsFactory = PrometheusMetricsFactory(client: prom, configuration: config)
+        let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
+        timer.recordNanoseconds(1)
+        metricsFactory.destroyTimer(timer)
+        let histogram: PromHistogram<Int64, DimensionHistogramLabels>? = prom.getMetricInstance(with: "duration_nanos", andType: .histogram)
+        XCTAssertNil(histogram)
+    }
+    func testDestroySummaryTimer() {
+        let prom = PrometheusClient()
+        var config = PrometheusMetricsFactory.Configuration()
+        config.timerImplementation = .summary()
+        let metricsFactory = PrometheusMetricsFactory(client: prom)
+        let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
+        timer.recordNanoseconds(1)
+        metricsFactory.destroyTimer(timer)
+        let summary: PromSummary<Int64, DimensionSummaryLabels>? = prom.getMetricInstance(with: "duration_nanos", andType: .summary)
+        XCTAssertNil(summary)
+    }
+
+    func testDimensionLabelEquality() {
+        let labelsA = DimensionLabels([("a", "a")])
+        let labelsB = DimensionLabels([("b", "b")])
+        let labelsATwo = DimensionLabels([("a", "a")])
+
+        XCTAssertEqual(labelsA, labelsATwo)
+        XCTAssertNotEqual(labelsA, labelsB)
+        XCTAssertNotEqual(labelsATwo, labelsB)
     }
 }
-

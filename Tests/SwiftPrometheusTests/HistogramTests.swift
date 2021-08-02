@@ -26,7 +26,7 @@ final class HistogramTests: XCTestCase {
     override func setUp() {
         self.prom = PrometheusClient()
         self.group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        MetricsSystem.bootstrapInternal(prom)
+        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(client: prom))
     }
     
     override func tearDown() {
@@ -75,7 +75,7 @@ final class HistogramTests: XCTestCase {
         my_histogram_bucket{myValue="labels", le="10.0"} 1.0
         my_histogram_bucket{myValue="labels", le="+Inf"} 1.0
         my_histogram_count{myValue="labels"} 1.0
-        my_histogram_sum{myValue="labels"} 3.0
+        my_histogram_sum{myValue="labels"} 3.0\n
         """)
     }
     

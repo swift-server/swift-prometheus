@@ -7,24 +7,14 @@ import NIO
 public class PrometheusClient {
 
     /// Metrics tracked by this Prometheus instance
-    private var metrics: [PromMetric]
-    
-    /// To keep track of the type of a metric since  it can not change
-    /// througout the lifetime of the program
-    private var metricTypeMap: [String: PromMetricType]
+    private var metrics: [String: PromMetric]
     
     /// Lock used for thread safety
     private let lock: Lock
     
-    /// Sanitizers used to clean up label values provided through
-    /// swift-metrics.
-    public let sanitizer: LabelSanitizer
-    
     /// Create a PrometheusClient instance
-    public init(labelSanitizer sanitizer: LabelSanitizer = PrometheusLabelSanitizer()) {
-        self.metrics = []
-        self.metricTypeMap = [:]
-        self.sanitizer = sanitizer
+    public init() {
+        self.metrics = [:]
         self.lock = Lock()
     }
     
@@ -36,7 +26,7 @@ public class PrometheusClient {
     ///     - succeed: Closure that will be called with a newline separated string with metrics for all Metrics this PrometheusClient handles
     public func collect(_ succeed: (String) -> ()) {
         self.lock.withLock {
-            succeed(self.metrics.map { $0.collect() }.joined(separator: "\n"))
+            succeed(self.metrics.isEmpty ? "": "\(self.metrics.values.map { $0.collect() }.joined(separator: "\n"))\n")
         }
     }
     
@@ -55,7 +45,7 @@ public class PrometheusClient {
     public func collect(_ succeed: (ByteBuffer) -> ()) {
         self.lock.withLock {
             var buffer = ByteBufferAllocator().buffer(capacity: 0)
-            self.metrics.forEach {
+            self.metrics.values.forEach {
                 $0.collect(into: &buffer)
                 buffer.writeString("\n")
             }
@@ -77,13 +67,21 @@ public class PrometheusClient {
         // `metricTypeMap` is left untouched as those must be consistent
         // throughout the lifetime of a program.
         return lock.withLock {
-            self.metrics.removeAll { $0._type == metric._type && $0.name == metric.name }
+            self.metrics.removeValue(forKey: metric.name)
         }
     }
     
-    public func getMetricInstance<T>(with name: String, andType type: PromMetricType) -> T? where T: PromMetric {
+    public func getMetricInstance<Metric>(with name: String, andType type: PromMetricType) -> Metric? where Metric: PromMetric {
         return lock.withLock {
-            self.metrics.compactMap { $0 as? T }.filter { $0.name == name && $0._type == type }.first
+            self._getMetricInstance(with: name, andType: type)
+        }
+    }
+    
+    private func _getMetricInstance<Metric>(with name: String, andType type: PromMetricType) -> Metric? where Metric: PromMetric {
+        if let metric = self.metrics[name], metric._type == type {
+            return metric as? Metric
+        } else {
+            return nil
         }
     }
     
@@ -106,17 +104,14 @@ public class PrometheusClient {
         initialValue: T = 0,
         withLabelType labelType: U.Type) -> PromCounter<T, U>
     {
-        if let counter: PromCounter<T, U> = getMetricInstance(with: name, andType: .counter) {
-            return counter
-        }
-
         return self.lock.withLock {
-            if let type = metricTypeMap[name] {
-                precondition(type == .counter, "Label \(name) was associated with \(type) before. Can not be used for a counter now.")
+            if let cachedCounter: PromCounter<T, U> = self._getMetricInstance(with: name, andType: .counter) {
+                return cachedCounter
             }
+
             let counter = PromCounter<T, U>(name, helpText, initialValue, self)
-            self.metricTypeMap[name] = .counter
-            self.metrics.append(counter)
+            let oldInstrument = self.metrics.updateValue(counter, forKey: name)
+            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return counter
         }
     }
@@ -158,17 +153,14 @@ public class PrometheusClient {
         initialValue: T = 0,
         withLabelType labelType: U.Type) -> PromGauge<T, U>
     {
-        if let gauge: PromGauge<T, U> = getMetricInstance(with: name, andType: .gauge) {
-            return gauge
-        }
-
         return self.lock.withLock {
-            if let type = metricTypeMap[name] {
-                precondition(type == .gauge, "Label \(name) was associated with \(type) before. Can not be used for a gauge now.")
+            if let cachedGauge: PromGauge<T, U> = self._getMetricInstance(with: name, andType: .gauge) {
+                return cachedGauge
             }
+
             let gauge = PromGauge<T, U>(name, helpText, initialValue, self)
-            self.metricTypeMap[name] = .gauge
-            self.metrics.append(gauge)
+            let oldInstrument = self.metrics.updateValue(gauge, forKey: name)
+            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return gauge
         }
     }
@@ -210,17 +202,14 @@ public class PrometheusClient {
         buckets: Buckets = .defaultBuckets,
         labels: U.Type) -> PromHistogram<T, U>
     {
-        if let histogram: PromHistogram<T, U> = getMetricInstance(with: name, andType: .histogram) {
-            return histogram
-        }
-
         return self.lock.withLock {
-            if let type = metricTypeMap[name] {
-                precondition(type == .histogram, "Label \(name) was associated with \(type) before. Can not be used for a histogram now.")
+            if let cachedHistogram: PromHistogram<T, U> = self._getMetricInstance(with: name, andType: .histogram) {
+                return cachedHistogram
             }
+
             let histogram = PromHistogram<T, U>(name, helpText, U(), buckets, self)
-            self.metricTypeMap[name] = .histogram
-            self.metrics.append(histogram)
+            let oldInstrument = self.metrics.updateValue(histogram, forKey: name)
+            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return histogram
         }
     }
@@ -252,7 +241,7 @@ public class PrometheusClient {
     ///     - name: Name of the summary
     ///     - helpText: Help text for the summary. Usually a short description
     ///     - capacity: Number of (last) observations used to calculate quantiles
-    ///     - quantiles: Quantiles to caluculate
+    ///     - quantiles: Quantiles to calculate
     ///     - labels: Labels to give this summary. Can be left out to default to no labels
     ///
     /// - Returns: Summary instance
@@ -264,17 +253,13 @@ public class PrometheusClient {
         quantiles: [Double] = Prometheus.defaultQuantiles,
         labels: U.Type) -> PromSummary<T, U>
     {
-        if let summary: PromSummary<T, U> = getMetricInstance(with: name, andType: .summary) {
-            return summary
-        }
-
         return self.lock.withLock {
-            if let type = metricTypeMap[name] {
-                precondition(type == .summary, "Label \(name) was associated with \(type) before. Can not be used for a summary now.")
+            if let cachedSummary: PromSummary<T, U> = self._getMetricInstance(with: name, andType: .summary) {
+                return cachedSummary
             }
             let summary = PromSummary<T, U>(name, helpText, U(), capacity, quantiles, self)
-            self.metricTypeMap[name] = .summary
-            self.metrics.append(summary)
+            let oldInstrument = self.metrics.updateValue(summary, forKey: name)
+            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return summary
         }
     }
@@ -285,7 +270,7 @@ public class PrometheusClient {
     ///     - type: The type the summary will observe
     ///     - name: Name of the summary
     ///     - helpText: Help text for the summary. Usually a short description
-    ///     - quantiles: Quantiles to caluculate
+    ///     - quantiles: Quantiles to calculate
     ///
     /// - Returns: Summary instance
     public func createSummary<T: Numeric>(
@@ -300,8 +285,8 @@ public class PrometheusClient {
 
 /// Prometheus specific errors
 public enum PrometheusError: Error {
-    /// Thrown when a user tries to retrive
-    /// a `PromtheusClient` from `MetricsSystem`
+    /// Thrown when a user tries to retrieve
+    /// a `PrometheusClient` from `MetricsSystem`
     /// but there was no `PrometheusClient` bootstrapped
     case prometheusFactoryNotBootstrapped(bootstrappedWith: String)
 }

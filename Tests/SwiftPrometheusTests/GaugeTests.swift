@@ -25,7 +25,7 @@ final class GaugeTests: XCTestCase {
     override func setUp() {
         self.prom = PrometheusClient()
         self.group = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        MetricsSystem.bootstrapInternal(prom)
+        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(client: prom))
     }
     
     override func tearDown() {
@@ -49,7 +49,7 @@ final class GaugeTests: XCTestCase {
         XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE my_gauge gauge
         my_gauge 20.0
-        my_gauge{myValue=\"labels\"} 10.0
+        my_gauge{myValue=\"labels\"} 10.0\n
         """)
     }
 

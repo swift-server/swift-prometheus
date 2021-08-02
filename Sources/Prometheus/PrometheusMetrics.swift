@@ -64,6 +64,24 @@ private class MetricsHistogram: RecorderHandler {
     }
 }
 
+class MetricsHistogramTimer: TimerHandler {
+    let histogram: PromHistogram<Int64, DimensionHistogramLabels>
+    let labels: DimensionHistogramLabels?
+
+    init(histogram: PromHistogram<Int64, DimensionHistogramLabels>, dimensions: [(String, String)]) {
+        self.histogram = histogram
+        if !dimensions.isEmpty {
+            self.labels = DimensionHistogramLabels(dimensions)
+        } else {
+            self.labels = nil
+        }
+    }
+
+    func recordNanoseconds(_ duration: Int64) {
+        return histogram.observe(duration, labels)
+    }
+}
+
 private class MetricsSummary: TimerHandler {
     let summary: PromSummary<Int64, DimensionSummaryLabels>
     let labels: DimensionSummaryLabels?
@@ -82,7 +100,7 @@ private class MetricsSummary: TimerHandler {
     }
     
     func recordNanoseconds(_ duration: Int64) {
-        summary.observe(duration, labels)
+        return summary.observe(duration, labels)
     }
 }
 
@@ -94,7 +112,7 @@ private class MetricsSummary: TimerHandler {
 ///     let sanitizer: LabelSanitizer = ...
 ///     let prometheusLabel = sanitizer.sanitize(nonPrometheusLabel)
 ///
-/// By default `PrometheusLabelSanitizer` is used by `PrometheusClient`
+/// By default `PrometheusLabelSanitizer` is used by `PrometheusMetricsFactory`
 public protocol LabelSanitizer {
     /// Sanitize the passed in label to a Prometheus accepted value.
     ///
@@ -110,84 +128,156 @@ public protocol LabelSanitizer {
 ///
 /// See `https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels` for more info.
 public struct PrometheusLabelSanitizer: LabelSanitizer {
-    let allowedCharacters = "abcdefghijklmnopqrstuvwxyz0123456789_:"
-    
+    private static let uppercaseAThroughZ = UInt8(ascii: "A") ... UInt8(ascii: "Z")
+    private static let lowercaseAThroughZ = UInt8(ascii: "a") ... UInt8(ascii: "z")
+    private static let zeroThroughNine = UInt8(ascii: "0") ... UInt8(ascii: "9")
+
     public init() { }
 
     public func sanitize(_ label: String) -> String {
-        return String(label
-            .lowercased()
-            .map { (c: Character) -> Character in if allowedCharacters.contains(c) { return c }; return "_" })
+        if PrometheusLabelSanitizer.isSanitized(label) {
+            return label
+        } else {
+            return PrometheusLabelSanitizer.sanitizeLabel(label)
+        }
+    }
+
+    /// Returns a boolean indicating whether the label is already sanitized.
+    private static func isSanitized(_ label: String) -> Bool {
+        return label.utf8.allSatisfy(PrometheusLabelSanitizer.isValidCharacter(_:))
+    }
+    
+    /// Returns a boolean indicating whether the character may be used in a label.
+    private static func isValidCharacter(_ codePoint: String.UTF8View.Element) -> Bool {
+        switch codePoint {
+        case PrometheusLabelSanitizer.lowercaseAThroughZ,
+             PrometheusLabelSanitizer.zeroThroughNine,
+             UInt8(ascii: ":"),
+             UInt8(ascii: "_"):
+            return true
+        default:
+            return false
+        }
+    }
+
+    private static func sanitizeLabel(_ label: String) -> String {
+        let sanitized: [UInt8] = label.utf8.map { character in
+            if PrometheusLabelSanitizer.isValidCharacter(character) {
+                return character
+            } else {
+                return PrometheusLabelSanitizer.sanitizeCharacter(character)
+            }
+        }
+        
+        return String(decoding: sanitized, as: UTF8.self)
+    }
+    
+    private static func sanitizeCharacter(_ character: UInt8) -> UInt8 {
+        if PrometheusLabelSanitizer.uppercaseAThroughZ.contains(character) {
+            // Uppercase, so shift to lower case.
+            return character + (UInt8(ascii: "a") - UInt8(ascii: "A"))
+        } else {
+            return UInt8(ascii: "_")
+        }
     }
 }
 
-extension PrometheusClient: MetricsFactory {
+/// Defines the base for a bridge between PrometheusClient and swift-metrics.
+/// Used by `SwiftMetrics.prometheus()` to get an instance of `PrometheusClient` from `MetricsSystem`
+///
+/// Any custom implementation of `MetricsFactory` using `PrometheusClient` should conform to this implementation.
+public protocol PrometheusWrappedMetricsFactory: MetricsFactory {
+    var client: PrometheusClient { get }
+}
+
+/// A bridge between PrometheusClient and swift-metrics. Prometheus types don't map perfectly on swift-metrics API,
+/// which makes bridge implementation non trivial. This class defines how exactly swift-metrics types should be backed
+/// with Prometheus types, e.g. how to sanitize labels, what buckets/quantiles to use for recorder/timer, etc.
+public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
+
+    /// Prometheus client to bridge swift-metrics API to.
+    public let client: PrometheusClient
+
+    /// Bridge configuration.
+    private let configuration: Configuration
+
+    public init(client: PrometheusClient,
+                configuration: Configuration = Configuration()) {
+        self.client = client
+        self.configuration = configuration
+    }
+
     public func destroyCounter(_ handler: CounterHandler) {
         guard let handler = handler as? MetricsCounter else { return }
-        self.removeMetric(handler.counter)
+        client.removeMetric(handler.counter)
     }
     
     public func destroyRecorder(_ handler: RecorderHandler) {
         if let handler = handler as? MetricsGauge {
-            self.removeMetric(handler.gauge)
+            client.removeMetric(handler.gauge)
         }
         if let handler = handler as? MetricsHistogram {
-            self.removeMetric(handler.histogram)
+            client.removeMetric(handler.histogram)
         }
     }
-    
+
     public func destroyTimer(_ handler: TimerHandler) {
-        guard let handler = handler as? MetricsSummary else { return }
-        self.removeMetric(handler.summary)
+        switch self.configuration.timerImplementation._wrapped {
+        case .summary:
+            guard let handler = handler as? MetricsSummary else { return }
+            client.removeMetric(handler.summary)
+        case .histogram:
+            guard let handler = handler as? MetricsHistogramTimer else { return }
+            client.removeMetric(handler.histogram)
+        }
     }
     
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
-        let label = self.sanitizer.sanitize(label)
-        let createHandler = { (counter: PromCounter) -> CounterHandler in
-            return MetricsCounter(counter: counter, dimensions: dimensions)
-        }
-        if let counter: PromCounter<Int64, DimensionLabels> = self.getMetricInstance(with: label, andType: .counter) {
-            return createHandler(counter)
-        }
-        return createHandler(self.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self))
+        let label = configuration.labelSanitizer.sanitize(label)
+        let counter = client.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self)
+        return MetricsCounter(counter: counter, dimensions: dimensions)
     }
     
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
-        let label = self.sanitizer.sanitize(label)
+        let label = configuration.labelSanitizer.sanitize(label)
         return aggregate ? makeHistogram(label: label, dimensions: dimensions) : makeGauge(label: label, dimensions: dimensions)
     }
     
     private func makeGauge(label: String, dimensions: [(String, String)]) -> RecorderHandler {
-        let label = self.sanitizer.sanitize(label)
-        let createHandler = { (gauge: PromGauge) -> RecorderHandler in
-            return MetricsGauge(gauge: gauge, dimensions: dimensions)
-        }
-        if let gauge: PromGauge<Double, DimensionLabels> = self.getMetricInstance(with: label, andType: .gauge) {
-            return createHandler(gauge)
-        }
-        return createHandler(createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self))
+        let label = configuration.labelSanitizer.sanitize(label)
+        let gauge = client.createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self)
+        return MetricsGauge(gauge: gauge, dimensions: dimensions)
     }
     
     private func makeHistogram(label: String, dimensions: [(String, String)]) -> RecorderHandler {
-        let label = self.sanitizer.sanitize(label)
-        let createHandler = { (histogram: PromHistogram) -> RecorderHandler in
-            return MetricsHistogram(histogram: histogram, dimensions: dimensions)
-        }
-        if let histogram: PromHistogram<Double, DimensionHistogramLabels> = self.getMetricInstance(with: label, andType: .histogram) {
-            return createHandler(histogram)
-        }
-        return createHandler(createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self))
+        let label = configuration.labelSanitizer.sanitize(label)
+        let histogram = client.createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self)
+        return MetricsHistogram(histogram: histogram, dimensions: dimensions)
     }
     
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
-        let label = self.sanitizer.sanitize(label)
-        let createHandler = { (summary: PromSummary) -> TimerHandler in
-            return MetricsSummary(summary: summary, dimensions: dimensions)
+        switch configuration.timerImplementation._wrapped {
+        case .summary(let quantiles):
+            return self.makeSummaryTimer(label: label, dimensions: dimensions, quantiles: quantiles)
+        case .histogram(let buckets):
+            return self.makeHistogramTimer(label: label, dimensions: dimensions, buckets: buckets)
         }
-        if let summary: PromSummary<Int64, DimensionSummaryLabels> = self.getMetricInstance(with: label, andType: .summary) {
-            return createHandler(summary)
-        }
-        return createHandler(createSummary(forType: Int64.self, named: label, labels: DimensionSummaryLabels.self))
+    }
+
+    /// There's two different ways to back swift-api `Timer` with Prometheus classes.
+    /// This method creates `Summary` backed timer implementation
+    private func makeSummaryTimer(label: String, dimensions: [(String, String)], quantiles: [Double]) -> TimerHandler {
+        let label = configuration.labelSanitizer.sanitize(label)
+        let summary = client.createSummary(forType: Int64.self, named: label, quantiles: quantiles, labels: DimensionSummaryLabels.self)
+        return MetricsSummary(summary: summary, dimensions: dimensions)
+    }
+
+    /// There's two different ways to back swift-api `Timer` with Prometheus classes.
+    /// This method creates `Histogram` backed timer implementation
+    private func makeHistogramTimer(label: String, dimensions: [(String, String)], buckets: Buckets) -> TimerHandler {
+        let label = configuration.labelSanitizer.sanitize(label)
+        let histogram = client.createHistogram(forType: Int64.self, named: label, buckets: buckets, labels: DimensionHistogramLabels.self)
+        return MetricsHistogramTimer(histogram: histogram, dimensions: dimensions)
     }
 }
 
@@ -198,10 +288,10 @@ public extension MetricsSystem {
     /// - Throws: `PrometheusError.PrometheusFactoryNotBootstrapped`
     ///             if no `PrometheusClient` was used to bootstrap `MetricsSystem`
     static func prometheus() throws -> PrometheusClient {
-        guard let prom = self.factory as? PrometheusClient else {
+        guard let prom = self.factory as? PrometheusWrappedMetricsFactory else {
             throw PrometheusError.prometheusFactoryNotBootstrapped(bootstrappedWith: "\(self.factory)")
         }
-        return prom
+        return prom.client
     }
 }
 
@@ -233,118 +323,95 @@ private struct StringCodingKey: CodingKey {
     }
 }
 
-
-
 /// Helper for dimensions
-private struct DimensionLabels: MetricLabels {
+public struct DimensionLabels: MetricLabels {
     let dimensions: [(String, String)]
     
-    init() {
+    public init() {
         self.dimensions = []
     }
     
-    init(_ dimensions: [(String, String)]) {
+    public init(_ dimensions: [(String, String)]) {
         self.dimensions = dimensions
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
-        try self.dimensions.forEach {
-            try container.encode($0.1, forKey: .init($0.0))
+        for (key, value) in self.dimensions {
+            try container.encode(value, forKey: .init(key))
         }
     }
     
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
+    public func hash(into hasher: inout Hasher) {
+        for (key, value) in dimensions {
+            hasher.combine(key)
+            hasher.combine(value)
+        }
     }
-    
-    fileprivate var identifiers: String {
-        return dimensions.map { $0.0 }.joined(separator: "-")
-    }
-    
-    static func == (lhs: DimensionLabels, rhs: DimensionLabels) -> Bool {
-        return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"}
+
+    public static func == (lhs: DimensionLabels, rhs: DimensionLabels) -> Bool {
+        guard lhs.dimensions.count == rhs.dimensions.count else { return false }
+        for index in 0..<lhs.dimensions.count {
+            guard lhs.dimensions[index] == rhs.dimensions[index] else { return false }
+        }
+        return true
     }
 }
 
 /// Helper for dimensions
-private struct DimensionHistogramLabels: HistogramLabels {
+/// swift-metrics api doesn't allow setting buckets explicitly.
+/// If default buckets don't fit, this Labels implementation is a nice default to create Prometheus metric types with
+public struct DimensionHistogramLabels: HistogramLabels {
     /// Bucket
-    var le: String
+    public var le: String
     /// Dimensions
-    let dimensions: [(String, String)]
+    let labels: DimensionLabels
     
     /// Empty init
-    init() {
+    public init() {
         self.le = ""
-        self.dimensions = []
+        self.labels = DimensionLabels()
     }
     
     /// Init with dimensions
-    init(_ dimensions: [(String, String)]) {
+    public init(_ dimensions: [(String, String)]) {
         self.le = ""
-        self.dimensions = dimensions
+        self.labels = DimensionLabels(dimensions)
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
-        try self.dimensions.forEach {
-            try container.encode($0.1, forKey: .init($0.0))
+        for (key, value) in self.labels.dimensions {
+            try container.encode(value, forKey: .init(key))
         }
         try container.encode(le, forKey: .init("le"))
     }
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
-        hasher.combine(le)
-    }
-    
-    fileprivate var identifiers: String {
-        return dimensions.map { $0.0 }.joined(separator: "-")
-    }
-    
-    static func == (lhs: DimensionHistogramLabels, rhs: DimensionHistogramLabels) -> Bool {
-        return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"} && rhs.le == lhs.le
-    }
 }
 
 /// Helper for dimensions
-private struct DimensionSummaryLabels: SummaryLabels {
+public struct DimensionSummaryLabels: SummaryLabels {
     /// Quantile
-    var quantile: String
+    public var quantile: String
     /// Dimensions
-    let dimensions: [(String, String)]
-    
+    let labels: DimensionLabels
+
     /// Empty init
-    init() {
+    public init() {
         self.quantile = ""
-        self.dimensions = []
+        self.labels = DimensionLabels()
     }
     
     /// Init with dimensions
-    init(_ dimensions: [(String, String)]) {
+    public init(_ dimensions: [(String, String)]) {
         self.quantile = ""
-        self.dimensions = dimensions
+        self.labels = DimensionLabels(dimensions)
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: StringCodingKey.self)
-        try self.dimensions.forEach {
-            try container.encode($0.1, forKey: .init($0.0))
+        for (key, value) in self.labels.dimensions {
+            try container.encode(value, forKey: .init(key))
         }
         try container.encode(quantile, forKey: .init("quantile"))
-    }
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(dimensions.map { "\($0.0)-\($0.1)"})
-        hasher.combine(quantile)
-    }
-    
-    fileprivate var identifiers: String {
-        return dimensions.map { $0.0 }.joined(separator: "-")
-    }
-    
-    static func == (lhs: DimensionSummaryLabels, rhs: DimensionSummaryLabels) -> Bool {
-        return lhs.dimensions.map { "\($0.0)-\($0.1)"} == rhs.dimensions.map { "\($0.0)-\($0.1)"} && rhs.quantile == lhs.quantile
     }
 }
