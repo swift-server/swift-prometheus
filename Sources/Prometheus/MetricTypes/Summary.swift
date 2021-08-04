@@ -1,7 +1,6 @@
 import NIOConcurrencyHelpers
 import struct CoreMetrics.TimeUnit
 import Dispatch
-import Collections
 
 /// Label type Summaries can use
 public protocol SummaryLabels: MetricLabels {
@@ -44,7 +43,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     private let count: PromCounter<NumType, EmptyLabels>
     
     /// Values in this Summary
-    private var values: Deque<NumType> = []
+    private var values: [NumType] = []
 
     /// Number of last values used to calculate quantiles
     internal let capacity: Int
@@ -168,7 +167,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
             self.sum.inc(value)
             self.values.append(value)
             if self.values.count > self.capacity {
-                _ = self.values.popFirst()
+                self.values.remove(at: 0)
             }
         }
     }
