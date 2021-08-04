@@ -1,0 +1,33 @@
+name: tests
+on: { pull_request: {} }
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        docker: ['swift:5.2-focal', 'swift:5.3-focal', 'swift:5.4-focal']
+    container: ${{ matrix.docker }}
+    steps:
+      - name: Check out SwiftPrometheus
+        uses: actions/checkout@v2
+      - name: Run tests with Thread Sanitizer
+        timeout-minutes: 30
+        run: swift test --enable-test-discovery --sanitize=thread
+  macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: ['latest', 'latest-stable']
+    steps:
+      - name: Select toolchain
+        uses: maxim-lobanov/setup-xcode@v1.2.1
+        with:
+          xcode-version: ${{ matrix.toolchain }}
+      - name: Check out SwiftPrometheus
+        uses: actions/checkout@v2
+      - name: Run tests with Thread Sanitizer
+        timeout-minutes: 30
+        run: swift test --enable-test-discovery --sanitize=thread
