@@ -1,4 +1,5 @@
 import NIOConcurrencyHelpers
+import NIO
 import struct CoreMetrics.TimeUnit
 import Dispatch
 
@@ -43,7 +44,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     private let count: PromCounter<NumType, EmptyLabels>
     
     /// Values in this Summary
-    private var values: [NumType] = []
+    private var values: CircularBuffer<NumType>
 
     /// Number of last values used to calculate quantiles
     internal let capacity: Int
@@ -78,6 +79,8 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         
         self.count = .init("\(self.name)_count", nil, 0, p)
         
+        self.values = CircularBuffer(initialCapacity: capacity)
+
         self.capacity = capacity
 
         self.quantiles = quantiles
@@ -165,10 +168,10 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
             }
             self.count.inc(1)
             self.sum.inc(value)
-            self.values.append(value)
-            if self.values.count > self.capacity {
-                self.values.remove(at: 0)
+            if self.values.count == self.capacity {
+                _ = self.values.popFirst()
             }
+            self.values.append(value)
         }
     }
     
