@@ -46,7 +46,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     /// Values in this Summary
     private var values: CircularBuffer<NumType>
 
-    /// Number of last values used to calculate quantiles
+    /// Number of values to keep for calculating quantiles
     internal let capacity: Int
 
     /// Quantiles used by this Summary
@@ -64,7 +64,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     ///     - name: Name of the Summary
     ///     - help: Help text of the Summary
     ///     - labels: Labels for the Summary
-    ///     - capacity: Number of last values used to calculate quantiles
+    ///     - capacity: Number of values to keep for calculating quantiles
     ///     - quantiles: Quantiles to use for the Summary
     ///     - p: Prometheus instance creating this Summary
     internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ capacity: Int = Prometheus.defaultSummaryCapacity, _ quantiles: [Double] = Prometheus.defaultQuantiles, _ p: PrometheusClient) {

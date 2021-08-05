@@ -240,7 +240,7 @@ public class PrometheusClient {
     ///     - type: The type the summary will observe
     ///     - name: Name of the summary
     ///     - helpText: Help text for the summary. Usually a short description
-    ///     - capacity: Number of (last) observations used to calculate quantiles
+    ///     - capacity: Number of observations to keep for calculating quantiles
     ///     - quantiles: Quantiles to calculate
     ///     - labels: Labels to give this summary. Can be left out to default to no labels
     ///
