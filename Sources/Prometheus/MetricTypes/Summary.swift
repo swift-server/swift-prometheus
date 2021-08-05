@@ -1,4 +1,5 @@
 import NIOConcurrencyHelpers
+import NIO
 import struct CoreMetrics.TimeUnit
 import Dispatch
 
@@ -43,8 +44,11 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     private let count: PromCounter<NumType, EmptyLabels>
     
     /// Values in this Summary
-    private var values: [NumType] = []
-    
+    private var values: CircularBuffer<NumType>
+
+    /// Number of values to keep for calculating quantiles
+    internal let capacity: Int
+
     /// Quantiles used by this Summary
     internal let quantiles: [Double]
     
@@ -60,9 +64,10 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     ///     - name: Name of the Summary
     ///     - help: Help text of the Summary
     ///     - labels: Labels for the Summary
+    ///     - capacity: Number of values to keep for calculating quantiles
     ///     - quantiles: Quantiles to use for the Summary
     ///     - p: Prometheus instance creating this Summary
-    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ quantiles: [Double] = Prometheus.defaultQuantiles, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ capacity: Int = Prometheus.defaultSummaryCapacity, _ quantiles: [Double] = Prometheus.defaultQuantiles, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         
@@ -74,6 +79,10 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         
         self.count = .init("\(self.name)_count", nil, 0, p)
         
+        self.values = CircularBuffer(initialCapacity: capacity)
+
+        self.capacity = capacity
+
         self.quantiles = quantiles
         
         self.labels = labels
@@ -159,6 +168,9 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
             }
             self.count.inc(1)
             self.sum.inc(value)
+            if self.values.count == self.capacity {
+                _ = self.values.popFirst()
+            }
             self.values.append(value)
         }
     }
@@ -190,7 +202,7 @@ extension PrometheusClient {
         if let summary = summaries.first {
             return summary
         } else {
-            let newSummary = PromSummary<T, U>(summary.name, summary.help, labels, summary.quantiles, self)
+            let newSummary = PromSummary<T, U>(summary.name, summary.help, labels, summary.capacity, summary.quantiles, self)
             summary.subSummaries.append(newSummary)
             return newSummary
         }

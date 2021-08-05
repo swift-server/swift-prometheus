@@ -240,6 +240,7 @@ public class PrometheusClient {
     ///     - type: The type the summary will observe
     ///     - name: Name of the summary
     ///     - helpText: Help text for the summary. Usually a short description
+    ///     - capacity: Number of observations to keep for calculating quantiles
     ///     - quantiles: Quantiles to calculate
     ///     - labels: Labels to give this summary. Can be left out to default to no labels
     ///
@@ -248,6 +249,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
+        capacity: Int = Prometheus.defaultSummaryCapacity,
         quantiles: [Double] = Prometheus.defaultQuantiles,
         labels: U.Type) -> PromSummary<T, U>
     {
@@ -255,8 +257,7 @@ public class PrometheusClient {
             if let cachedSummary: PromSummary<T, U> = self._getMetricInstance(with: name, andType: .summary) {
                 return cachedSummary
             }
-            
-            let summary = PromSummary<T, U>(name, helpText, U(), quantiles, self)
+            let summary = PromSummary<T, U>(name, helpText, U(), capacity, quantiles, self)
             let oldInstrument = self.metrics.updateValue(summary, forKey: name)
             precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return summary

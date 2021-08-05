@@ -144,4 +144,21 @@ final class SummaryTests: XCTestCase {
         my_summary_sum{myValue=\"labels\"} 123.0
         """)
     }
+
+    func testStandaloneSummaryWithCustomCapacity() {
+        let capacity = 10
+        let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", capacity: capacity, quantiles: [0.5, 0.99], labels: BaseSummaryLabels.self)
+
+        for i in 0 ..< capacity { summary.observe(Double(i * 1_000)) }
+        for i in 0 ..< capacity { summary.observe(Double(i)) }
+
+        XCTAssertEqual(summary.collect(), """
+        # HELP my_summary Summary for testing
+        # TYPE my_summary summary
+        my_summary{quantile="0.5", myValue="*"} 4.5
+        my_summary{quantile="0.99", myValue="*"} 9.0
+        my_summary_count{myValue="*"} 20.0
+        my_summary_sum{myValue="*"} 45045.0
+        """)
+    }
 }
