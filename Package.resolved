@@ -3,11 +3,11 @@
     "pins": [
       {
         "package": "swift-metrics",
-        "repositoryURL": "https://github.com/rauhul/swift-metrics.git",
+        "repositoryURL": "https://github.com/apple/swift-metrics.git",
         "state": {
-          "branch": "feature/floating-point-counter",
-          "revision": "7f85b16b9791154162beea7c670dd3cd2d3efd17",
-          "version": null
+          "branch": null,
+          "revision": "3edd2f57afc4e68e23c3e4956bc8b65ca6b5b2ff",
+          "version": "2.2.0"
         }
       },
       {

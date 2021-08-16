@@ -13,7 +13,7 @@ let package = Package(
             targets: ["PrometheusExample"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/rauhul/swift-metrics.git", .branch("feature/floating-point-counter")),
+        .package(url: "https://github.com/apple/swift-metrics.git", from: "2.2.0"),
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.0.0"),
     ],
     targets: [
