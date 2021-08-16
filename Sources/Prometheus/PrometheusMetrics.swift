@@ -385,7 +385,7 @@ public struct DimensionLabels: MetricLabels {
         for index in 0..<lhs.dimensions.count {
             guard lhs.dimensions[index] == rhs.dimensions[index] else { return false }
         }
-        return false
+        return true
     }
 }
 

@@ -13,6 +13,9 @@ public enum PromMetricType: String {
 }
 
 public enum Prometheus {
+    /// Default capacity of Summaries
+    public static let defaultSummaryCapacity = 500
+
     /// Default quantiles used by Summaries
     public static let defaultQuantiles = [0.01, 0.05, 0.5, 0.9, 0.95, 0.99, 0.999]
 }

@@ -214,4 +214,14 @@ final class PrometheusMetricsTests: XCTestCase {
         let summary: PromSummary<Int64, DimensionSummaryLabels>? = prom.getMetricInstance(with: "duration_nanos", andType: .summary)
         XCTAssertNil(summary)
     }
+
+    func testDimensionLabelEquality() {
+        let labelsA = DimensionLabels([("a", "a")])
+        let labelsB = DimensionLabels([("b", "b")])
+        let labelsATwo = DimensionLabels([("a", "a")])
+
+        XCTAssertEqual(labelsA, labelsATwo)
+        XCTAssertNotEqual(labelsA, labelsB)
+        XCTAssertNotEqual(labelsATwo, labelsB)
+    }
 }
