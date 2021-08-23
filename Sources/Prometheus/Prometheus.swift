@@ -25,9 +25,8 @@ public class PrometheusClient {
     /// - Parameters:
     ///     - succeed: Closure that will be called with a newline separated string with metrics for all Metrics this PrometheusClient handles
     public func collect(_ succeed: (String) -> ()) {
-        self.lock.withLock {
-            succeed(self.metrics.isEmpty ? "": "\(self.metrics.values.map { $0.collect() }.joined(separator: "\n"))\n")
-        }
+        let metrics = self.lock.withLock { self.metrics }
+        succeed(metrics.isEmpty ? "" : "\(metrics.values.map { $0.collect() }.joined(separator: "\n"))\n")
     }
     
     /// Creates prometheus formatted metrics
@@ -43,14 +42,13 @@ public class PrometheusClient {
     /// - Parameters:
     ///     - succeed: Closure that will be called with a `ByteBuffer` containing a newline separated string with metrics for all Metrics this PrometheusClient handles
     public func collect(_ succeed: (ByteBuffer) -> ()) {
-        self.lock.withLock {
-            var buffer = ByteBufferAllocator().buffer(capacity: 0)
-            self.metrics.values.forEach {
-                $0.collect(into: &buffer)
-                buffer.writeString("\n")
-            }
-            succeed(buffer)
+        var buffer = ByteBufferAllocator().buffer(capacity: 0)
+        let metrics = self.lock.withLock { self.metrics }
+        metrics.values.forEach {
+            $0.collect(into: &buffer)
+            buffer.writeString("\n")
         }
+        succeed(buffer)
     }
 
     /// Creates prometheus formatted metrics
@@ -290,4 +288,3 @@ public enum PrometheusError: Error {
     /// but there was no `PrometheusClient` bootstrapped
     case prometheusFactoryNotBootstrapped(bootstrappedWith: String)
 }
-
