@@ -83,7 +83,7 @@ extension HistogramLabels {
 public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: PromMetric, PrometheusHandled {
     /// Prometheus instance that created this Histogram
     internal weak var prometheus: PrometheusClient?
-    
+
     /// Name of this Histogram, required
     public let name: String
     /// Help text of this Histogram, optional
@@ -99,7 +99,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     internal let upperBounds: [Double]
     
     /// Labels for this Histogram
-    internal private(set) var labels: Labels
+    internal let labels: Labels
     
     /// Sub Histograms for this Histogram
     fileprivate var subHistograms: [PromHistogram<NumType, Labels>] = []
@@ -121,9 +121,9 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: Buckets = .defaultBuckets, _ p: PrometheusClient) {
         self.name = name
         self.help = help
-        
+
         self.prometheus = p
-        
+
         self.sum = .init("\(self.name)_sum", nil, 0, p)
         
         self.labels = labels
@@ -142,50 +142,58 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     /// - Returns:
     ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
-        return self.lock.withLock {
-            var output = [String]()
-            
-            if let help = self.help {
-                output.append("# HELP \(self.name) \(help)")
-            }
-            output.append("# TYPE \(self.name) \(self._type)")
-
-            var acc: NumType = 0
-            for (i, bound) in self.upperBounds.enumerated() {
-                acc += self.buckets[i].get()
-                self.labels.le = bound.description
-                let labelsString = encodeLabels(self.labels)
-                output.append("\(self.name)_bucket\(labelsString) \(acc)")
-            }
-            
-            let labelsString = encodeLabels(self.labels, ["le"])
-            output.append("\(self.name)_count\(labelsString) \(acc)")
-            
-            output.append("\(self.name)_sum\(labelsString) \(self.sum.get())")
-            
-            self.subHistograms.forEach { subHistogram in
-                var acc: NumType = 0
-                for (i, bound) in subHistogram.upperBounds.enumerated() {
-                    acc += subHistogram.buckets[i].get()
-                    subHistogram.labels.le = bound.description
-                    let labelsString = encodeLabels(subHistogram.labels)
-                    output.append("\(subHistogram.name)_bucket\(labelsString) \(acc)")
-                }
-                
-                let labelsString = encodeLabels(subHistogram.labels, ["le"])
-                output.append("\(subHistogram.name)_count\(labelsString) \(acc)")
-                
-                output.append("\(subHistogram.name)_sum\(labelsString) \(subHistogram.sum.get())")
-                
-                subHistogram.labels.le = ""
-            }
-            
-            self.labels.le = ""
-            
-            return output.joined(separator: "\n")
+        let (buckets, subHistograms, labels) = self.lock.withLock {
+            (self.buckets, self.subHistograms, self.labels)
         }
+
+        var output = [String]()
+
+        if let help = self.help {
+            output.append("# HELP \(self.name) \(help)")
+        }
+        output.append("# TYPE \(self.name) \(self._type)")
+        collectBuckets(buckets: buckets,
+                       upperBounds: self.upperBounds,
+                       name: self.name,
+                       labels: labels,
+                       sum: self.sum.get(),
+                       into: &output)
+
+        subHistograms.forEach { subHistogram in
+            let (subHistogramBuckets, subHistogramLabels) = self.lock.withLock {
+                (subHistogram.buckets, subHistogram.labels)
+            }
+            collectBuckets(buckets: subHistogramBuckets,
+                           upperBounds: subHistogram.upperBounds,
+                           name: subHistogram.name,
+                           labels: subHistogramLabels,
+                           sum: subHistogram.sum.get(),
+                           into: &output)
+        }
+        return output.joined(separator: "\n")
     }
-    
+
+    private func collectBuckets(buckets: [PromCounter<NumType, EmptyLabels>],
+                                upperBounds: [Double],
+                                name: String,
+                                labels: Labels,
+                                sum: NumType,
+                                into output: inout [String]) {
+        var labels = labels
+        var acc: NumType = 0
+        for (i, bound) in upperBounds.enumerated() {
+            acc += buckets[i].get()
+            labels.le = bound.description
+            let labelsString = encodeLabels(labels)
+            output.append("\(name)_bucket\(labelsString) \(acc)")
+        }
+
+        let labelsString = encodeLabels(labels, ["le"])
+        output.append("\(name)_count\(labelsString) \(acc)")
+
+        output.append("\(name)_sum\(labelsString) \(sum)")
+    }
+
     /// Observe a value
     ///
     /// - Parameters:
@@ -231,7 +239,7 @@ extension PrometheusClient {
             guard metric.name == histogram.name, metric.help == histogram.help, metric.labels == labels else { return false }
             return true
         }
-        if histograms.count > 2 { fatalError("Somehow got 2 histograms with the same data type") }
+        if histograms.count > 1 { fatalError("Somehow got 2 histograms with the same data type") }
         if let histogram = histograms.first {
             return histogram
         } else {

@@ -290,4 +290,3 @@ public enum PrometheusError: Error {
     /// but there was no `PrometheusClient` bootstrapped
     case prometheusFactoryNotBootstrapped(bootstrappedWith: String)
 }
-

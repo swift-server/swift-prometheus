@@ -95,43 +95,44 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     /// - Returns:
     ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
-        return self.lock.withLock {
-            var output = [String]()
-            
-            if let help = self.help {
-                output.append("# HELP \(self.name) \(help)")
-            }
-            output.append("# TYPE \(self.name) \(self._type)")
-
-            calculateQuantiles(quantiles: self.quantiles, values: self.values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
-                let (q, v) = arg
-                self.labels.quantile = "\(q)"
-                let labelsString = encodeLabels(self.labels)
-                output.append("\(self.name)\(labelsString) \(format(v))")
-            }
-            
-            let labelsString = encodeLabels(self.labels, ["quantile"])
-            output.append("\(self.name)_count\(labelsString) \(self.count.get())")
-            output.append("\(self.name)_sum\(labelsString) \(format(self.sum.get().doubleValue))")
-            
-            self.subSummaries.forEach { subSum in
-                calculateQuantiles(quantiles: self.quantiles, values: subSum.values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
-                    let (q, v) = arg
-                    subSum.labels.quantile = "\(q)"
-                    let labelsString = encodeLabels(subSum.labels)
-                    output.append("\(subSum.name)\(labelsString) \(format(v))")
-                }
-                
-                let labelsString = encodeLabels(subSum.labels, ["quantile"])
-                output.append("\(subSum.name)_count\(labelsString) \(subSum.count.get())")
-                output.append("\(subSum.name)_sum\(labelsString) \(format(subSum.sum.get().doubleValue))")
-                subSum.labels.quantile = ""
-            }
-            
-            self.labels.quantile = ""
-            
-            return output.joined(separator: "\n")
+        let (subSummaries, values) = lock.withLock {
+            (self.subSummaries, self.values)
         }
+
+        var output = [String]()
+
+        if let help = self.help {
+            output.append("# HELP \(self.name) \(help)")
+        }
+        output.append("# TYPE \(self.name) \(self._type)")
+        var labels = self.labels
+        calculateQuantiles(quantiles: self.quantiles, values: values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
+            let (q, v) = arg
+            labels.quantile = "\(q)"
+            let labelsString = encodeLabels(labels)
+            output.append("\(self.name)\(labelsString) \(format(v))")
+        }
+
+        let labelsString = encodeLabels(labels, ["quantile"])
+        output.append("\(self.name)_count\(labelsString) \(self.count.get())")
+        output.append("\(self.name)_sum\(labelsString) \(format(self.sum.get().doubleValue))")
+
+        subSummaries.forEach { subSum in
+            var subSumLabels = subSum.labels
+            let subSumValues = lock.withLock { subSum.values }
+            calculateQuantiles(quantiles: self.quantiles, values: subSumValues.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
+                let (q, v) = arg
+                subSumLabels.quantile = "\(q)"
+                let labelsString = encodeLabels(subSumLabels)
+                output.append("\(subSum.name)\(labelsString) \(format(v))")
+            }
+
+            let labelsString = encodeLabels(subSumLabels, ["quantile"])
+            output.append("\(subSum.name)_count\(labelsString) \(subSum.count.get())")
+            output.append("\(subSum.name)_sum\(labelsString) \(format(subSum.sum.get().doubleValue))")
+        }
+
+        return output.joined(separator: "\n")
     }
     
     // Updated for SwiftMetrics 2.0 to be unit agnostic if displayUnit is set or default to nanoseconds.
