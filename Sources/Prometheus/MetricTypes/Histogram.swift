@@ -102,7 +102,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     internal let labels: Labels
     
     /// Sub Histograms for this Histogram
-    fileprivate var subHistograms: [PromHistogram<NumType, Labels>] = []
+    fileprivate var subHistograms: [Labels: PromHistogram<NumType, Labels>] = [:]
     
     /// Total value of the Histogram
     private let sum: PromCounter<NumType, EmptyLabels>
@@ -161,13 +161,13 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
 
         subHistograms.forEach { subHistogram in
             let (subHistogramBuckets, subHistogramLabels) = self.lock.withLock {
-                (subHistogram.buckets, subHistogram.labels)
+                (subHistogram.value.buckets, subHistogram.value.labels)
             }
             collectBuckets(buckets: subHistogramBuckets,
-                           upperBounds: subHistogram.upperBounds,
-                           name: subHistogram.name,
+                           upperBounds: subHistogram.value.upperBounds,
+                           name: subHistogram.value.name,
                            labels: subHistogramLabels,
-                           sum: subHistogram.sum.get(),
+                           sum: subHistogram.value.sum.get(),
                            into: &output)
         }
         return output.joined(separator: "\n")
@@ -233,17 +233,13 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
 
     /// Helper for histograms & labels
     fileprivate func getOrCreateHistogram(with labels: Labels) -> PromHistogram<NumType, Labels> {
-        let histograms = self.subHistograms.filter { (metric) -> Bool in
-            guard metric.name == self.name, metric.help == self.help, metric.labels == labels else { return false }
-            return true
-        }
-        if histograms.count > 1 { fatalError("Somehow got 2 histograms with the same data type") }
-        if let histogram = histograms.first {
+        let histogram = self.subHistograms[labels]
+        if let histogram = histogram, histogram.name == self.name, histogram.help == self.help {
             return histogram
         } else {
             guard let prometheus = prometheus else { fatalError("Lingering Histogram") }
             let newHistogram = PromHistogram(self.name, self.help, labels, Buckets(self.upperBounds), prometheus)
-            self.subHistograms.append(newHistogram)
+            self.subHistograms[labels] = newHistogram
             return newHistogram
         }
     }
