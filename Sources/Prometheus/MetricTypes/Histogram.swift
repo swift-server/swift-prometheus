@@ -200,18 +200,18 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
     public func observe(_ value: NumType, _ labels: Labels? = nil) {
-        self.lock.withLock {
-            if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
-                guard let his = self.prometheus?.getOrCreateHistogram(with: labels, for: self) else { fatalError("Lingering Histogram") }
-                his.observe(value)
+        if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
+            let his: PromHistogram<NumType, Labels> = self.lock.withLock {
+                self.getOrCreateHistogram(with: labels)
             }
-            self.sum.inc(value)
-            
-            for (i, bound) in self.upperBounds.enumerated() {
-                if bound >= value.doubleValue {
-                    self.buckets[i].inc()
-                    return
-                }
+            his.observe(value)
+        }
+        self.sum.inc(value)
+
+        for (i, bound) in self.upperBounds.enumerated() {
+            if bound >= value.doubleValue {
+                self.buckets[i].inc()
+                return
             }
         }
     }
@@ -230,21 +230,20 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         }
         return try body()
     }
-}
 
-extension PrometheusClient {
     /// Helper for histograms & labels
-    fileprivate func getOrCreateHistogram<T: Numeric, U: HistogramLabels>(with labels: U, for histogram: PromHistogram<T, U>) -> PromHistogram<T, U> {
-        let histograms = histogram.subHistograms.filter { (metric) -> Bool in
-            guard metric.name == histogram.name, metric.help == histogram.help, metric.labels == labels else { return false }
+    fileprivate func getOrCreateHistogram(with labels: Labels) -> PromHistogram<NumType, Labels> {
+        let histograms = self.subHistograms.filter { (metric) -> Bool in
+            guard metric.name == self.name, metric.help == self.help, metric.labels == labels else { return false }
             return true
         }
         if histograms.count > 1 { fatalError("Somehow got 2 histograms with the same data type") }
         if let histogram = histograms.first {
             return histogram
         } else {
-            let newHistogram = PromHistogram<T, U>(histogram.name, histogram.help, labels, Buckets(histogram.upperBounds), self)
-            histogram.subHistograms.append(newHistogram)
+            guard let prometheus = prometheus else { fatalError("Lingering Histogram") }
+            let newHistogram = PromHistogram(self.name, self.help, labels, Buckets(self.upperBounds), prometheus)
+            self.subHistograms.append(newHistogram)
             return newHistogram
         }
     }
