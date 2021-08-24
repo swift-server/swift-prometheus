@@ -25,9 +25,8 @@ public class PrometheusClient {
     /// - Parameters:
     ///     - succeed: Closure that will be called with a newline separated string with metrics for all Metrics this PrometheusClient handles
     public func collect(_ succeed: (String) -> ()) {
-        self.lock.withLock {
-            succeed(self.metrics.isEmpty ? "": "\(self.metrics.values.map { $0.collect() }.joined(separator: "\n"))\n")
-        }
+        let metrics = self.lock.withLock { self.metrics }
+        succeed(metrics.isEmpty ? "" : "\(metrics.values.map { $0.collect() }.joined(separator: "\n"))\n")
     }
     
     /// Creates prometheus formatted metrics
@@ -43,14 +42,13 @@ public class PrometheusClient {
     /// - Parameters:
     ///     - succeed: Closure that will be called with a `ByteBuffer` containing a newline separated string with metrics for all Metrics this PrometheusClient handles
     public func collect(_ succeed: (ByteBuffer) -> ()) {
-        self.lock.withLock {
-            var buffer = ByteBufferAllocator().buffer(capacity: 0)
-            self.metrics.values.forEach {
-                $0.collect(into: &buffer)
-                buffer.writeString("\n")
-            }
-            succeed(buffer)
+        var buffer = ByteBufferAllocator().buffer(capacity: 0)
+        let metrics = self.lock.withLock { self.metrics }
+        metrics.values.forEach {
+            $0.collect(into: &buffer)
+            buffer.writeString("\n")
         }
+        succeed(buffer)
     }
 
     /// Creates prometheus formatted metrics
@@ -240,6 +238,7 @@ public class PrometheusClient {
     ///     - type: The type the summary will observe
     ///     - name: Name of the summary
     ///     - helpText: Help text for the summary. Usually a short description
+    ///     - capacity: Number of observations to keep for calculating quantiles
     ///     - quantiles: Quantiles to calculate
     ///     - labels: Labels to give this summary. Can be left out to default to no labels
     ///
@@ -248,6 +247,7 @@ public class PrometheusClient {
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
+        capacity: Int = Prometheus.defaultSummaryCapacity,
         quantiles: [Double] = Prometheus.defaultQuantiles,
         labels: U.Type) -> PromSummary<T, U>
     {
@@ -255,8 +255,7 @@ public class PrometheusClient {
             if let cachedSummary: PromSummary<T, U> = self._getMetricInstance(with: name, andType: .summary) {
                 return cachedSummary
             }
-            
-            let summary = PromSummary<T, U>(name, helpText, U(), quantiles, self)
+            let summary = PromSummary<T, U>(name, helpText, U(), capacity, quantiles, self)
             let oldInstrument = self.metrics.updateValue(summary, forKey: name)
             precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return summary
@@ -289,4 +288,3 @@ public enum PrometheusError: Error {
     /// but there was no `PrometheusClient` bootstrapped
     case prometheusFactoryNotBootstrapped(bootstrappedWith: String)
 }
-
