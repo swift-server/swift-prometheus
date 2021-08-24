@@ -48,23 +48,24 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, Pr
     /// - Returns:
     ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
-        return self.lock.withLock {
-            var output = [String]()
-            
-            if let help = self.help {
-                output.append("# HELP \(self.name) \(help)")
-            }
-            output.append("# TYPE \(self.name) \(self._type)")
-            
-            output.append("\(self.name) \(self.value)")
-            
-            self.metrics.forEach { (labels, value) in
-                let labelsString = encodeLabels(labels)
-                output.append("\(self.name)\(labelsString) \(value)")
-            }
-            
-            return output.joined(separator: "\n")
+        let (value, metrics) = self.lock.withLock {
+            (self.value, self.metrics)
         }
+        var output = [String]()
+
+        if let help = self.help {
+            output.append("# HELP \(self.name) \(help)")
+        }
+        output.append("# TYPE \(self.name) \(self._type)")
+
+        output.append("\(self.name) \(value)")
+
+        metrics.forEach { (labels, value) in
+            let labelsString = encodeLabels(labels)
+            output.append("\(self.name)\(labelsString) \(value)")
+        }
+
+        return output.joined(separator: "\n")
     }
     
     /// Increments the Counter
@@ -104,4 +105,3 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, Pr
         }
     }
 }
-
