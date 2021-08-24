@@ -55,7 +55,7 @@ final class GaugeTests: XCTestCase {
 
     func testGaugeTime() {
         let gauge = prom.createGauge(forType: Double.self, named: "my_gauge")
-        let delay = 0.05
+        let delay = 0.051
         gauge.time {
             Thread.sleep(forTimeInterval: delay)
         }

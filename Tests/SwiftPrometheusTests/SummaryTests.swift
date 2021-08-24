@@ -99,7 +99,7 @@ final class SummaryTests: XCTestCase {
     
     func testSummaryTime() {
         let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99], labels: BaseSummaryLabels.self)
-        let delay = 0.05
+        let delay = 0.051
         summary.time {
             Thread.sleep(forTimeInterval: delay)
         }
