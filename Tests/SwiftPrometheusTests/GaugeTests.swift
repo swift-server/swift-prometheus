@@ -53,19 +53,20 @@ final class GaugeTests: XCTestCase {
         """)
     }
 
+    #if os(Linux)
     func testGaugeTime() {
         let gauge = prom.createGauge(forType: Double.self, named: "my_gauge")
-        let delay = 0.051
+        let delay = 0.05
         gauge.time {
             Thread.sleep(forTimeInterval: delay)
         }
         // Using starts(with:) here since the exact subseconds might differ per-test.
-        let output = gauge.collect()
-        XCTAssert(output.starts(with: """
+        XCTAssert(gauge.collect().starts(with: """
         # TYPE my_gauge gauge
         my_gauge 0.05
-        """), output)
+        """))
     }
+    #endif
     
     func testGaugeStandalone() {
         let gauge = prom.createGauge(forType: Int.self, named: "my_gauge", helpText: "Gauge for testing", initialValue: 10, withLabelType: BaseLabels.self)

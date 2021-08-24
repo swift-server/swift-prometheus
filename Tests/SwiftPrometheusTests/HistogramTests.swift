@@ -78,7 +78,8 @@ final class HistogramTests: XCTestCase {
         my_histogram_sum{myValue="labels"} 3.0\n
         """)
     }
-    
+
+    #if os(Linux)
     func testHistogramTime() {
         let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram")
         let delay = 0.05
@@ -86,8 +87,7 @@ final class HistogramTests: XCTestCase {
             Thread.sleep(forTimeInterval: delay)
         }
         // Using starts(with:) here since the exact subseconds might differ per-test.
-        let output = histogram.collect()
-        XCTAssert(output.starts(with: """
+        XCTAssert(histogram.collect().starts(with: """
         # TYPE my_histogram histogram
         my_histogram_bucket{le="0.005"} 0.0
         my_histogram_bucket{le="0.01"} 0.0
@@ -103,8 +103,9 @@ final class HistogramTests: XCTestCase {
         my_histogram_bucket{le="+Inf"} 1.0
         my_histogram_count 1.0
         my_histogram_sum 0.05
-        """), output)
+        """))
     }
+    #endif
     
     func testHistogramStandalone() {
         let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude], labels: BaseHistogramLabels.self)

@@ -96,10 +96,11 @@ final class SummaryTests: XCTestCase {
         my_summary_sum 10010.0\n
         """)
     }
-    
+
+    #if os(Linux)
     func testSummaryTime() {
         let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99], labels: BaseSummaryLabels.self)
-        let delay = 0.051
+        let delay = 0.05
         summary.time {
             Thread.sleep(forTimeInterval: delay)
         }
@@ -114,10 +115,10 @@ final class SummaryTests: XCTestCase {
             #"my_summary_count{myValue="*"} 1.0"#,
             #"my_summary_sum{myValue="*"} 0.05"#
         ]
-        let output = summary.collect()
-        let sections = output.split(separator: "\n").map(String.init).enumerated().map { i, s in s.starts(with: lines[i]) }
-        XCTAssert(sections.filter { !$0 }.isEmpty, output)
+        let sections = summary.collect().split(separator: "\n").map(String.init).enumerated().map { i, s in s.starts(with: lines[i]) }
+        XCTAssert(sections.filter { !$0 }.isEmpty)
     }
+    #endif
     
     func testSummaryStandalone() {
         let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99], labels: BaseSummaryLabels.self)
