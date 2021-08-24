@@ -60,10 +60,11 @@ final class GaugeTests: XCTestCase {
             Thread.sleep(forTimeInterval: delay)
         }
         // Using starts(with:) here since the exact subseconds might differ per-test.
-        XCTAssert(gauge.collect().starts(with: """
+        let output = gauge.collect()
+        XCTAssert(output.starts(with: """
         # TYPE my_gauge gauge
         my_gauge 0.05
-        """))
+        """), output)
     }
     
     func testGaugeStandalone() {

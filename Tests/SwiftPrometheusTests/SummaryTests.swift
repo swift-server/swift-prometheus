@@ -114,8 +114,9 @@ final class SummaryTests: XCTestCase {
             #"my_summary_count{myValue="*"} 1.0"#,
             #"my_summary_sum{myValue="*"} 0.05"#
         ]
-        let sections = summary.collect().split(separator: "\n").map(String.init).enumerated().map { i, s in s.starts(with: lines[i]) }
-        XCTAssert(sections.filter { !$0 }.isEmpty)
+        let output = summary.collect()
+        let sections = output.split(separator: "\n").map(String.init).enumerated().map { i, s in s.starts(with: lines[i]) }
+        XCTAssert(sections.filter { !$0 }.isEmpty, output)
     }
     
     func testSummaryStandalone() {

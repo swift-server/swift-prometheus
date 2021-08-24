@@ -86,7 +86,8 @@ final class HistogramTests: XCTestCase {
             Thread.sleep(forTimeInterval: delay)
         }
         // Using starts(with:) here since the exact subseconds might differ per-test.
-        XCTAssert(histogram.collect().starts(with: """
+        let output = histogram.collect()
+        XCTAssert(output.starts(with: """
         # TYPE my_histogram histogram
         my_histogram_bucket{le="0.005"} 0.0
         my_histogram_bucket{le="0.01"} 0.0
@@ -102,7 +103,7 @@ final class HistogramTests: XCTestCase {
         my_histogram_bucket{le="+Inf"} 1.0
         my_histogram_count 1.0
         my_histogram_sum 0.05
-        """))
+        """), output)
     }
     
     func testHistogramStandalone() {
