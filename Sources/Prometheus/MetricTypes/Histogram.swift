@@ -6,12 +6,12 @@ import Dispatch
 /// See https://prometheus.io/docs/concepts/metric_types/#Histogram
 public struct Buckets: ExpressibleByArrayLiteral {
     public typealias ArrayLiteralElement = Double
-    
+
     public init(arrayLiteral elements: Double...) {
         self.init(elements)
     }
-    
-    fileprivate init (_ r: [Double]) {
+
+    fileprivate init(_ r: [Double]) {
         if r.isEmpty {
             self = Buckets.defaultBuckets
             return
@@ -24,13 +24,13 @@ public struct Buckets: ExpressibleByArrayLiteral {
         assert(Array(Set(r)).sorted(by: <) == r.sorted(by: <), "Buckets contain duplicate values.")
         self.buckets = r
     }
-    
+
     /// The upper bounds
     public let buckets: [Double]
-        
+
     /// Default buckets used by Histograms
     public static let defaultBuckets: Buckets = [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
-    
+
     /// Create linear buckets used by Histograms
     ///
     /// - Parameters:
@@ -42,7 +42,7 @@ public struct Buckets: ExpressibleByArrayLiteral {
         let arr = (0..<count).map { Double(start) + Double($0) * Double(width) }
         return Buckets(arr)
     }
-    
+
     /// Create exponential buckets used by Histograms
     ///
     ///  - Parameters:
@@ -88,28 +88,28 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     public let name: String
     /// Help text of this Histogram, optional
     public let help: String?
-    
+
     /// Type of the metric, used for formatting
     public let _type: PromMetricType = .histogram
-    
+
     /// Bucketed values for this Histogram
     private var buckets: [PromCounter<NumType, EmptyLabels>] = []
-    
+
     /// Buckets used by this Histogram
     internal let upperBounds: [Double]
-    
+
     /// Labels for this Histogram
     internal let labels: Labels
-    
+
     /// Sub Histograms for this Histogram
     fileprivate var subHistograms: [Labels: PromHistogram<NumType, Labels>] = [:]
-    
+
     /// Total value of the Histogram
     private let sum: PromCounter<NumType, EmptyLabels>
-    
+
     /// Lock used for thread safety
     private let lock: Lock
-    
+
     /// Creates a new Histogram
     ///
     /// - Parameters:
@@ -125,18 +125,18 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         self.prometheus = p
 
         self.sum = .init("\(self.name)_sum", nil, 0, p)
-        
+
         self.labels = labels
-        
+
         self.upperBounds = buckets.buckets
-        
+
         self.lock = Lock()
-        
+
         buckets.buckets.forEach { _ in
             self.buckets.append(.init("\(name)_bucket", nil, 0, p))
         }
     }
-    
+
     /// Gets the metric string for this Histogram
     ///
     /// - Returns:
@@ -147,6 +147,8 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         }
 
         var output = [String]()
+        // HELP/TYPE + (histogram + subHistograms) * (buckets + sum + count)
+        output.reserveCapacity(2 + (subHistograms.count + 1) * (buckets.count + 2))
 
         if let help = self.help {
             output.append("# HELP \(self.name) \(help)")
@@ -200,11 +202,9 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
     public func observe(_ value: NumType, _ labels: Labels? = nil) {
-        if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
-            let his: PromHistogram<NumType, Labels> = self.lock.withLock {
-                self.getOrCreateHistogram(with: labels)
-            }
-            his.observe(value)
+        if let labels = labels, type(of: labels) != type(of: EmptyHistogramLabels()) {
+            self.getOrCreateHistogram(with: labels)
+                .observe(value)
         }
         self.sum.inc(value)
 
@@ -215,7 +215,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
             }
         }
     }
-    
+
     /// Time the duration of a closure and observe the resulting time in seconds.
     ///
     /// - parameters:
@@ -233,14 +233,23 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
 
     /// Helper for histograms & labels
     fileprivate func getOrCreateHistogram(with labels: Labels) -> PromHistogram<NumType, Labels> {
-        let histogram = self.subHistograms[labels]
-        if let histogram = histogram, histogram.name == self.name, histogram.help == self.help {
-            return histogram
+        let subHistograms = lock.withLock { self.subHistograms }
+        if let histogram = subHistograms[labels] {
+            if histogram.name == self.name, histogram.help == self.help {
+                return histogram
+            } else {
+                fatalError("Somehow got 2 summaries with the same data type")
+            }
         } else {
-            guard let prometheus = prometheus else { fatalError("Lingering Histogram") }
-            let newHistogram = PromHistogram(self.name, self.help, labels, Buckets(self.upperBounds), prometheus)
-            self.subHistograms[labels] = newHistogram
-            return newHistogram
+            return lock.withLock {
+                if let histogram = subHistograms[labels], histogram.name == self.name, histogram.help == self.help {
+                    return histogram
+                }
+                guard let prometheus = prometheus else { fatalError("Lingering Histogram") }
+                let newHistogram = PromHistogram(self.name, self.help, labels, Buckets(self.upperBounds), prometheus)
+                self.subHistograms[labels] = newHistogram
+                return newHistogram
+            }
         }
     }
 }
