@@ -235,14 +235,30 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     fileprivate func getOrCreateHistogram(with labels: Labels) -> PromHistogram<NumType, Labels> {
         let subHistograms = lock.withLock { self.subHistograms }
         if let histogram = subHistograms[labels] {
-            if histogram.name == self.name, histogram.help == self.help {
-                return histogram
-            } else {
-                fatalError("Somehow got 2 summaries with the same data type")
-            }
+            precondition(histogram.name == self.name,
+                         """
+                         Somehow got 2 subHistograms with the same data type  / labels 
+                         but different names: expected \(self.name), got \(histogram.name)
+                         """)
+            precondition(histogram.help == self.help,
+                         """
+                         Somehow got 2 subHistograms with the same data type  / labels 
+                         but different help messages: expected \(self.help ?? "nil"), got \(histogram.help ?? "nil")
+                         """)
+            return histogram
         } else {
             return lock.withLock {
-                if let histogram = subHistograms[labels], histogram.name == self.name, histogram.help == self.help {
+                if let histogram = subHistograms[labels] {
+                    precondition(histogram.name == self.name,
+                                 """
+                                 Somehow got 2 subHistograms with the same data type  / labels 
+                                 but different names: expected \(self.name), got \(histogram.name)
+                                 """)
+                    precondition(histogram.help == self.help,
+                                 """
+                                 Somehow got 2 subHistograms with the same data type  / labels 
+                                 but different help messages: expected \(self.help ?? "nil"), got \(histogram.help ?? "nil")
+                                 """)
                     return histogram
                 }
                 guard let prometheus = prometheus else { fatalError("Lingering Histogram") }

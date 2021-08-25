@@ -195,19 +195,31 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     fileprivate func getOrCreateSummary(withLabels labels: Labels) -> PromSummary<NumType, Labels> {
         let subSummaries = self.lock.withLock { self.subSummaries }
         if let summary = subSummaries[labels] {
-            if summary.name == self.name, summary.help == self.help {
-                return summary
-            } else {
-                fatalError("Somehow got 2 summaries with the same data type")
-            }
+            precondition(summary.name == self.name,
+                         """
+                         Somehow got 2 subSummaries with the same data type  / labels 
+                         but different names: expected \(self.name), got \(summary.name)
+                         """)
+            precondition(summary.help == self.help,
+                         """
+                         Somehow got 2 subSummaries with the same data type  / labels 
+                         but different help messages: expected \(self.help ?? "nil"), got \(summary.help ?? "nil")
+                         """)
+            return summary
         } else {
             return lock.withLock {
                 if let summary = self.subSummaries[labels] {
-                    if summary.name == self.name, summary.help == self.help {
-                        return summary
-                    } else {
-                        fatalError("Somehow got 2 summaries with the same data type")
-                    }
+                    precondition(summary.name == self.name,
+                                 """
+                                 Somehow got 2 subSummaries with the same data type  / labels 
+                                 but different names: expected \(self.name), got \(summary.name)
+                                 """)
+                    precondition(summary.help == self.help,
+                                 """
+                                 Somehow got 2 subSummaries with the same data type  / labels 
+                                 but different help messages: expected \(self.help ?? "nil"), got \(summary.help ?? "nil")
+                                 """)
+                    return summary
                 }
                 guard let prometheus = prometheus else {
                     fatalError("Lingering Summary")
