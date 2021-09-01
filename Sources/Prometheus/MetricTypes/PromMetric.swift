@@ -68,7 +68,7 @@ internal protocol PrometheusHandled {
 ///     my_counter{status="unknown"} 0
 ///     my_counter{status="failure"} 12
 ///     my_counter{status="success"} 1
-public protocol MetricLabels: Encodable, Hashable {
+public protocol MetricLabels: Hashable {
     /// Create empty labels
     init()
 }

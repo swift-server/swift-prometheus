@@ -5,7 +5,7 @@ import NIOConcurrencyHelpers
 /// Prometheus Gauge metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#gauge
-public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: PromMetric, PrometheusHandled {
+public class PromGauge<NumType: DoubleRepresentable>: PromMetric, PrometheusHandled {
     /// Prometheus instance that created this Gauge
     internal weak var prometheus: PrometheusClient?
     
@@ -24,7 +24,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     private let initialValue: NumType
     
     /// Storage of values that have labels attached
-    private var metrics: [Labels: NumType] = [:]
+    private var metrics: [DimensionLabels: NumType] = [:]
     
     /// Lock used for thread safety
     private let lock: Lock
@@ -78,7 +78,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     ///
     /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
-    public func setToCurrentTime(_ labels: Labels? = nil) -> NumType {
+    public func setToCurrentTime(_ labels: DimensionLabels? = nil) -> NumType {
         return self.set(.init(Date().timeIntervalSince1970), labels)
     }
     
@@ -94,7 +94,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     ///
     /// - Returns: The same type of function passed in for `body`, but wrapped to track progress.
     @inlinable
-    public func trackInProgress<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) -> (() throws -> T) {
+    public func trackInProgress<T>(_ labels: DimensionLabels? = nil, _ body: @escaping () throws -> T) -> (() throws -> T) {
         return {
             self.inc()
             defer {
@@ -109,7 +109,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     ///     - labels: Labels to attach to the resulting value.
     ///     - body: Closure to run & record execution time of.
     @inlinable
-    public func time<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
+    public func time<T>(_ labels: DimensionLabels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
         let start = DispatchTime.now().uptimeNanoseconds
         defer {
             let delta = Double(DispatchTime.now().uptimeNanoseconds - start)
@@ -127,7 +127,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     ///
     /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
-    public func set(_ amount: NumType, _ labels: Labels? = nil) -> NumType {
+    public func set(_ amount: NumType, _ labels: DimensionLabels? = nil) -> NumType {
         return self.lock.withLock {
             if let labels = labels {
                 self.metrics[labels] = amount
@@ -147,7 +147,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     ///
     /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
-    public func inc(_ amount: NumType, _ labels: Labels? = nil) -> NumType {
+    public func inc(_ amount: NumType, _ labels: DimensionLabels? = nil) -> NumType {
         return self.lock.withLock {
             if let labels = labels {
                 var val = self.metrics[labels] ?? self.initialValue
@@ -168,7 +168,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     ///
     /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
-    public func inc(_ labels: Labels? = nil) -> NumType {
+    public func inc(_ labels: DimensionLabels? = nil) -> NumType {
         return self.inc(1, labels)
     }
     
@@ -180,7 +180,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     ///
     /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
-    public func dec(_ amount: NumType, _ labels: Labels? = nil) -> NumType {
+    public func dec(_ amount: NumType, _ labels: DimensionLabels? = nil) -> NumType {
         return self.lock.withLock {
             if let labels = labels {
                 var val = self.metrics[labels] ?? self.initialValue
@@ -201,7 +201,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     ///
     /// - Returns: The value of the Gauge attached to the provided labels
     @discardableResult
-    public func dec(_ labels: Labels? = nil) -> NumType {
+    public func dec(_ labels: DimensionLabels? = nil) -> NumType {
         return self.dec(1, labels)
     }
     
@@ -211,7 +211,7 @@ public class PromGauge<NumType: DoubleRepresentable, Labels: MetricLabels>: Prom
     ///     - labels: Labels to get the value for
     ///
     /// - Returns: The value of the Gauge attached to the provided labels
-    public func get(_ labels: Labels? = nil) -> NumType {
+    public func get(_ labels: DimensionLabels? = nil) -> NumType {
         return self.lock.withLock {
             if let labels = labels {
                 return self.metrics[labels] ?? initialValue

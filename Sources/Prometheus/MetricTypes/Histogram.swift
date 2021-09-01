@@ -63,24 +63,10 @@ public struct Buckets: ExpressibleByArrayLiteral {
     }
 }
 
-/// Label type Histograms can use
-public protocol HistogramLabels: MetricLabels {
-    /// Bucket
-    var le: String { get set }
-}
-
-extension HistogramLabels {
-    /// Creates empty HistogramLabels
-    init() {
-        self.init()
-        self.le = ""
-    }
-}
-
 /// Prometheus Histogram metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#Histogram
-public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels>: PromMetric, PrometheusHandled {
+public class PromHistogram<NumType: DoubleRepresentable>: PromMetric, PrometheusHandled {
     /// Prometheus instance that created this Histogram
     internal weak var prometheus: PrometheusClient?
 
@@ -93,19 +79,16 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     public let _type: PromMetricType = .histogram
 
     /// Bucketed values for this Histogram
-    private var buckets: [PromCounter<NumType, EmptyLabels>] = []
+    private var buckets: [PromCounter<NumType>] = []
 
     /// Buckets used by this Histogram
     internal let upperBounds: [Double]
 
-    /// Labels for this Histogram
-    internal let labels: Labels
-
     /// Sub Histograms for this Histogram
-    fileprivate var subHistograms: [Labels: PromHistogram<NumType, Labels>] = [:]
+    fileprivate var subHistograms: [DimensionLabels: PromHistogram<NumType>] = [:]
 
     /// Total value of the Histogram
-    private let sum: PromCounter<NumType, EmptyLabels>
+    private let sum: PromCounter<NumType>
 
     /// Lock used for thread safety
     private let lock: Lock
@@ -118,15 +101,13 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     ///     - labels: Labels for the Histogram
     ///     - buckets: Buckets to use for the Histogram
     ///     - p: Prometheus instance creating this Histogram
-    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ buckets: Buckets = .defaultBuckets, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ buckets: Buckets = .defaultBuckets, _ p: PrometheusClient) {
         self.name = name
         self.help = help
 
         self.prometheus = p
 
         self.sum = .init("\(self.name)_sum", nil, 0, p)
-
-        self.labels = labels
 
         self.upperBounds = buckets.buckets
 
@@ -142,8 +123,8 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     /// - Returns:
     ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
-        let (buckets, subHistograms, labels) = self.lock.withLock {
-            (self.buckets, self.subHistograms, self.labels)
+        let (buckets, subHistograms) = self.lock.withLock {
+            (self.buckets, self.subHistograms)
         }
 
         var output = [String]()
@@ -157,13 +138,13 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         collectBuckets(buckets: buckets,
                        upperBounds: self.upperBounds,
                        name: self.name,
-                       labels: labels,
+                       labels: nil,
                        sum: self.sum.get(),
                        into: &output)
 
         subHistograms.forEach { subHistogram in
             let (subHistogramBuckets, subHistogramLabels) = self.lock.withLock {
-                (subHistogram.value.buckets, subHistogram.value.labels)
+                (subHistogram.value.buckets, subHistogram.key)
             }
             collectBuckets(buckets: subHistogramBuckets,
                            upperBounds: subHistogram.value.upperBounds,
@@ -175,22 +156,20 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
         return output.joined(separator: "\n")
     }
 
-    private func collectBuckets(buckets: [PromCounter<NumType, EmptyLabels>],
+    private func collectBuckets(buckets: [PromCounter<NumType>],
                                 upperBounds: [Double],
                                 name: String,
-                                labels: Labels,
+                                labels: DimensionLabels?,
                                 sum: NumType,
                                 into output: inout [String]) {
-        var labels = labels
         var acc: NumType = 0
         for (i, bound) in upperBounds.enumerated() {
             acc += buckets[i].get()
-            labels.le = bound.description
-            let labelsString = encodeLabels(labels)
+            let labelsString = encodeLabels(EncodableHistogramLabels(labels: labels, le: bound.description))
             output.append("\(name)_bucket\(labelsString) \(acc)")
         }
 
-        let labelsString = encodeLabels(labels, ["le"])
+        let labelsString = encodeLabels(EncodableHistogramLabels(labels: labels))
         output.append("\(name)_count\(labelsString) \(acc)")
 
         output.append("\(name)_sum\(labelsString) \(sum)")
@@ -201,8 +180,8 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     /// - Parameters:
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
-    public func observe(_ value: NumType, _ labels: Labels? = nil) {
-        if let labels = labels, type(of: labels) != type(of: EmptyHistogramLabels()) {
+    public func observe(_ value: NumType, _ labels: DimensionLabels? = nil) {
+        if let labels = labels {
             self.getOrCreateHistogram(with: labels)
                 .observe(value)
         }
@@ -222,7 +201,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     ///     - labels: Labels to attach to the resulting value.
     ///     - body: Closure to run & record.
     @inlinable
-    public func time<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
+    public func time<T>(_ labels: DimensionLabels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
         let start = DispatchTime.now().uptimeNanoseconds
         defer {
             let delta = Double(DispatchTime.now().uptimeNanoseconds - start)
@@ -232,7 +211,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
     }
 
     /// Helper for histograms & labels
-    fileprivate func getOrCreateHistogram(with labels: Labels) -> PromHistogram<NumType, Labels> {
+    fileprivate func getOrCreateHistogram(with labels: DimensionLabels) -> PromHistogram<NumType> {
         let subHistograms = lock.withLock { self.subHistograms }
         if let histogram = subHistograms[labels] {
             precondition(histogram.name == self.name,
@@ -262,7 +241,7 @@ public class PromHistogram<NumType: DoubleRepresentable, Labels: HistogramLabels
                     return histogram
                 }
                 guard let prometheus = prometheus else { fatalError("Lingering Histogram") }
-                let newHistogram = PromHistogram(self.name, self.help, labels, Buckets(self.upperBounds), prometheus)
+                let newHistogram = PromHistogram(self.name, self.help, Buckets(self.upperBounds), prometheus)
                 self.subHistograms[labels] = newHistogram
                 return newHistogram
             }

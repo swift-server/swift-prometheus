@@ -4,18 +4,7 @@ import NIO
 @testable import CoreMetrics
 
 final class HistogramTests: XCTestCase {
-    struct BaseHistogramLabels: HistogramLabels {
-        var le: String = ""
-        let myValue: String
-        
-        init() {
-            self.myValue = "*"
-        }
-        
-        init(myValue: String) {
-            self.myValue = myValue
-        }
-    }
+    let baseLabels = DimensionLabels([("myValue", "labels")])
 
     var prom: PrometheusClient!
     var group: EventLoopGroup!
@@ -38,14 +27,13 @@ final class HistogramTests: XCTestCase {
         let prom = PrometheusClient()
         let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram",
                                              helpText: "Histogram for testing",
-                                             buckets: Buckets.exponential(start: 1, factor: 2, count: 63),
-                                             labels: DimensionHistogramLabels.self)
+                                             buckets: Buckets.exponential(start: 1, factor: 2, count: 63))
         let elg = MultiThreadedEventLoopGroup(numberOfThreads: 8)
         let semaphore = DispatchSemaphore(value: 2)
         _ = elg.next().submit {
             for _ in 1...1_000 {
-                let labels = DimensionHistogramLabels([("myValue", "1")])
-                let labels2 = DimensionHistogramLabels([("myValue", "2")])
+                let labels = DimensionLabels([("myValue", "1")])
+                let labels2 = DimensionLabels([("myValue", "2")])
 
                 histogram.observe(1.0, labels)
                 histogram.observe(1.0, labels2)
@@ -54,8 +42,8 @@ final class HistogramTests: XCTestCase {
         }
         _ = elg.next().submit {
             for _ in 1...1_000 {
-                let labels = DimensionHistogramLabels([("myValue", "1")])
-                let labels2 = DimensionHistogramLabels([("myValue", "2")])
+                let labels = DimensionLabels([("myValue", "1")])
+                let labels2 = DimensionLabels([("myValue", "2")])
 
                 histogram.observe(1.0, labels2)
                 histogram.observe(1.0, labels)
@@ -140,26 +128,26 @@ final class HistogramTests: XCTestCase {
     }
     
     func testHistogramStandalone() {
-        let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude], labels: BaseHistogramLabels.self)
-        let histogramTwo = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude], labels: BaseHistogramLabels.self)
+        let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude])
+        let histogramTwo = prom.createHistogram(forType: Double.self, named: "my_histogram", helpText: "Histogram for testing", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude])
 
         histogram.observe(1)
         histogram.observe(2)
         histogramTwo.observe(3)
         
-        histogram.observe(3, .init(myValue: "labels"))
+        histogram.observe(3, baseLabels)
 
         XCTAssertEqual(histogram.collect(), """
         # HELP my_histogram Histogram for testing
         # TYPE my_histogram histogram
-        my_histogram_bucket{myValue="*", le="0.5"} 0.0
-        my_histogram_bucket{myValue="*", le="1.0"} 1.0
-        my_histogram_bucket{myValue="*", le="2.0"} 2.0
-        my_histogram_bucket{myValue="*", le="3.0"} 4.0
-        my_histogram_bucket{myValue="*", le="5.0"} 4.0
-        my_histogram_bucket{myValue="*", le="+Inf"} 4.0
-        my_histogram_count{myValue="*"} 4.0
-        my_histogram_sum{myValue="*"} 9.0
+        my_histogram_bucket{le="0.5"} 0.0
+        my_histogram_bucket{le="1.0"} 1.0
+        my_histogram_bucket{le="2.0"} 2.0
+        my_histogram_bucket{le="3.0"} 4.0
+        my_histogram_bucket{le="5.0"} 4.0
+        my_histogram_bucket{le="+Inf"} 4.0
+        my_histogram_count 4.0
+        my_histogram_sum 9.0
         my_histogram_bucket{myValue="labels", le="0.5"} 0.0
         my_histogram_bucket{myValue="labels", le="1.0"} 0.0
         my_histogram_bucket{myValue="labels", le="2.0"} 0.0

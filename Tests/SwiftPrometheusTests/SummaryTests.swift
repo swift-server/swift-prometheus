@@ -4,19 +4,7 @@ import NIO
 @testable import CoreMetrics
 
 final class SummaryTests: XCTestCase {
-    struct BaseSummaryLabels: SummaryLabels {
-        var quantile: String = ""
-        let myValue: String
-        
-        init() {
-            self.myValue = "*"
-        }
-        
-        init(myValue: String) {
-            self.myValue = myValue
-        }
-    }
-    
+    let baseLabels = DimensionLabels([("myValue", "labels")])
     var prom: PrometheusClient!
     var group: EventLoopGroup!
     var eventLoop: EventLoop {
@@ -74,14 +62,13 @@ final class SummaryTests: XCTestCase {
     func testConcurrent() throws {
         let prom = PrometheusClient()
         let summary = prom.createSummary(forType: Double.self, named: "my_summary",
-                                             helpText: "Summary for testing",
-                                             labels: DimensionSummaryLabels.self)
+                                             helpText: "Summary for testing")
         let elg = MultiThreadedEventLoopGroup(numberOfThreads: 8)
         let semaphore = DispatchSemaphore(value: 2)
         _ = elg.next().submit {
             for _ in 1...1_000 {
-                let labels = DimensionSummaryLabels([("myValue", "1")])
-                let labels2 = DimensionSummaryLabels([("myValue", "2")])
+                let labels = DimensionLabels([("myValue", "1")])
+                let labels2 = DimensionLabels([("myValue", "2")])
 
                 summary.observe(1.0, labels)
                 summary.observe(1.0, labels2)
@@ -90,8 +77,8 @@ final class SummaryTests: XCTestCase {
         }
         _ = elg.next().submit {
             for _ in 1...1_000 {
-                let labels = DimensionSummaryLabels([("myValue", "1")])
-                let labels2 = DimensionSummaryLabels([("myValue", "2")])
+                let labels = DimensionLabels([("myValue", "1")])
+                let labels2 = DimensionLabels([("myValue", "2")])
 
                 summary.observe(1.0, labels2)
                 summary.observe(1.0, labels)
@@ -131,7 +118,7 @@ final class SummaryTests: XCTestCase {
     }
     
     func testSummaryTime() {
-        let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99], labels: BaseSummaryLabels.self)
+        let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99])
         let delay = 0.05
         summary.time {
             Thread.sleep(forTimeInterval: delay)
@@ -141,35 +128,36 @@ final class SummaryTests: XCTestCase {
         let lines = [
             "# HELP my_summary Summary for testing",
             "# TYPE my_summary summary",
-            #"my_summary{quantile="0.5", myValue="*"} 0.05"#,
-            #"my_summary{quantile="0.9", myValue="*"} 0.05"#,
-            #"my_summary{quantile="0.99", myValue="*"} 0.05"#,
-            #"my_summary_count{myValue="*"} 1.0"#,
-            #"my_summary_sum{myValue="*"} 0.05"#
+            #"my_summary{quantile="0.5"} 0.05"#,
+            #"my_summary{quantile="0.9"} 0.05"#,
+            #"my_summary{quantile="0.99"} 0.05"#,
+            #"my_summary_count 1.0"#,
+            #"my_summary_sum 0.05"#
         ]
-        let sections = summary.collect().split(separator: "\n").map(String.init).enumerated().map { i, s in s.starts(with: lines[i]) }
+        let collect = summary.collect()
+        let sections = collect.split(separator: "\n").map(String.init).enumerated().map { i, s in s.starts(with: lines[i]) }
         XCTAssert(sections.filter { !$0 }.isEmpty)
     }
     
     func testSummaryStandalone() {
-        let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99], labels: BaseSummaryLabels.self)
-        let summaryTwo = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99], labels: BaseSummaryLabels.self)
+        let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99])
+        let summaryTwo = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", quantiles: [0.5, 0.9, 0.99])
         
         summary.observe(1)
         summary.observe(2)
         summary.observe(4)
         summaryTwo.observe(10000)
         
-        summary.observe(123, .init(myValue: "labels"))
+        summary.observe(123, baseLabels)
         
         XCTAssertEqual(summary.collect(), """
         # HELP my_summary Summary for testing
         # TYPE my_summary summary
-        my_summary{quantile=\"0.5\", myValue=\"*\"} 4.0
-        my_summary{quantile=\"0.9\", myValue=\"*\"} 10000.0
-        my_summary{quantile=\"0.99\", myValue=\"*\"} 10000.0
-        my_summary_count{myValue=\"*\"} 5.0
-        my_summary_sum{myValue=\"*\"} 10130.0
+        my_summary{quantile=\"0.5\"} 4.0
+        my_summary{quantile=\"0.9\"} 10000.0
+        my_summary{quantile=\"0.99\"} 10000.0
+        my_summary_count 5.0
+        my_summary_sum 10130.0
         my_summary{quantile=\"0.5\", myValue=\"labels\"} 123.0
         my_summary{quantile=\"0.9\", myValue=\"labels\"} 123.0
         my_summary{quantile=\"0.99\", myValue=\"labels\"} 123.0
@@ -180,7 +168,7 @@ final class SummaryTests: XCTestCase {
 
     func testStandaloneSummaryWithCustomCapacity() {
         let capacity = 10
-        let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", capacity: capacity, quantiles: [0.5, 0.99], labels: BaseSummaryLabels.self)
+        let summary = prom.createSummary(forType: Double.self, named: "my_summary", helpText: "Summary for testing", capacity: capacity, quantiles: [0.5, 0.99])
 
         for i in 0 ..< capacity { summary.observe(Double(i * 1_000)) }
         for i in 0 ..< capacity { summary.observe(Double(i)) }
@@ -188,10 +176,10 @@ final class SummaryTests: XCTestCase {
         XCTAssertEqual(summary.collect(), """
         # HELP my_summary Summary for testing
         # TYPE my_summary summary
-        my_summary{quantile="0.5", myValue="*"} 4.5
-        my_summary{quantile="0.99", myValue="*"} 9.0
-        my_summary_count{myValue="*"} 20.0
-        my_summary_sum{myValue="*"} 45045.0
+        my_summary{quantile="0.5"} 4.5
+        my_summary{quantile="0.99"} 9.0
+        my_summary_count 20.0
+        my_summary_sum 45045.0
         """)
     }
 }

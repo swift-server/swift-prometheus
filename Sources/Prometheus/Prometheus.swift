@@ -95,41 +95,22 @@ public class PrometheusClient {
     ///     - labelType: Type of labels this counter can use. Can be left out to default to no labels
     ///
     /// - Returns: Counter instance
-    public func createCounter<T: Numeric, U: MetricLabels>(
-        forType type: T.Type,
-        named name: String,
-        helpText: String? = nil,
-        initialValue: T = 0,
-        withLabelType labelType: U.Type) -> PromCounter<T, U>
-    {
-        return self.lock.withLock {
-            if let cachedCounter: PromCounter<T, U> = self._getMetricInstance(with: name, andType: .counter) {
-                return cachedCounter
-            }
-
-            let counter = PromCounter<T, U>(name, helpText, initialValue, self)
-            let oldInstrument = self.metrics.updateValue(counter, forKey: name)
-            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
-            return counter
-        }
-    }
-    
-    /// Creates a counter with the given values
-    ///
-    /// - Parameters:
-    ///     - type: Type the counter will count
-    ///     - name: Name of the counter
-    ///     - helpText: Help text for the counter. Usually a short description
-    ///     - initialValue: An initial value to set the counter to, defaults to 0
-    ///
-    /// - Returns: Counter instance
     public func createCounter<T: Numeric>(
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        initialValue: T = 0) -> PromCounter<T, EmptyLabels>
+        initialValue: T = 0) -> PromCounter<T>
     {
-        return self.createCounter(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyLabels.self)
+        return self.lock.withLock {
+            if let cachedCounter: PromCounter<T> = self._getMetricInstance(with: name, andType: .counter) {
+                return cachedCounter
+            }
+
+            let counter = PromCounter<T>(name, helpText, initialValue, self)
+            let oldInstrument = self.metrics.updateValue(counter, forKey: name)
+            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
+            return counter
+        }
     }
     
     // MARK: - Gauge
@@ -144,41 +125,22 @@ public class PrometheusClient {
     ///     - labelType: Type of labels this gauge can use. Can be left out to default to no labels
     ///
     /// - Returns: Gauge instance
-    public func createGauge<T: Numeric, U: MetricLabels>(
-        forType type: T.Type,
-        named name: String,
-        helpText: String? = nil,
-        initialValue: T = 0,
-        withLabelType labelType: U.Type) -> PromGauge<T, U>
-    {
-        return self.lock.withLock {
-            if let cachedGauge: PromGauge<T, U> = self._getMetricInstance(with: name, andType: .gauge) {
-                return cachedGauge
-            }
-
-            let gauge = PromGauge<T, U>(name, helpText, initialValue, self)
-            let oldInstrument = self.metrics.updateValue(gauge, forKey: name)
-            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
-            return gauge
-        }
-    }
-    
-    /// Creates a gauge with the given values
-    ///
-    /// - Parameters:
-    ///     - type: Type the gauge will count
-    ///     - name: Name of the gauge
-    ///     - helpText: Help text for the gauge. Usually a short description
-    ///     - initialValue: An initial value to set the gauge to, defaults to 0
-    ///
-    /// - Returns: Gauge instance
     public func createGauge<T: Numeric>(
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        initialValue: T = 0) -> PromGauge<T, EmptyLabels>
+        initialValue: T = 0) -> PromGauge<T>
     {
-        return self.createGauge(forType: type, named: name, helpText: helpText, initialValue: initialValue, withLabelType: EmptyLabels.self)
+        return self.lock.withLock {
+            if let cachedGauge: PromGauge<T> = self._getMetricInstance(with: name, andType: .gauge) {
+                return cachedGauge
+            }
+
+            let gauge = PromGauge<T>(name, helpText, initialValue, self)
+            let oldInstrument = self.metrics.updateValue(gauge, forKey: name)
+            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
+            return gauge
+        }
     }
     
     // MARK: - Histogram
@@ -193,41 +155,22 @@ public class PrometheusClient {
     ///     - labels: Labels to give this histogram. Can be left out to default to no labels
     ///
     /// - Returns: Histogram instance
-    public func createHistogram<T: Numeric, U: HistogramLabels>(
-        forType type: T.Type,
-        named name: String,
-        helpText: String? = nil,
-        buckets: Buckets = .defaultBuckets,
-        labels: U.Type) -> PromHistogram<T, U>
-    {
-        return self.lock.withLock {
-            if let cachedHistogram: PromHistogram<T, U> = self._getMetricInstance(with: name, andType: .histogram) {
-                return cachedHistogram
-            }
-
-            let histogram = PromHistogram<T, U>(name, helpText, U(), buckets, self)
-            let oldInstrument = self.metrics.updateValue(histogram, forKey: name)
-            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
-            return histogram
-        }
-    }
-    
-    /// Creates a histogram with the given values
-    ///
-    /// - Parameters:
-    ///     - type: The type the histogram will observe
-    ///     - name: Name of the histogram
-    ///     - helpText: Help text for the histogram. Usually a short description
-    ///     - buckets: Buckets to divide values over
-    ///
-    /// - Returns: Histogram instance
     public func createHistogram<T: Numeric>(
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        buckets: Buckets = .defaultBuckets) -> PromHistogram<T, EmptyHistogramLabels>
+        buckets: Buckets = .defaultBuckets) -> PromHistogram<T>
     {
-        return self.createHistogram(forType: type, named: name, helpText: helpText, buckets: buckets, labels: EmptyHistogramLabels.self)
+        return self.lock.withLock {
+            if let cachedHistogram: PromHistogram<T> = self._getMetricInstance(with: name, andType: .histogram) {
+                return cachedHistogram
+            }
+
+            let histogram = PromHistogram<T>(name, helpText, buckets, self)
+            let oldInstrument = self.metrics.updateValue(histogram, forKey: name)
+            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
+            return histogram
+        }
     }
     
     // MARK: - Summary
@@ -243,41 +186,22 @@ public class PrometheusClient {
     ///     - labels: Labels to give this summary. Can be left out to default to no labels
     ///
     /// - Returns: Summary instance
-    public func createSummary<T: Numeric, U: SummaryLabels>(
-        forType type: T.Type,
-        named name: String,
-        helpText: String? = nil,
-        capacity: Int = Prometheus.defaultSummaryCapacity,
-        quantiles: [Double] = Prometheus.defaultQuantiles,
-        labels: U.Type) -> PromSummary<T, U>
-    {
-        return self.lock.withLock {
-            if let cachedSummary: PromSummary<T, U> = self._getMetricInstance(with: name, andType: .summary) {
-                return cachedSummary
-            }
-            let summary = PromSummary<T, U>(name, helpText, U(), capacity, quantiles, self)
-            let oldInstrument = self.metrics.updateValue(summary, forKey: name)
-            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
-            return summary
-        }
-    }
-    
-    /// Creates a summary with the given values
-    ///
-    /// - Parameters:
-    ///     - type: The type the summary will observe
-    ///     - name: Name of the summary
-    ///     - helpText: Help text for the summary. Usually a short description
-    ///     - quantiles: Quantiles to calculate
-    ///
-    /// - Returns: Summary instance
     public func createSummary<T: Numeric>(
         forType type: T.Type,
         named name: String,
         helpText: String? = nil,
-        quantiles: [Double] = Prometheus.defaultQuantiles) -> PromSummary<T, EmptySummaryLabels>
+        capacity: Int = Prometheus.defaultSummaryCapacity,
+        quantiles: [Double] = Prometheus.defaultQuantiles) -> PromSummary<T>
     {
-        return self.createSummary(forType: type, named: name, helpText: helpText, quantiles: quantiles, labels: EmptySummaryLabels.self)
+        return self.lock.withLock {
+            if let cachedSummary: PromSummary<T> = self._getMetricInstance(with: name, andType: .summary) {
+                return cachedSummary
+            }
+            let summary = PromSummary<T>(name, helpText, capacity, quantiles, self)
+            let oldInstrument = self.metrics.updateValue(summary, forKey: name)
+            precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
+            return summary
+        }
     }
 }
 
