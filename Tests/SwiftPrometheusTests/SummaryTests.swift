@@ -36,7 +36,8 @@ final class SummaryTests: XCTestCase {
     
     func testSummary() {
         let summary = Timer(label: "my_summary")
-        
+        summary.handler.preferDisplayUnit(.nanoseconds)
+
         summary.recordNanoseconds(1)
         summary.recordNanoseconds(2)
         summary.recordNanoseconds(4)
@@ -69,6 +70,39 @@ final class SummaryTests: XCTestCase {
         my_summary_count{myValue="labels"} 1
         my_summary_sum{myValue="labels"} 123.0\n
         """)
+    }
+
+    func testConcurrent() throws {
+        let prom = PrometheusClient()
+        let summary = prom.createSummary(forType: Double.self, named: "my_summary",
+                                             helpText: "Summary for testing",
+                                             labels: DimensionSummaryLabels.self)
+        let elg = MultiThreadedEventLoopGroup(numberOfThreads: 8)
+        let semaphore = DispatchSemaphore(value: 2)
+        _ = elg.next().submit {
+            for _ in 1...1_000 {
+                let labels = DimensionSummaryLabels([("myValue", "1")])
+                let labels2 = DimensionSummaryLabels([("myValue", "2")])
+
+                summary.observe(1.0, labels)
+                summary.observe(1.0, labels2)
+            }
+            semaphore.signal()
+        }
+        _ = elg.next().submit {
+            for _ in 1...1_000 {
+                let labels = DimensionSummaryLabels([("myValue", "1")])
+                let labels2 = DimensionSummaryLabels([("myValue", "2")])
+
+                summary.observe(1.0, labels2)
+                summary.observe(1.0, labels)
+            }
+            semaphore.signal()
+        }
+        semaphore.wait()
+        try elg.syncShutdownGracefully()
+        XCTAssertTrue(summary.collect().contains("my_summary_count 4000.0"))
+        XCTAssertTrue(summary.collect().contains("my_summary_sum 4000.0"))
     }
     
     func testSummaryWithPreferredDisplayUnit() {

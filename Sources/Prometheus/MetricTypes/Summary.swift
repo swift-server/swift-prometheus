@@ -53,7 +53,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     internal let quantiles: [Double]
     
     /// Sub Summaries for this Summary
-    fileprivate var subSummaries: [PromSummary<NumType, Labels>] = []
+    fileprivate var subSummaries: [Labels: PromSummary<NumType, Labels>] = [:]
     
     /// Lock used for thread safety
     private let lock: Lock
@@ -100,6 +100,8 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         }
 
         var output = [String]()
+        // HELP/TYPE + (summary + subSummaries) * (quantiles + sum + count)
+        output.reserveCapacity(2 + (subSummaries.count + 1) * (quantiles.count + 2))
 
         if let help = self.help {
             output.append("# HELP \(self.name) \(help)")
@@ -117,7 +119,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         output.append("\(self.name)_count\(labelsString) \(self.count.get())")
         output.append("\(self.name)_sum\(labelsString) \(format(self.sum.get().doubleValue))")
 
-        subSummaries.forEach { subSum in
+        subSummaries.values.forEach { subSum in
             var subSumLabels = subSum.labels
             let subSumValues = lock.withLock { subSum.values }
             calculateQuantiles(quantiles: self.quantiles, values: subSumValues.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
@@ -137,7 +139,8 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     
     // Updated for SwiftMetrics 2.0 to be unit agnostic if displayUnit is set or default to nanoseconds.
     private func format(_ v: Double) -> Double {
-        let displayUnitScale = self.displayUnit?.scaleFromNanoseconds ?? 1
+        let displayUnit = lock.withLock { self.displayUnit }
+        let displayUnitScale = displayUnit?.scaleFromNanoseconds ?? 1
         return v / Double(displayUnitScale)
     }
     
@@ -162,13 +165,13 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
     public func observe(_ value: NumType, _ labels: Labels? = nil) {
+        if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
+            let sum = self.getOrCreateSummary(withLabels: labels)
+            sum.observe(value)
+        }
+        self.count.inc(1)
+        self.sum.inc(value)
         self.lock.withLock {
-            if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
-                guard let sum = self.prometheus?.getOrCreateSummary(withLabels: labels, forSummary: self) else { fatalError("Lingering Summary") }
-                sum.observe(value)
-            }
-            self.count.inc(1)
-            self.sum.inc(value)
             if self.values.count == self.capacity {
                 _ = self.values.popFirst()
             }
@@ -190,22 +193,42 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         }
         return try body()
     }
-}
-
-extension PrometheusClient {
-    /// Helper for summaries & labels
-    fileprivate func getOrCreateSummary<T: Numeric, U: SummaryLabels>(withLabels labels: U, forSummary summary: PromSummary<T, U>) -> PromSummary<T, U> {
-        let summaries = summary.subSummaries.filter { (metric) -> Bool in
-            guard metric.name == summary.name, metric.help == summary.help, metric.labels == labels else { return false }
-            return true
-        }
-        if summaries.count > 2 { fatalError("Somehow got 2 summaries with the same data type") }
-        if let summary = summaries.first {
+    fileprivate func getOrCreateSummary(withLabels labels: Labels) -> PromSummary<NumType, Labels> {
+        let subSummaries = self.lock.withLock { self.subSummaries }
+        if let summary = subSummaries[labels] {
+            precondition(summary.name == self.name,
+                         """
+                         Somehow got 2 subSummaries with the same data type  / labels 
+                         but different names: expected \(self.name), got \(summary.name)
+                         """)
+            precondition(summary.help == self.help,
+                         """
+                         Somehow got 2 subSummaries with the same data type  / labels 
+                         but different help messages: expected \(self.help ?? "nil"), got \(summary.help ?? "nil")
+                         """)
             return summary
         } else {
-            let newSummary = PromSummary<T, U>(summary.name, summary.help, labels, summary.capacity, summary.quantiles, self)
-            summary.subSummaries.append(newSummary)
-            return newSummary
+            return lock.withLock {
+                if let summary = self.subSummaries[labels] {
+                    precondition(summary.name == self.name,
+                                 """
+                                 Somehow got 2 subSummaries with the same data type  / labels 
+                                 but different names: expected \(self.name), got \(summary.name)
+                                 """)
+                    precondition(summary.help == self.help,
+                                 """
+                                 Somehow got 2 subSummaries with the same data type  / labels 
+                                 but different help messages: expected \(self.help ?? "nil"), got \(summary.help ?? "nil")
+                                 """)
+                    return summary
+                }
+                guard let prometheus = prometheus else {
+                    fatalError("Lingering Summary")
+                }
+                let newSummary = PromSummary(self.name, self.help, labels, self.capacity, self.quantiles, prometheus)
+                self.subSummaries[labels] = newSummary
+                return newSummary
+            }
         }
     }
 }

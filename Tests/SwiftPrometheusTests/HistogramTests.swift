@@ -33,6 +33,40 @@ final class HistogramTests: XCTestCase {
         self.prom = nil
         try! self.group.syncShutdownGracefully()
     }
+
+    func testConcurrent() throws {
+        let prom = PrometheusClient()
+        let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram",
+                                             helpText: "Histogram for testing",
+                                             buckets: Buckets.exponential(start: 1, factor: 2, count: 63),
+                                             labels: DimensionHistogramLabels.self)
+        let elg = MultiThreadedEventLoopGroup(numberOfThreads: 8)
+        let semaphore = DispatchSemaphore(value: 2)
+        _ = elg.next().submit {
+            for _ in 1...1_000 {
+                let labels = DimensionHistogramLabels([("myValue", "1")])
+                let labels2 = DimensionHistogramLabels([("myValue", "2")])
+
+                histogram.observe(1.0, labels)
+                histogram.observe(1.0, labels2)
+            }
+            semaphore.signal()
+        }
+        _ = elg.next().submit {
+            for _ in 1...1_000 {
+                let labels = DimensionHistogramLabels([("myValue", "1")])
+                let labels2 = DimensionHistogramLabels([("myValue", "2")])
+
+                histogram.observe(1.0, labels2)
+                histogram.observe(1.0, labels)
+            }
+            semaphore.signal()
+        }
+        semaphore.wait()
+        try elg.syncShutdownGracefully()
+        XCTAssertTrue(histogram.collect().contains("my_histogram_count 4000.0"))
+        XCTAssertTrue(histogram.collect().contains("my_histogram_sum 4000.0"))
+    }
     
     func testHistogramSwiftMetrics() {
         let recorder = Recorder(label: "my_histogram")
