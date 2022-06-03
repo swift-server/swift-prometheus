@@ -98,7 +98,6 @@ public class PromHistogram<NumType: DoubleRepresentable>: PromMetric, Prometheus
     /// - Parameters:
     ///     - name: Name of the Histogram
     ///     - help: Help text of the Histogram
-    ///     - labels: Labels for the Histogram
     ///     - buckets: Buckets to use for the Histogram
     ///     - p: Prometheus instance creating this Histogram
     internal init(_ name: String, _ help: String? = nil, _ buckets: Buckets = .defaultBuckets, _ p: PrometheusClient) {

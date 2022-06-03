@@ -424,12 +424,6 @@ struct EncodableHistogramLabels: Encodable {
     }
 }
 
-@available(*, deprecated, message: "This is now an alias to DimensionLabels, please use it directly instead")
-public typealias DimensionSummaryLabels = DimensionLabels
-
-@available(*, deprecated, message: "This is now an alias to DimensionLabels, please use it directly instead")
-public typealias DimensionHistogramLabels = DimensionLabels
-
 struct EncodableSummaryLabels: Encodable {
     /// Quantile
     var quantile: String?

@@ -46,7 +46,6 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric, PrometheusHa
     /// - Parameters:
     ///     - name: Name of the Summary
     ///     - help: Help text of the Summary
-    ///     - labels: Labels for the Summary
     ///     - capacity: Number of values to keep for calculating quantiles
     ///     - quantiles: Quantiles to use for the Summary
     ///     - p: Prometheus instance creating this Summary
@@ -94,7 +93,6 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric, PrometheusHa
             output.append("\(self.name)\(labelsString) \(format(v))")
         }
 
-//        let labelsString = encodeLabels(labels, ["quantile"])
         output.append("\(self.name)_count \(self.count.get())")
         output.append("\(self.name)_sum \(format(self.sum.get().doubleValue))")
 

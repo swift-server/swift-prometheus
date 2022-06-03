@@ -92,7 +92,6 @@ public class PrometheusClient {
     ///     - name: Name of the counter
     ///     - helpText: Help text for the counter. Usually a short description
     ///     - initialValue: An initial value to set the counter to, defaults to 0
-    ///     - labelType: Type of labels this counter can use. Can be left out to default to no labels
     ///
     /// - Returns: Counter instance
     public func createCounter<T: Numeric>(
@@ -122,7 +121,6 @@ public class PrometheusClient {
     ///     - name: Name of the gauge
     ///     - helpText: Help text for the gauge. Usually a short description
     ///     - initialValue: An initial value to set the gauge to, defaults to 0
-    ///     - labelType: Type of labels this gauge can use. Can be left out to default to no labels
     ///
     /// - Returns: Gauge instance
     public func createGauge<T: Numeric>(
@@ -152,7 +150,6 @@ public class PrometheusClient {
     ///     - name: Name of the histogram
     ///     - helpText: Help text for the histogram. Usually a short description
     ///     - buckets: Buckets to divide values over
-    ///     - labels: Labels to give this histogram. Can be left out to default to no labels
     ///
     /// - Returns: Histogram instance
     public func createHistogram<T: Numeric>(
@@ -183,7 +180,6 @@ public class PrometheusClient {
     ///     - helpText: Help text for the summary. Usually a short description
     ///     - capacity: Number of observations to keep for calculating quantiles
     ///     - quantiles: Quantiles to calculate
-    ///     - labels: Labels to give this summary. Can be left out to default to no labels
     ///
     /// - Returns: Summary instance
     public func createSummary<T: Numeric>(
