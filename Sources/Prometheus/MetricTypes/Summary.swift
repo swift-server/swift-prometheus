@@ -116,7 +116,8 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric, PrometheusHa
     
     // Updated for SwiftMetrics 2.0 to be unit agnostic if displayUnit is set or default to nanoseconds.
     private func format(_ v: Double) -> Double {
-        let displayUnitScale = self.displayUnit?.scaleFromNanoseconds ?? 1
+        let displayUnit = lock.withLock { self.displayUnit }
+        let displayUnitScale = displayUnit?.scaleFromNanoseconds ?? 1
         return v / Double(displayUnitScale)
     }
     
