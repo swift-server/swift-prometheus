@@ -355,7 +355,7 @@ private struct StringCodingKey: CodingKey {
 }
 
 /// Helper for dimensions
-public struct DimensionLabels: MetricLabels {
+public struct DimensionLabels: Hashable, ExpressibleByArrayLiteral {
     let dimensions: [(String, String)]
 
     public init() {
@@ -364,6 +364,10 @@ public struct DimensionLabels: MetricLabels {
 
     public init(_ dimensions: [(String, String)]) {
         self.dimensions = dimensions
+    }
+
+    public init(arrayLiteral elements: (String, String)...) {
+        self.init(elements)
     }
 
     public func hash(into hasher: inout Hasher) {
