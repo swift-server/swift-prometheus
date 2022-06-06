@@ -19,6 +19,15 @@ public class PrometheusClient {
     }
     
     // MARK: - Collection
+
+    /// Creates prometheus formatted metrics
+    ///
+    /// - returns: A newline separated string with metrics for all Metrics this PrometheusClient handles
+    @available(macOS 10.15.0, *)
+    public func collect() async -> String {
+        let metrics = self.lock.withLock { self.metrics }
+        return metrics.isEmpty ? "" : "\(metrics.values.map { $0.collect() }.joined(separator: "\n"))\n"
+    }
     
     /// Creates prometheus formatted metrics
     ///
@@ -35,6 +44,20 @@ public class PrometheusClient {
     ///     - promise: Promise that will succeed with a newline separated string with metrics for all Metrics this PrometheusClient handles
     public func collect(into promise: EventLoopPromise<String>) {
         collect(promise.succeed)
+    }
+
+    /// Creates prometheus formatted metrics
+    ///
+    /// - returns: A `ByteBuffer` containing a newline separated string with metrics for all Metrics this PrometheusClient handles
+    @available(macOS 10.15.0, *)
+    public func collect() async -> ByteBuffer {
+        var buffer = ByteBufferAllocator().buffer(capacity: 0)
+        let metrics = self.lock.withLock { self.metrics }
+        metrics.values.forEach {
+            $0.collect(into: &buffer)
+            buffer.writeString("\n")
+        }
+        return buffer
     }
     
     /// Creates prometheus formatted metrics

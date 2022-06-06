@@ -1,4 +1,4 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.4
 
 import PackageDescription
 
@@ -7,10 +7,7 @@ let package = Package(
     products: [
         .library(
             name: "SwiftPrometheus",
-            targets: ["Prometheus"]),
-        .executable(
-            name: "PrometheusExample",
-            targets: ["PrometheusExample"]),
+            targets: ["Prometheus"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-metrics.git", from: "2.2.0"),
@@ -24,7 +21,7 @@ let package = Package(
                 .product(name: "NIOConcurrencyHelpers", package: "swift-nio"),
                 .product(name: "NIO", package: "swift-nio"),
             ]),
-        .target(
+        .executableTarget(
             name: "PrometheusExample",
             dependencies: [
                 .target(name: "Prometheus"),
