@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/MrLotU/SwiftPrometheus.svg?style=svg)](https://circleci.com/gh/MrLotU/SwiftPrometheus)[![Swift 5.2](https://img.shields.io/badge/swift-5.2-orange.svg?style=flat)](http://swift.org)
+[![Swift 5.2](https://img.shields.io/badge/swift-5.2-orange.svg?style=flat)](http://swift.org)
 
 # SwiftPrometheus, Prometheus client for Swift
 
@@ -8,7 +8,7 @@ A prometheus client for Swift supporting counters, gauges, histograms, summaries
 
 SwiftPrometheus is available through SPM. To include it in your project add the following dependency to your `Package.swift`:
 ```swift
-        .package(url: "https://github.com/MrLotU/SwiftPrometheus.git", from: "1.0.0-alpha")
+        .package(url: "https://github.com/swift-server-community/SwiftPrometheus.git", from: "1.0.0-alpha")
 ```
 
 _NOTE: For NIO 1 use `from: "0.4.0-alpha"` instead._
@@ -27,7 +27,7 @@ let myProm = PrometheusClient()
 ## Usage with SwiftMetrics
 _For more details about swift-metrics, please view [the GitHub repo](https://github.com/apple/swift-metrics)._
 
-Starting with SwiftPrometheus [1.0.0-alpha.10](https://github.com/MrLotU/SwiftPrometheus/releases/tag/1.0.0-alpha.10) `MetricsSystem` is no longer directly configured with a `PrometheusClient`.
+Starting with SwiftPrometheus [1.0.0-alpha.10](https://github.com/swift-server-community/SwiftPrometheus/releases/tag/1.0.0-alpha.10) `MetricsSystem` is no longer directly configured with a `PrometheusClient`.
 
 Instead, create a `PrometheusMetricsFactory` instance wrapping a `PrometheusClient`.
 
@@ -146,6 +146,6 @@ Please see [SECURITY.md](SECURITY.md) for details on the security process.
 
 All contributions are most welcome!
 
-If you think of some cool new feature that should be included, please [create an issue](https://github.com/MrLotU/SwiftPrometheus/issues/new/choose). Or, if you want to implement it yourself, [fork this repo](https://github.com/MrLotU/SwiftPrometheus/fork) and submit a PR!
+If you think of some cool new feature that should be included, please [create an issue](https://github.com/swift-server-community/SwiftPrometheus/issues/new/choose). Or, if you want to implement it yourself, [fork this repo](https://github.com/swift-server-community/SwiftPrometheus/fork) and submit a PR!
 
-If you find a bug or have issues, please [create an issue](https://github.com/MrLotU/SwiftPrometheus/issues/new/choose) explaining your problems. Please include as much information as possible, so it's easier for me to reproduce (Framework, OS, Swift version, terminal output, etc.)
+If you find a bug or have issues, please [create an issue](https://github.com/swift-server-community/SwiftPrometheus/issues/new/choose) explaining your problems. Please include as much information as possible, so it's easier for me to reproduce (Framework, OS, Swift version, terminal output, etc.)
