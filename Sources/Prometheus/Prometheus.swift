@@ -20,6 +20,7 @@ public class PrometheusClient {
     
     // MARK: - Collection
 
+#if swift(>=5.4)
     /// Creates prometheus formatted metrics
     ///
     /// - returns: A newline separated string with metrics for all Metrics this PrometheusClient handles
@@ -28,7 +29,8 @@ public class PrometheusClient {
         let metrics = self.lock.withLock { self.metrics }
         return metrics.isEmpty ? "" : "\(metrics.values.map { $0.collect() }.joined(separator: "\n"))\n"
     }
-    
+#endif
+
     /// Creates prometheus formatted metrics
     ///
     /// - Parameters:
@@ -46,6 +48,7 @@ public class PrometheusClient {
         collect(promise.succeed)
     }
 
+#if swift(>=5.4)
     /// Creates prometheus formatted metrics
     ///
     /// - returns: A `ByteBuffer` containing a newline separated string with metrics for all Metrics this PrometheusClient handles
@@ -59,7 +62,8 @@ public class PrometheusClient {
         }
         return buffer
     }
-    
+#endif
+
     /// Creates prometheus formatted metrics
     ///
     /// - Parameters:
