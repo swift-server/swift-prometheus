@@ -1,4 +1,4 @@
-// swift-tools-version:5.4
+// swift-tools-version:5.2
 
 import PackageDescription
 
@@ -21,7 +21,7 @@ let package = Package(
                 .product(name: "NIOConcurrencyHelpers", package: "swift-nio"),
                 .product(name: "NIO", package: "swift-nio"),
             ]),
-        .executableTarget(
+        .target(
             name: "PrometheusExample",
             dependencies: [
                 .target(name: "Prometheus"),
