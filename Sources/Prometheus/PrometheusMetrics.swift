@@ -124,84 +124,6 @@ private class MetricsSummary: TimerHandler {
     }
 }
 
-/// Used to sanitize labels into a format compatible with Prometheus label requirements.
-/// Useful when using `PrometheusMetrics` via `SwiftMetrics` with clients which do not necessarily know 
-/// about prometheus label formats, and may be using e.g. `.` or upper-case letters in labels (which Prometheus 
-/// does not allow).
-///
-///     let sanitizer: LabelSanitizer = ...
-///     let prometheusLabel = sanitizer.sanitize(nonPrometheusLabel)
-///
-/// By default `PrometheusLabelSanitizer` is used by `PrometheusMetricsFactory`
-public protocol LabelSanitizer {
-    /// Sanitize the passed in label to a Prometheus accepted value.
-    ///
-    /// - parameters:
-    ///     - label: The created label that needs to be sanitized.
-    ///
-    /// - returns: A sanitized string that a Prometheus backend will accept.
-    func sanitize(_ label: String) -> String
-}
-
-/// Default implementation of `LabelSanitizer` that sanitizes any characters not
-/// allowed by Prometheus to an underscore (`_`).
-///
-/// See `https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels` for more info.
-public struct PrometheusLabelSanitizer: LabelSanitizer {
-    private static let uppercaseAThroughZ = UInt8(ascii: "A") ... UInt8(ascii: "Z")
-    private static let lowercaseAThroughZ = UInt8(ascii: "a") ... UInt8(ascii: "z")
-    private static let zeroThroughNine = UInt8(ascii: "0") ... UInt8(ascii: "9")
-
-    public init() { }
-
-    public func sanitize(_ label: String) -> String {
-        if PrometheusLabelSanitizer.isSanitized(label) {
-            return label
-        } else {
-            return PrometheusLabelSanitizer.sanitizeLabel(label)
-        }
-    }
-
-    /// Returns a boolean indicating whether the label is already sanitized.
-    private static func isSanitized(_ label: String) -> Bool {
-        return label.utf8.allSatisfy(PrometheusLabelSanitizer.isValidCharacter(_:))
-    }
-    
-    /// Returns a boolean indicating whether the character may be used in a label.
-    private static func isValidCharacter(_ codePoint: String.UTF8View.Element) -> Bool {
-        switch codePoint {
-        case PrometheusLabelSanitizer.lowercaseAThroughZ,
-             PrometheusLabelSanitizer.zeroThroughNine,
-             UInt8(ascii: ":"),
-             UInt8(ascii: "_"):
-            return true
-        default:
-            return false
-        }
-    }
-
-    private static func sanitizeLabel(_ label: String) -> String {
-        let sanitized: [UInt8] = label.utf8.map { character in
-            if PrometheusLabelSanitizer.isValidCharacter(character) {
-                return character
-            } else {
-                return PrometheusLabelSanitizer.sanitizeCharacter(character)
-            }
-        }
-        
-        return String(decoding: sanitized, as: UTF8.self)
-    }
-    
-    private static func sanitizeCharacter(_ character: UInt8) -> UInt8 {
-        if PrometheusLabelSanitizer.uppercaseAThroughZ.contains(character) {
-            // Uppercase, so shift to lower case.
-            return character + (UInt8(ascii: "a") - UInt8(ascii: "A"))
-        } else {
-            return UInt8(ascii: "_")
-        }
-    }
-}
-
 /// Defines the base for a bridge between PrometheusClient and swift-metrics.
 /// Used by `SwiftMetrics.prometheus()` to get an instance of `PrometheusClient` from `MetricsSystem`
 ///
@@ -260,13 +182,13 @@ public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let counter = client.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self)
-        return MetricsCounter(counter: counter, dimensions: dimensions)
+        return MetricsCounter(counter: counter, dimensions: dimensions.sanitized())
     }
 
     public func makeFloatingPointCounter(label: String, dimensions: [(String, String)]) -> FloatingPointCounterHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let counter = client.createCounter(forType: Double.self, named: label, withLabelType: DimensionLabels.self)
-        return MetricsFloatingPointCounter(counter: counter, dimensions: dimensions)
+        return MetricsFloatingPointCounter(counter: counter, dimensions: dimensions.sanitized())
     }
     
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
@@ -277,13 +199,13 @@ public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
     private func makeGauge(label: String, dimensions: [(String, String)]) -> RecorderHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let gauge = client.createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self)
-        return MetricsGauge(gauge: gauge, dimensions: dimensions)
+        return MetricsGauge(gauge: gauge, dimensions: dimensions.sanitized())
     }
     
     private func makeHistogram(label: String, dimensions: [(String, String)]) -> RecorderHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let histogram = client.createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self)
-        return MetricsHistogram(histogram: histogram, dimensions: dimensions)
+        return MetricsHistogram(histogram: histogram, dimensions: dimensions.sanitized())
     }
     
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
@@ -300,7 +222,7 @@ public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
     private func makeSummaryTimer(label: String, dimensions: [(String, String)], quantiles: [Double]) -> TimerHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let summary = client.createSummary(forType: Int64.self, named: label, quantiles: quantiles, labels: DimensionSummaryLabels.self)
-        return MetricsSummary(summary: summary, dimensions: dimensions)
+        return MetricsSummary(summary: summary, dimensions: dimensions.sanitized())
     }
 
     /// There's two different ways to back swift-api `Timer` with Prometheus classes.
@@ -308,7 +230,16 @@ public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
     private func makeHistogramTimer(label: String, dimensions: [(String, String)], buckets: Buckets) -> TimerHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let histogram = client.createHistogram(forType: Int64.self, named: label, buckets: buckets, labels: DimensionHistogramLabels.self)
-        return MetricsHistogramTimer(histogram: histogram, dimensions: dimensions)
+        return MetricsHistogramTimer(histogram: histogram, dimensions: dimensions.sanitized())
+    }
+}
+
+extension Array where Element == (String, String) {
+    func sanitized() -> [(String, String)] {
+        let sanitizer = DimensionsSanitizer()
+        return self.map {
+            (sanitizer.sanitize($0.0), $0.1)
+        }
     }
 }
 
