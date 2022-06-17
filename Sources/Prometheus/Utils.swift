@@ -1,29 +1,7 @@
 import Foundation
 
-/// Empty labels class
-public struct EmptyLabels: MetricLabels {
-    /// Creates empty labels
-    public init() { }
-}
-
-/// Empty labels class
-public struct EmptyHistogramLabels: HistogramLabels {
-    /// Bucket
-    public var le: String = ""
-    /// Creates empty labels
-    public init() { }
-}
-
-/// Empty labels class
-public struct EmptySummaryLabels: SummaryLabels {
-    /// Quantile
-    public var quantile: String = ""
-    /// Creates empty labels
-    public init() { }
-}
-
 /// Creates a Prometheus String representation of a `MetricLabels` instance
-func encodeLabels<Labels: MetricLabels>(_ labels: Labels, _ excludingKeys: [String] = []) -> String {
+func encodeLabels<Labels: Encodable>(_ labels: Labels, _ excludingKeys: [String] = []) -> String {
     do {
         let data = try JSONEncoder().encode(labels)
         guard var dictionary = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [String: Any] else {

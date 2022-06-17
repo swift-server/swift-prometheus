@@ -3,7 +3,7 @@ import NIOConcurrencyHelpers
 /// Prometheus Counter metric
 ///
 /// See: https://prometheus.io/docs/concepts/metric_types/#counter
-public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, PrometheusHandled {
+public class PromCounter<NumType: Numeric>: PromMetric, PrometheusHandled {
     /// Prometheus instance that created this Counter
     internal weak var prometheus: PrometheusClient?
     
@@ -22,7 +22,7 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, Pr
     private let initialValue: NumType
     
     /// Storage of values that have labels attached
-    internal var metrics: [Labels: NumType] = [:]
+    internal var metrics: [DimensionLabels: NumType] = [:]
     
     /// Lock used for thread safety
     internal let lock: Lock
@@ -75,7 +75,7 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, Pr
     ///     - labels: Labels to attach to the value
     ///
     @discardableResult
-    public func inc(_ amount: NumType = 1, _ labels: Labels? = nil) -> NumType {
+    public func inc(_ amount: NumType = 1, _ labels: DimensionLabels? = nil) -> NumType {
         return self.lock.withLock {
             if let labels = labels {
                 var val = self.metrics[labels] ?? self.initialValue
@@ -95,7 +95,7 @@ public class PromCounter<NumType: Numeric, Labels: MetricLabels>: PromMetric, Pr
     ///     - labels: Labels to get the value for
     ///
     /// - Returns: The value of the Counter attached to the provided labels
-    public func get(_ labels: Labels? = nil) -> NumType {
+    public func get(_ labels: DimensionLabels? = nil) -> NumType {
         return self.lock.withLock {
             if let labels = labels {
                 return self.metrics[labels] ?? initialValue
