@@ -20,7 +20,7 @@ public class PrometheusClient {
     
     // MARK: - Collection
 
-#if swift(>=5.4)
+#if swift(>=5.5)
     /// Creates prometheus formatted metrics
     ///
     /// - returns: A newline separated string with metrics for all Metrics this PrometheusClient handles
@@ -48,7 +48,7 @@ public class PrometheusClient {
         collect(promise.succeed)
     }
 
-#if swift(>=5.4)
+#if swift(>=5.5)
     /// Creates prometheus formatted metrics
     ///
     /// - returns: A `ByteBuffer` containing a newline separated string with metrics for all Metrics this PrometheusClient handles
