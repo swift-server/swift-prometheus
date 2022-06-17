@@ -49,4 +49,20 @@ final class SanitizerTests: XCTestCase {
         test_counter 10\n
         """)
     }
+
+    func testIntegratedSanitizerForDimensions() throws {
+        let prom = PrometheusClient()
+        MetricsSystem.bootstrapInternal(PrometheusMetricsFactory(client: prom))
+
+        let dimensions: [(String, String)] = [("invalid-service.dimension", "something")]
+        CoreMetrics.Counter(label: "dimensions_total", dimensions: dimensions).increment()
+        
+        let promise = eventLoop.makePromise(of: String.self)
+        prom.collect(into: promise)
+        XCTAssertEqual(try! promise.futureResult.wait(), """
+        # TYPE dimensions_total counter
+        dimensions_total 0\n
+        dimensions_total{invalid_service_dimension="something"} 1\n
+        """)
+    }
 }
