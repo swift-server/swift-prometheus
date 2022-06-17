@@ -61,7 +61,7 @@ final class SanitizerTests: XCTestCase {
         prom.collect(into: promise)
         XCTAssertEqual(try! promise.futureResult.wait(), """
         # TYPE dimensions_total counter
-        dimensions_total 0\n
+        dimensions_total 0
         dimensions_total{invalid_service_dimension="something"} 1\n
         """)
     }

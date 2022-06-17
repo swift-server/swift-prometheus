@@ -260,13 +260,13 @@ public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CounterHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let counter = client.createCounter(forType: Int64.self, named: label, withLabelType: DimensionLabels.self)
-        return MetricsCounter(counter: counter, dimensions: dimensions)
+        return MetricsCounter(counter: counter, dimensions: dimensions.sanitized(configuration: configuration))
     }
 
     public func makeFloatingPointCounter(label: String, dimensions: [(String, String)]) -> FloatingPointCounterHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let counter = client.createCounter(forType: Double.self, named: label, withLabelType: DimensionLabels.self)
-        return MetricsFloatingPointCounter(counter: counter, dimensions: dimensions)
+        return MetricsFloatingPointCounter(counter: counter, dimensions: dimensions.sanitized(configuration: configuration))
     }
     
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> RecorderHandler {
@@ -277,13 +277,13 @@ public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
     private func makeGauge(label: String, dimensions: [(String, String)]) -> RecorderHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let gauge = client.createGauge(forType: Double.self, named: label, withLabelType: DimensionLabels.self)
-        return MetricsGauge(gauge: gauge, dimensions: dimensions)
+        return MetricsGauge(gauge: gauge, dimensions: dimensions.sanitized(configuration: configuration))
     }
     
     private func makeHistogram(label: String, dimensions: [(String, String)]) -> RecorderHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let histogram = client.createHistogram(forType: Double.self, named: label, labels: DimensionHistogramLabels.self)
-        return MetricsHistogram(histogram: histogram, dimensions: dimensions)
+        return MetricsHistogram(histogram: histogram, dimensions: dimensions.sanitized(configuration: configuration))
     }
     
     public func makeTimer(label: String, dimensions: [(String, String)]) -> TimerHandler {
@@ -300,7 +300,7 @@ public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
     private func makeSummaryTimer(label: String, dimensions: [(String, String)], quantiles: [Double]) -> TimerHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let summary = client.createSummary(forType: Int64.self, named: label, quantiles: quantiles, labels: DimensionSummaryLabels.self)
-        return MetricsSummary(summary: summary, dimensions: dimensions)
+        return MetricsSummary(summary: summary, dimensions: dimensions.sanitized(configuration: configuration))
     }
 
     /// There's two different ways to back swift-api `Timer` with Prometheus classes.
@@ -308,7 +308,15 @@ public struct PrometheusMetricsFactory: PrometheusWrappedMetricsFactory {
     private func makeHistogramTimer(label: String, dimensions: [(String, String)], buckets: Buckets) -> TimerHandler {
         let label = configuration.labelSanitizer.sanitize(label)
         let histogram = client.createHistogram(forType: Int64.self, named: label, buckets: buckets, labels: DimensionHistogramLabels.self)
-        return MetricsHistogramTimer(histogram: histogram, dimensions: dimensions)
+        return MetricsHistogramTimer(histogram: histogram, dimensions: dimensions.sanitized(configuration: configuration))
+    }
+}
+
+extension Array where Element == (String, String) {
+    func sanitized(configuration: PrometheusMetricsFactory.Configuration) -> [(String, String)] {
+        self.map {
+            (configuration.labelSanitizer.sanitize($0.0), $0.1)
+        }
     }
 }
 
