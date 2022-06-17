@@ -102,20 +102,18 @@ summary.observe(4.7) // Observe the given value
 ```
 
 ## Labels
-All metric types support adding labels, allowing for grouping of related metrics.
+All metric types support adding labels, allowing for grouping of related metrics. Labels are passed when recording values to your metric as an instance of `DimensionLabels`, or as an array of `(String, String)`.
 
 Example with a counter:
 
 ```swift
-struct RouteLabels: MetricLabels {
-   var route: String = "*"
-}
+let counter = myProm.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter")
 
-let counter = myProm.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", withLabelType: RouteLabels.self)
+let counter = prom.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter")
 
-let counter = prom.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", withLabelType: RouteLabels.self)
-
-counter.inc(12, .init(route: "/"))
+counter.inc(12, .init([("route", "/users")]))
+// OR
+counter.inc(12, [("route", "/users")])
 ```
 
 # Exporting

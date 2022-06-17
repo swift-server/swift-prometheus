@@ -183,7 +183,7 @@ final class PrometheusMetricsTests: XCTestCase {
         config.timerImplementation = .histogram()
         let metricsFactory = PrometheusMetricsFactory(client: prom, configuration: config)
         metricsFactory.makeTimer(label: "duration_nanos", dimensions: []).recordNanoseconds(1)
-        guard let histogram: PromHistogram<Int64, DimensionHistogramLabels> = prom.getMetricInstance(with: "duration_nanos", andType: .histogram) else {
+        guard let histogram: PromHistogram<Int64> = prom.getMetricInstance(with: "duration_nanos", andType: .histogram) else {
             XCTFail("Timer should be backed by Histogram")
             return
         }
@@ -200,7 +200,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
         timer.recordNanoseconds(1)
         metricsFactory.destroyTimer(timer)
-        let histogram: PromHistogram<Int64, DimensionHistogramLabels>? = prom.getMetricInstance(with: "duration_nanos", andType: .histogram)
+        let histogram: PromHistogram<Int64>? = prom.getMetricInstance(with: "duration_nanos", andType: .histogram)
         XCTAssertNil(histogram)
     }
     func testDestroySummaryTimer() {
@@ -211,7 +211,7 @@ final class PrometheusMetricsTests: XCTestCase {
         let timer = metricsFactory.makeTimer(label: "duration_nanos", dimensions: [])
         timer.recordNanoseconds(1)
         metricsFactory.destroyTimer(timer)
-        let summary: PromSummary<Int64, DimensionSummaryLabels>? = prom.getMetricInstance(with: "duration_nanos", andType: .summary)
+        let summary: PromSummary<Int64>? = prom.getMetricInstance(with: "duration_nanos", andType: .summary)
         XCTAssertNil(summary)
     }
 
