@@ -27,7 +27,10 @@ public class PrometheusClient {
     @available(macOS 10.15.0, *)
     public func collect() async -> String {
         let metrics = self.lock.withLock { self.metrics }
-        return metrics.isEmpty ? "" : "\(metrics.values.map { $0.collect() }.joined(separator: "\n"))\n"
+        let task = Task {
+            return metrics.isEmpty ? "" : "\(metrics.values.map { $0.collect() }.joined(separator: "\n"))\n"
+        }
+        return await task.value
     }
 #endif
 
@@ -54,13 +57,16 @@ public class PrometheusClient {
     /// - returns: A `ByteBuffer` containing a newline separated string with metrics for all Metrics this PrometheusClient handles
     @available(macOS 10.15.0, *)
     public func collect() async -> ByteBuffer {
-        var buffer = ByteBufferAllocator().buffer(capacity: 0)
         let metrics = self.lock.withLock { self.metrics }
-        metrics.values.forEach {
-            $0.collect(into: &buffer)
-            buffer.writeString("\n")
+        let task = Task { () -> ByteBuffer in
+            var buffer = ByteBufferAllocator().buffer(capacity: 0)
+            metrics.values.forEach {
+                $0.collect(into: &buffer)
+                buffer.writeString("\n")
+            }
+            return buffer
         }
-        return buffer
+        return await task.value
     }
 #endif
 
