@@ -1,6 +1,12 @@
 import XCTest
 @testable import Prometheus
 
+var isCITestRun: Bool {
+    return ProcessInfo.processInfo.environment.contains { k, v in
+        return k == "CI_RUN" && v == "TRUE"
+    }
+}
+
 final class SwiftPrometheusTests: XCTestCase {
     
     struct BaseLabels: MetricLabels {
