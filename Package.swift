@@ -7,10 +7,7 @@ let package = Package(
     products: [
         .library(
             name: "SwiftPrometheus",
-            targets: ["Prometheus"]),
-        .executable(
-            name: "PrometheusExample",
-            targets: ["PrometheusExample"]),
+            targets: ["Prometheus"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-metrics.git", from: "2.2.0"),

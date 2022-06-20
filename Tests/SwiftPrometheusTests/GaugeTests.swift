@@ -4,18 +4,7 @@ import NIO
 @testable import CoreMetrics
 
 final class GaugeTests: XCTestCase {
-    struct BaseLabels: MetricLabels {
-        let myValue: String
-        
-        init() {
-            self.myValue = "*"
-        }
-        
-        init(myValue: String) {
-            self.myValue = myValue
-        }
-    }
-
+    let baseLabels = DimensionLabels([("myValue", "labels")])
     var prom: PrometheusClient!
     var group: EventLoopGroup!
     var eventLoop: EventLoop {
@@ -67,18 +56,18 @@ final class GaugeTests: XCTestCase {
     }
 
     func testGaugeStandalone() {
-        let gauge = prom.createGauge(forType: Int.self, named: "my_gauge", helpText: "Gauge for testing", initialValue: 10, withLabelType: BaseLabels.self)
+        let gauge = prom.createGauge(forType: Int.self, named: "my_gauge", helpText: "Gauge for testing", initialValue: 10)
         XCTAssertEqual(gauge.get(), 10)
         gauge.inc(10)
         XCTAssertEqual(gauge.get(), 20)
         gauge.dec(12)
         XCTAssertEqual(gauge.get(), 8)
         gauge.set(20)
-        gauge.inc(10, BaseLabels(myValue: "labels"))
+        gauge.inc(10, baseLabels)
         XCTAssertEqual(gauge.get(), 20)
-        XCTAssertEqual(gauge.get(BaseLabels(myValue: "labels")), 20)
+        XCTAssertEqual(gauge.get(baseLabels), 20)
 
-        let gaugeTwo = prom.createGauge(forType: Int.self, named: "my_gauge", helpText: "Gauge for testing", initialValue: 10, withLabelType: BaseLabels.self)
+        let gaugeTwo = prom.createGauge(forType: Int.self, named: "my_gauge", helpText: "Gauge for testing", initialValue: 10)
         XCTAssertEqual(gaugeTwo.get(), 20)
         gaugeTwo.inc()
         XCTAssertEqual(gauge.get(), 21)

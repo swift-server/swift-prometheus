@@ -3,24 +3,10 @@ import NIO
 import struct CoreMetrics.TimeUnit
 import Dispatch
 
-/// Label type Summaries can use
-public protocol SummaryLabels: MetricLabels {
-    /// Quantile used to label the summary.
-    var quantile: String { get set }
-}
-
-extension SummaryLabels {
-    /// Creates empty SummaryLabels
-    init() {
-        self.init()
-        self.quantile = ""
-    }
-}
-
 /// Prometheus Summary metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#summary
-public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: PromMetric, PrometheusHandled {
+public class PromSummary<NumType: DoubleRepresentable>: PromMetric, PrometheusHandled {
     /// Prometheus instance that created this Summary
     internal weak var prometheus: PrometheusClient?
     
@@ -34,14 +20,11 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     
     private var displayUnit: TimeUnit?
     
-    /// Labels for this Summary
-    internal private(set) var labels: Labels
-    
     /// Sum of the values in this Summary
-    private let sum: PromCounter<NumType, EmptyLabels>
+    private let sum: PromCounter<NumType>
     
     /// Amount of values in this Summary
-    private let count: PromCounter<NumType, EmptyLabels>
+    private let count: PromCounter<NumType>
     
     /// Values in this Summary
     private var values: CircularBuffer<NumType>
@@ -53,7 +36,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     internal let quantiles: [Double]
     
     /// Sub Summaries for this Summary
-    fileprivate var subSummaries: [Labels: PromSummary<NumType, Labels>] = [:]
+    fileprivate var subSummaries: [DimensionLabels: PromSummary<NumType>] = [:]
     
     /// Lock used for thread safety
     private let lock: Lock
@@ -63,11 +46,10 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     /// - Parameters:
     ///     - name: Name of the Summary
     ///     - help: Help text of the Summary
-    ///     - labels: Labels for the Summary
     ///     - capacity: Number of values to keep for calculating quantiles
     ///     - quantiles: Quantiles to use for the Summary
     ///     - p: Prometheus instance creating this Summary
-    internal init(_ name: String, _ help: String? = nil, _ labels: Labels = Labels(), _ capacity: Int = Prometheus.defaultSummaryCapacity, _ quantiles: [Double] = Prometheus.defaultQuantiles, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ capacity: Int = Prometheus.defaultSummaryCapacity, _ quantiles: [Double] = Prometheus.defaultQuantiles, _ p: PrometheusClient) {
         self.name = name
         self.help = help
         
@@ -84,9 +66,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         self.capacity = capacity
 
         self.quantiles = quantiles
-        
-        self.labels = labels
-        
+
         self.lock = Lock()
     }
     
@@ -107,29 +87,24 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
             output.append("# HELP \(self.name) \(help)")
         }
         output.append("# TYPE \(self.name) \(self._type)")
-        var labels = self.labels
         calculateQuantiles(quantiles: self.quantiles, values: values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
             let (q, v) = arg
-            labels.quantile = "\(q)"
-            let labelsString = encodeLabels(labels)
+            let labelsString = encodeLabels(EncodableSummaryLabels(labels: nil, quantile: "\(q)"))
             output.append("\(self.name)\(labelsString) \(format(v))")
         }
 
-        let labelsString = encodeLabels(labels, ["quantile"])
-        output.append("\(self.name)_count\(labelsString) \(self.count.get())")
-        output.append("\(self.name)_sum\(labelsString) \(format(self.sum.get().doubleValue))")
+        output.append("\(self.name)_count \(self.count.get())")
+        output.append("\(self.name)_sum \(format(self.sum.get().doubleValue))")
 
-        subSummaries.values.forEach { subSum in
-            var subSumLabels = subSum.labels
+        subSummaries.forEach { labels, subSum in
             let subSumValues = lock.withLock { subSum.values }
             calculateQuantiles(quantiles: self.quantiles, values: subSumValues.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
                 let (q, v) = arg
-                subSumLabels.quantile = "\(q)"
-                let labelsString = encodeLabels(subSumLabels)
+                let labelsString = encodeLabels(EncodableSummaryLabels(labels: labels, quantile: "\(q)"))
                 output.append("\(subSum.name)\(labelsString) \(format(v))")
             }
 
-            let labelsString = encodeLabels(subSumLabels, ["quantile"])
+            let labelsString = encodeLabels(EncodableSummaryLabels(labels: labels, quantile: nil))
             output.append("\(subSum.name)_count\(labelsString) \(subSum.count.get())")
             output.append("\(subSum.name)_sum\(labelsString) \(format(subSum.sum.get().doubleValue))")
         }
@@ -164,8 +139,8 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     /// - Parameters:
     ///     - value: Value to observe
     ///     - labels: Labels to attach to the observed value
-    public func observe(_ value: NumType, _ labels: Labels? = nil) {
-        if let labels = labels, type(of: labels) != type(of: EmptySummaryLabels()) {
+    public func observe(_ value: NumType, _ labels: DimensionLabels? = nil) {
+        if let labels = labels {
             let sum = self.getOrCreateSummary(withLabels: labels)
             sum.observe(value)
         }
@@ -185,7 +160,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
     ///     - labels: Labels to attach to the resulting value.
     ///     - body: Closure to run & record.
     @inlinable
-    public func time<T>(_ labels: Labels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
+    public func time<T>(_ labels: DimensionLabels? = nil, _ body: @escaping () throws -> T) rethrows -> T {
         let start = DispatchTime.now().uptimeNanoseconds
         defer {
             let delta = Double(DispatchTime.now().uptimeNanoseconds - start)
@@ -193,7 +168,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
         }
         return try body()
     }
-    fileprivate func getOrCreateSummary(withLabels labels: Labels) -> PromSummary<NumType, Labels> {
+    fileprivate func getOrCreateSummary(withLabels labels: DimensionLabels) -> PromSummary<NumType> {
         let subSummaries = self.lock.withLock { self.subSummaries }
         if let summary = subSummaries[labels] {
             precondition(summary.name == self.name,
@@ -225,7 +200,7 @@ public class PromSummary<NumType: DoubleRepresentable, Labels: SummaryLabels>: P
                 guard let prometheus = prometheus else {
                     fatalError("Lingering Summary")
                 }
-                let newSummary = PromSummary(self.name, self.help, labels, self.capacity, self.quantiles, prometheus)
+                let newSummary = PromSummary(self.name, self.help, self.capacity, self.quantiles, prometheus)
                 self.subSummaries[labels] = newSummary
                 return newSummary
             }

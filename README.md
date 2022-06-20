@@ -102,20 +102,18 @@ summary.observe(4.7) // Observe the given value
 ```
 
 ## Labels
-All metric types support adding labels, allowing for grouping of related metrics.
+All metric types support adding labels, allowing for grouping of related metrics. Labels are passed when recording values to your metric as an instance of `DimensionLabels`, or as an array of `(String, String)`.
 
 Example with a counter:
 
 ```swift
-struct RouteLabels: MetricLabels {
-   var route: String = "*"
-}
+let counter = myProm.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter")
 
-let counter = myProm.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", withLabelType: RouteLabels.self)
+let counter = prom.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter")
 
-let counter = prom.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter", withLabelType: RouteLabels.self)
-
-counter.inc(12, .init(route: "/"))
+counter.inc(12, .init([("route", "/users")]))
+// OR
+counter.inc(12, [("route", "/users")])
 ```
 
 # Exporting
@@ -125,16 +123,8 @@ Prometheus itself is designed to "pull" metrics from a destination. Following th
 By default, this should be accessible on your main serving port, at the `/metrics` endpoint. An example in [Vapor](https://vapor.codes)  4 syntax looks like:
 
 ```swift
-app.get("metrics") { req -> EventLoopFuture<String> in
-    let promise = req.eventLoop.makePromise(of: String.self)
-    DispatchQueue.global().async {
-        do {
-            try MetricsSystem.prometheus().collect(into: promise)
-        } catch {
-            promise.fail(error)
-        }
-    }
-    return promise.futureResult
+app.get("metrics") { req async throws -> String in
+    return try await MetricsSystem.prometheus().collect()
 }
 ```
 
