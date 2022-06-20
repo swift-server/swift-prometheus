@@ -8,10 +8,8 @@ A prometheus client for Swift supporting counters, gauges, histograms, summaries
 
 SwiftPrometheus is available through SPM. To include it in your project add the following dependency to your `Package.swift`:
 ```swift
-        .package(url: "https://github.com/swift-server-community/SwiftPrometheus.git", from: "1.0.0-alpha")
+        .package(url: "https://github.com/swift-server-community/SwiftPrometheus.git", from: "1.0.0")
 ```
-
-_NOTE: For NIO 1 use `from: "0.4.0-alpha"` instead._
 
 # Usage
 
