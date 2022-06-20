@@ -19,7 +19,21 @@ public class PrometheusClient {
     }
     
     // MARK: - Collection
-    
+
+#if swift(>=5.5)
+    /// Creates prometheus formatted metrics
+    ///
+    /// - returns: A newline separated string with metrics for all Metrics this PrometheusClient handles
+    @available(macOS 10.15.0, *)
+    public func collect() async -> String {
+        let metrics = self.lock.withLock { self.metrics }
+        let task = Task {
+            return metrics.isEmpty ? "" : "\(metrics.values.map { $0.collect() }.joined(separator: "\n"))\n"
+        }
+        return await task.value
+    }
+#endif
+
     /// Creates prometheus formatted metrics
     ///
     /// - Parameters:
@@ -36,7 +50,26 @@ public class PrometheusClient {
     public func collect(into promise: EventLoopPromise<String>) {
         collect(promise.succeed)
     }
-    
+
+#if swift(>=5.5)
+    /// Creates prometheus formatted metrics
+    ///
+    /// - returns: A `ByteBuffer` containing a newline separated string with metrics for all Metrics this PrometheusClient handles
+    @available(macOS 10.15.0, *)
+    public func collect() async -> ByteBuffer {
+        let metrics = self.lock.withLock { self.metrics }
+        let task = Task { () -> ByteBuffer in
+            var buffer = ByteBufferAllocator().buffer(capacity: 0)
+            metrics.values.forEach {
+                $0.collect(into: &buffer)
+                buffer.writeString("\n")
+            }
+            return buffer
+        }
+        return await task.value
+    }
+#endif
+
     /// Creates prometheus formatted metrics
     ///
     /// - Parameters:
