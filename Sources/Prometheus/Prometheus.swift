@@ -24,7 +24,7 @@ public class PrometheusClient {
     /// Creates prometheus formatted metrics
     ///
     /// - returns: A newline separated string with metrics for all Metrics this PrometheusClient handles
-    @available(macOS 10.15.0, *)
+    @available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
     public func collect() async -> String {
         let metrics = self.lock.withLock { self.metrics }
         let task = Task {
@@ -55,7 +55,7 @@ public class PrometheusClient {
     /// Creates prometheus formatted metrics
     ///
     /// - returns: A `ByteBuffer` containing a newline separated string with metrics for all Metrics this PrometheusClient handles
-    @available(macOS 10.15.0, *)
+    @available(macOS 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
     public func collect() async -> ByteBuffer {
         let metrics = self.lock.withLock { self.metrics }
         let task = Task { () -> ByteBuffer in
