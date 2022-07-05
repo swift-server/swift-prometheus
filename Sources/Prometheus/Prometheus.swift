@@ -1,5 +1,6 @@
 import NIOConcurrencyHelpers
 import NIO
+import Foundation
 
 /// Prometheus class
 ///
@@ -11,6 +12,9 @@ public class PrometheusClient {
     
     /// Lock used for thread safety
     private let lock: Lock
+    
+    /// Used for the pushgateway, necessary property, so that the timer doesn't get deinitialised
+    private var timer: RepeatingTimer?
     
     /// Create a PrometheusClient instance
     public init() {
@@ -231,6 +235,114 @@ public class PrometheusClient {
             precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return summary
         }
+    }
+}
+
+// MARK: - PushGateway
+extension PrometheusClient {
+    
+    /// Sets up a repeated event which pushes the metrics to a PrometheusPushGateway instance
+    ///
+    /// - Parameters:
+    ///     - shouldUseHttps: The protocol that should be used for the connection
+    ///     - host: The host where the pushgateway is located
+    ///     - port: Optionally the port where the pushgateway is located
+    ///     - jobName: The job name, under which the data is submitted
+    ///     - pushInterval: The interval between each push
+    ///     - shouldIncludeKeepAliveHeader: Shows whether the connection should be kept alive to avoid overhead from HTTP Handshake. True by default as it saves resources when the pushInterval is small.
+    ///
+    /// - Returns: Summary instance
+    public func pushToGateway(shouldUseHttps: Bool = false, host: String, port: Int? = nil, jobName: String, shouldIncludeKeepAliveHeader: Bool = true, pushInterval: Double = 5.0) {
+        
+        guard var request = generateRequestWithHeaders(shouldUseHttps: shouldUseHttps, host: host, port: port, jobName: jobName, shouldIncludeKeepAliveHeader: shouldIncludeKeepAliveHeader) else {
+            print("Couldn't generate HTTP Headers")
+            return
+        }
+        
+        // Semaphore necessary to avoid race conditions in the case of a slow task execution.
+        let semaphore = DispatchSemaphore (value: 0)
+        
+        let closure: (String) -> () = { parameters in
+            
+            let postData = parameters.data(using: .utf8)
+            request.httpBody = postData
+            
+            let task = URLSession.shared.dataTask(with: request) { data, response, error in
+              guard let _ = data else {
+                print(String(describing: error))
+                semaphore.signal()
+                return
+              }
+                
+              semaphore.signal()
+            }
+
+            task.resume()
+            semaphore.wait()
+        }
+        
+        setupTimer(timerInterval: pushInterval, for: closure)
+    }
+    
+    /// Generates a request with an empty body and the provided header data
+    ///
+    /// - Parameters:
+    ///     - shouldUseHttps: The protocol that should be used for the connection
+    ///     - host: The host where the pushgateway is located
+    ///     - port: Optionally the port where the pushgateway is located
+    ///     - jobName: The job name, under which the data is submitted
+    ///     - shouldIncludeKeepAliveHeader: Shows whether the connection should be kept alive to avoid overhead from HTTP Handshake.
+    ///
+    /// - Returns: The generated request
+    private func generateRequestWithHeaders(shouldUseHttps: Bool, host: String, port: Int?, jobName: String, shouldIncludeKeepAliveHeader: Bool) -> URLRequest? {
+        var address = host
+        if let port = port {
+            address.append(contentsOf: ":\(port)")
+        }
+        
+        let connectionType = shouldUseHttps ? "https" : "http"
+        
+        let urlString = "\(connectionType)://\(address)/metrics/job/\(jobName)"
+        
+        guard let url = URL(string: urlString) else {
+            print("PushGatewayUrlString invalid: \(urlString)")
+            return nil
+        }
+        
+        var request = URLRequest(url: url, timeoutInterval: Double.infinity)
+        
+        request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
+        
+        if shouldIncludeKeepAliveHeader {
+            request.addValue("Keep-Alive", forHTTPHeaderField: "Connection")
+        }
+        
+        request.httpMethod = "POST"
+        
+        return request
+    }
+    
+    /// Creates a repeating timer which executes the closure block every pushInterval seconds.
+    ///
+    /// - Parameters:
+    ///     - pushInterval: The interval between each closure trigger.
+    ///     - for: The closure to be triggered.
+    private func setupTimer(timerInterval: Double, for closure: @escaping (String) -> ()) {
+        timer = RepeatingTimer(timeInterval: timerInterval)
+        
+        guard let timer = timer else {
+            return
+        }
+        
+        timer.eventHandler = { [weak self] in
+            self?.collect(closure)
+        }
+        timer.resume()
+    }
+    
+    /// Removes the repeated event, which submits data to the pushgateway
+    public func tearDownPushToGateway() {
+        timer = nil
     }
 }
 
