@@ -4,6 +4,9 @@ import PackageDescription
 
 let package = Package(
     name: "SwiftPrometheus",
+    platforms: [
+        .iOS(.v13)
+    ],
     products: [
         .library(
             name: "SwiftPrometheus",
