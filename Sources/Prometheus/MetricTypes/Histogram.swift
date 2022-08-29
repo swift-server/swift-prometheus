@@ -66,10 +66,7 @@ public struct Buckets: ExpressibleByArrayLiteral {
 /// Prometheus Histogram metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#Histogram
-public class PromHistogram<NumType: DoubleRepresentable>: PromMetric, PrometheusHandled {
-    /// Prometheus instance that created this Histogram
-    internal weak var prometheus: PrometheusClient?
-
+public class PromHistogram<NumType: DoubleRepresentable>: PromMetric {
     /// Name of this Histogram, required
     public let name: String
     /// Help text of this Histogram, optional
@@ -100,20 +97,18 @@ public class PromHistogram<NumType: DoubleRepresentable>: PromMetric, Prometheus
     ///     - help: Help text of the Histogram
     ///     - buckets: Buckets to use for the Histogram
     ///     - p: Prometheus instance creating this Histogram
-    internal init(_ name: String, _ help: String? = nil, _ buckets: Buckets = .defaultBuckets, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ buckets: Buckets = .defaultBuckets) {
         self.name = name
         self.help = help
 
-        self.prometheus = p
-
-        self.sum = .init("\(self.name)_sum", nil, 0, p)
+        self.sum = .init("\(self.name)_sum", nil, 0)
 
         self.upperBounds = buckets.buckets
 
         self.lock = Lock()
 
         buckets.buckets.forEach { _ in
-            self.buckets.append(.init("\(name)_bucket", nil, 0, p))
+            self.buckets.append(.init("\(name)_bucket", nil, 0))
         }
     }
 
@@ -239,8 +234,7 @@ public class PromHistogram<NumType: DoubleRepresentable>: PromMetric, Prometheus
                                  """)
                     return histogram
                 }
-                guard let prometheus = prometheus else { fatalError("Lingering Histogram") }
-                let newHistogram = PromHistogram(self.name, self.help, Buckets(self.upperBounds), prometheus)
+                let newHistogram = PromHistogram(self.name, self.help, Buckets(self.upperBounds))
                 self.subHistograms[labels] = newHistogram
                 return newHistogram
             }

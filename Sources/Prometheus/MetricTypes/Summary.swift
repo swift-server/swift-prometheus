@@ -6,10 +6,7 @@ import Dispatch
 /// Prometheus Summary metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#summary
-public class PromSummary<NumType: DoubleRepresentable>: PromMetric, PrometheusHandled {
-    /// Prometheus instance that created this Summary
-    internal weak var prometheus: PrometheusClient?
-    
+public class PromSummary<NumType: DoubleRepresentable>: PromMetric {
     /// Name of this Summary, required
     public let name: String
     /// Help text of this Summary, optional
@@ -49,17 +46,15 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric, PrometheusHa
     ///     - capacity: Number of values to keep for calculating quantiles
     ///     - quantiles: Quantiles to use for the Summary
     ///     - p: Prometheus instance creating this Summary
-    internal init(_ name: String, _ help: String? = nil, _ capacity: Int = Prometheus.defaultSummaryCapacity, _ quantiles: [Double] = Prometheus.defaultQuantiles, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ capacity: Int = Prometheus.defaultSummaryCapacity, _ quantiles: [Double] = Prometheus.defaultQuantiles) {
         self.name = name
         self.help = help
         
-        self.prometheus = p
-        
         self.displayUnit = nil
         
-        self.sum = .init("\(self.name)_sum", nil, 0, p)
+        self.sum = .init("\(self.name)_sum", nil, 0)
         
-        self.count = .init("\(self.name)_count", nil, 0, p)
+        self.count = .init("\(self.name)_count", nil, 0)
         
         self.values = CircularBuffer(initialCapacity: capacity)
 
@@ -197,10 +192,7 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric, PrometheusHa
                                  """)
                     return summary
                 }
-                guard let prometheus = prometheus else {
-                    fatalError("Lingering Summary")
-                }
-                let newSummary = PromSummary(self.name, self.help, self.capacity, self.quantiles, prometheus)
+                let newSummary = PromSummary(self.name, self.help, self.capacity, self.quantiles)
                 self.subSummaries[labels] = newSummary
                 return newSummary
             }
