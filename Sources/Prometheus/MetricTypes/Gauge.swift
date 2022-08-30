@@ -5,10 +5,7 @@ import NIOConcurrencyHelpers
 /// Prometheus Gauge metric
 ///
 /// See https://prometheus.io/docs/concepts/metric_types/#gauge
-public class PromGauge<NumType: DoubleRepresentable>: PromMetric, PrometheusHandled {
-    /// Prometheus instance that created this Gauge
-    internal weak var prometheus: PrometheusClient?
-    
+public class PromGauge<NumType: DoubleRepresentable>: PromMetric {
     /// Name of the Gauge, required
     public let name: String
     /// Help text of the Gauge, optional
@@ -37,12 +34,11 @@ public class PromGauge<NumType: DoubleRepresentable>: PromMetric, PrometheusHand
     ///     - initialValue: Initial value to set the Gauge to
     ///     - p: Prometheus instance that created this Gauge
     ///
-    internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0) {
         self.name = name
         self.help = help
         self.initialValue = initialValue
         self.value = initialValue
-        self.prometheus = p
         self.lock = Lock()
     }
     

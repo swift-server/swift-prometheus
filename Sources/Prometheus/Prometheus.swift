@@ -138,7 +138,7 @@ public class PrometheusClient {
                 return cachedCounter
             }
 
-            let counter = PromCounter<T>(name, helpText, initialValue, self)
+            let counter = PromCounter<T>(name, helpText, initialValue)
             let oldInstrument = self.metrics.updateValue(counter, forKey: name)
             precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return counter
@@ -167,7 +167,7 @@ public class PrometheusClient {
                 return cachedGauge
             }
 
-            let gauge = PromGauge<T>(name, helpText, initialValue, self)
+            let gauge = PromGauge<T>(name, helpText, initialValue)
             let oldInstrument = self.metrics.updateValue(gauge, forKey: name)
             precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return gauge
@@ -196,7 +196,7 @@ public class PrometheusClient {
                 return cachedHistogram
             }
 
-            let histogram = PromHistogram<T>(name, helpText, buckets, self)
+            let histogram = PromHistogram<T>(name, helpText, buckets)
             let oldInstrument = self.metrics.updateValue(histogram, forKey: name)
             precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return histogram
@@ -226,7 +226,7 @@ public class PrometheusClient {
             if let cachedSummary: PromSummary<T> = self._getMetricInstance(with: name, andType: .summary) {
                 return cachedSummary
             }
-            let summary = PromSummary<T>(name, helpText, capacity, quantiles, self)
+            let summary = PromSummary<T>(name, helpText, capacity, quantiles)
             let oldInstrument = self.metrics.updateValue(summary, forKey: name)
             precondition(oldInstrument == nil, "Label \(oldInstrument!.name) is already associated with a \(oldInstrument!._type).")
             return summary

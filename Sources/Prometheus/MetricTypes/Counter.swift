@@ -3,10 +3,7 @@ import NIOConcurrencyHelpers
 /// Prometheus Counter metric
 ///
 /// See: https://prometheus.io/docs/concepts/metric_types/#counter
-public class PromCounter<NumType: Numeric>: PromMetric, PrometheusHandled {
-    /// Prometheus instance that created this Counter
-    internal weak var prometheus: PrometheusClient?
-    
+public class PromCounter<NumType: Numeric>: PromMetric {
     /// Name of the Counter, required
     public let name: String
     /// Help text of the Counter, optional
@@ -34,12 +31,11 @@ public class PromCounter<NumType: Numeric>: PromMetric, PrometheusHandled {
     ///     - help: Help text of the Counter
     ///     - initialValue: Initial value to set the counter to
     ///     - p: Prometheus instance that created this counter
-    internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0, _ p: PrometheusClient) {
+    internal init(_ name: String, _ help: String? = nil, _ initialValue: NumType = 0) {
         self.name = name
         self.help = help
         self.initialValue = initialValue
         self.value = initialValue
-        self.prometheus = p
         self.lock = Lock()
     }
     

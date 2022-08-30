@@ -44,9 +44,3 @@ extension PromMetric {
         buffer.writeString(collect())
     }
 }
-
-/// Adding a prometheus instance to all metrics
-internal protocol PrometheusHandled {
-    /// Prometheus client handling this metric
-    var prometheus: PrometheusClient? { get }
-}
