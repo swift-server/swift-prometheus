@@ -29,7 +29,7 @@ final class HistogramTests: XCTestCase {
                                              helpText: "Histogram for testing",
                                              buckets: Buckets.exponential(start: 1, factor: 2, count: 63))
         let elg = MultiThreadedEventLoopGroup(numberOfThreads: 8)
-        let semaphore = DispatchSemaphore(value: 2)
+        let semaphore = DispatchSemaphore(value: 0)
         _ = elg.next().submit {
             for _ in 1...1_000 {
                 let labels = DimensionLabels([("myValue", "1")])
@@ -51,9 +51,18 @@ final class HistogramTests: XCTestCase {
             semaphore.signal()
         }
         semaphore.wait()
+        semaphore.wait()
         try elg.syncShutdownGracefully()
-        XCTAssertTrue(histogram.collect().contains("my_histogram_count 4000.0"))
-        XCTAssertTrue(histogram.collect().contains("my_histogram_sum 4000.0"))
+
+        let output = histogram.collect()
+        XCTAssertTrue(output.contains("my_histogram_count 4000.0"))
+        XCTAssertTrue(output.contains("my_histogram_sum 4000.0"))
+
+        XCTAssertTrue(output.contains(#"my_histogram_count{myValue="1"} 2000.0"#))
+        XCTAssertTrue(output.contains(#"my_histogram_sum{myValue="1"} 2000.0"#))
+
+        XCTAssertTrue(output.contains(#"my_histogram_count{myValue="2"} 2000.0"#))
+        XCTAssertTrue(output.contains(#"my_histogram_sum{myValue="2"} 2000.0"#))
     }
     
     func testHistogramSwiftMetrics() {

@@ -221,7 +221,7 @@ public class PromHistogram<NumType: DoubleRepresentable>: PromMetric {
             return histogram
         } else {
             return lock.withLock {
-                if let histogram = subHistograms[labels] {
+                if let histogram = self.subHistograms[labels] {
                     precondition(histogram.name == self.name,
                                  """
                                  Somehow got 2 subHistograms with the same data type  / labels 
