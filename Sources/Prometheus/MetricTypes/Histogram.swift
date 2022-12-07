@@ -87,6 +87,9 @@ public class PromHistogram<NumType: DoubleRepresentable>: PromMetric {
     /// Total value of the Histogram
     private let sum: PromCounter<NumType>
 
+    /// Indicates wether or not metric has been used without labels
+    private var usedWithoutLabels: Bool
+
     /// Lock used for thread safety
     private let lock: Lock
 
@@ -102,6 +105,7 @@ public class PromHistogram<NumType: DoubleRepresentable>: PromMetric {
         self.help = help
 
         self.sum = .init("\(self.name)_sum", nil, 0)
+        self.usedWithoutLabels = false
 
         self.upperBounds = buckets.buckets
 
@@ -117,8 +121,8 @@ public class PromHistogram<NumType: DoubleRepresentable>: PromMetric {
     /// - Returns:
     ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
-        let (buckets, subHistograms) = self.lock.withLock {
-            (self.buckets, self.subHistograms)
+        let (buckets, subHistograms, usedWithoutLabels) = self.lock.withLock {
+            (self.buckets, self.subHistograms, self.usedWithoutLabels)
         }
 
         var output = [String]()
@@ -129,12 +133,14 @@ public class PromHistogram<NumType: DoubleRepresentable>: PromMetric {
             output.append("# HELP \(self.name) \(help)")
         }
         output.append("# TYPE \(self.name) \(self._type)")
-        collectBuckets(buckets: buckets,
-                       upperBounds: self.upperBounds,
-                       name: self.name,
-                       labels: nil,
-                       sum: self.sum.get(),
-                       into: &output)
+        if usedWithoutLabels {
+            collectBuckets(buckets: buckets,
+                           upperBounds: self.upperBounds,
+                           name: self.name,
+                           labels: nil,
+                           sum: self.sum.get(),
+                           into: &output)
+        }
 
         subHistograms.forEach { subHistogram in
             let (subHistogramBuckets, subHistogramLabels) = self.lock.withLock {
@@ -178,13 +184,17 @@ public class PromHistogram<NumType: DoubleRepresentable>: PromMetric {
         if let labels = labels {
             self.getOrCreateHistogram(with: labels)
                 .observe(value)
-        }
-        self.sum.inc(value)
+        } else {
+            self.sum.inc(value)
 
-        for (i, bound) in self.upperBounds.enumerated() {
-            if bound >= value.doubleValue {
-                self.buckets[i].inc()
-                return
+            self.lock.withLock {
+                self.usedWithoutLabels = true
+                for (i, bound) in self.upperBounds.enumerated() {
+                    if bound >= value.doubleValue {
+                        self.buckets[i].inc()
+                        return
+                    }
+                }
             }
         }
     }

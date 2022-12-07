@@ -17,6 +17,9 @@ public class PromCounter<NumType: Numeric>: PromMetric {
     
     /// Initial value of the counter
     private let initialValue: NumType
+
+    /// Indicates wether or not metric has been used without labels
+    private var usedWithoutLabels: Bool
     
     /// Storage of values that have labels attached
     internal var metrics: [DimensionLabels: NumType] = [:]
@@ -36,6 +39,7 @@ public class PromCounter<NumType: Numeric>: PromMetric {
         self.help = help
         self.initialValue = initialValue
         self.value = initialValue
+        self.usedWithoutLabels = initialValue != 0
         self.lock = Lock()
     }
     
@@ -44,8 +48,8 @@ public class PromCounter<NumType: Numeric>: PromMetric {
     /// - Returns:
     ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
-        let (value, metrics) = self.lock.withLock {
-            (self.value, self.metrics)
+        let (value, metrics, usedWithoutLabels) = self.lock.withLock {
+            (self.value, self.metrics, self.usedWithoutLabels)
         }
         var output = [String]()
 
@@ -54,7 +58,9 @@ public class PromCounter<NumType: Numeric>: PromMetric {
         }
         output.append("# TYPE \(self.name) \(self._type)")
 
-        output.append("\(self.name) \(value)")
+        if usedWithoutLabels {
+            output.append("\(self.name) \(value)")
+        }
 
         metrics.forEach { (labels, value) in
             let labelsString = encodeLabels(labels)
@@ -79,6 +85,7 @@ public class PromCounter<NumType: Numeric>: PromMetric {
                 self.metrics[labels] = val
                 return val
             } else {
+                self.usedWithoutLabels = true
                 self.value += amount
                 return self.value
             }

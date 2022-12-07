@@ -80,4 +80,22 @@ final class GaugeTests: XCTestCase {
         my_gauge{myValue="labels"} 20
         """)
     }
+
+    func testGaugeDoesNotReportWithNoLabelUsed() {
+        let gauge = prom.createGauge(forType: Int.self, named: "my_gauge")
+        gauge.inc(1, [("a", "b")])
+
+        XCTAssertEqual(gauge.collect(), """
+        # TYPE my_gauge gauge
+        my_gauge{a="b"} 1
+        """)
+
+        gauge.inc()
+
+        XCTAssertEqual(gauge.collect(), """
+        # TYPE my_gauge gauge
+        my_gauge 1
+        my_gauge{a="b"} 1
+        """)
+    }
 }

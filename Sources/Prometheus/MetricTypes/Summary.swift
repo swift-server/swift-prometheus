@@ -34,6 +34,9 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric {
     
     /// Sub Summaries for this Summary
     fileprivate var subSummaries: [DimensionLabels: PromSummary<NumType>] = [:]
+
+    /// Indicates wether or not metric has been used without labels
+    private var usedWithoutLabels: Bool
     
     /// Lock used for thread safety
     private let lock: Lock
@@ -62,6 +65,8 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric {
 
         self.quantiles = quantiles
 
+        self.usedWithoutLabels = false
+
         self.lock = Lock()
     }
     
@@ -70,8 +75,8 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric {
     /// - Returns:
     ///     Newline separated Prometheus formatted metric string
     public func collect() -> String {
-        let (subSummaries, values) = lock.withLock {
-            (self.subSummaries, self.values)
+        let (subSummaries, values, usedWithoutLabels) = lock.withLock {
+            (self.subSummaries, self.values, self.usedWithoutLabels)
         }
 
         var output = [String]()
@@ -82,14 +87,17 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric {
             output.append("# HELP \(self.name) \(help)")
         }
         output.append("# TYPE \(self.name) \(self._type)")
-        calculateQuantiles(quantiles: self.quantiles, values: values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
-            let (q, v) = arg
-            let labelsString = encodeLabels(EncodableSummaryLabels(labels: nil, quantile: "\(q)"))
-            output.append("\(self.name)\(labelsString) \(format(v))")
-        }
 
-        output.append("\(self.name)_count \(self.count.get())")
-        output.append("\(self.name)_sum \(format(self.sum.get().doubleValue))")
+        if usedWithoutLabels {
+            calculateQuantiles(quantiles: self.quantiles, values: values.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
+                let (q, v) = arg
+                let labelsString = encodeLabels(EncodableSummaryLabels(labels: nil, quantile: "\(q)"))
+                output.append("\(self.name)\(labelsString) \(format(v))")
+            }
+
+            output.append("\(self.name)_count \(self.count.get())")
+            output.append("\(self.name)_sum \(format(self.sum.get().doubleValue))")
+        }
 
         subSummaries.forEach { labels, subSum in
             let subSumValues = lock.withLock { subSum.values }
@@ -138,14 +146,16 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric {
         if let labels = labels {
             let sum = self.getOrCreateSummary(withLabels: labels)
             sum.observe(value)
-        }
-        self.count.inc(1)
-        self.sum.inc(value)
-        self.lock.withLock {
-            if self.values.count == self.capacity {
-                _ = self.values.popFirst()
+        } else {
+            self.count.inc(1)
+            self.sum.inc(value)
+            self.lock.withLock {
+                self.usedWithoutLabels = true
+                if self.values.count == self.capacity {
+                    _ = self.values.popFirst()
+                }
+                self.values.append(value)
             }
-            self.values.append(value)
         }
     }
     
