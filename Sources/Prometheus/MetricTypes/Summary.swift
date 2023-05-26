@@ -92,7 +92,7 @@ public class PromSummary<NumType: DoubleRepresentable>: PromMetric {
         output.append("\(self.name)_sum \(format(self.sum.get().doubleValue))")
 
         subSummaries.forEach { labels, subSum in
-            let subSumValues = lock.withLock { subSum.values }
+            let subSumValues = subSum.lock.withLock { subSum.values }
             calculateQuantiles(quantiles: self.quantiles, values: subSumValues.map { $0.doubleValue }).sorted { $0.key < $1.key }.forEach { (arg) in
                 let (q, v) = arg
                 let labelsString = encodeLabels(EncodableSummaryLabels(labels: labels, quantile: "\(q)"))
