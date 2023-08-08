@@ -24,7 +24,7 @@ final class SummaryTests: XCTestCase {
     
     func testSummary() {
         let summary = Timer(label: "my_summary")
-        summary.handler.preferDisplayUnit(.nanoseconds)
+        summary._handler.preferDisplayUnit(.nanoseconds)
 
         summary.recordNanoseconds(1)
         summary.recordNanoseconds(2)
@@ -41,13 +41,13 @@ final class SummaryTests: XCTestCase {
         # TYPE my_summary summary
         my_summary{quantile="0.01"} 1.0
         my_summary{quantile="0.05"} 1.0
-        my_summary{quantile="0.5"} 4.0
+        my_summary{quantile="0.5"} 3.0
         my_summary{quantile="0.9"} 10000.0
         my_summary{quantile="0.95"} 10000.0
         my_summary{quantile="0.99"} 10000.0
         my_summary{quantile="0.999"} 10000.0
-        my_summary_count 5
-        my_summary_sum 10130.0
+        my_summary_count 4
+        my_summary_sum 10007.0
         my_summary{quantile="0.01", myValue="labels"} 123.0
         my_summary{quantile="0.05", myValue="labels"} 123.0
         my_summary{quantile="0.5", myValue="labels"} 123.0
@@ -88,8 +88,11 @@ final class SummaryTests: XCTestCase {
         }
         semaphore.wait()
         try elg.syncShutdownGracefully()
-        XCTAssertTrue(summary.collect().contains("my_summary_count 4000.0"))
-        XCTAssertTrue(summary.collect().contains("my_summary_sum 4000.0"))
+        XCTAssertTrue(summary.collect().contains(#"my_summary_count{myValue="1"} 2000.0"#))
+        XCTAssertTrue(summary.collect().contains(#"my_summary_sum{myValue="1"} 2000.0"#))
+        XCTAssertTrue(summary.collect().contains(#"my_summary_count{myValue="2"} 2000.0"#))
+        XCTAssertTrue(summary.collect().contains(#"my_summary_sum{myValue="2"} 2000.0"#))
+        XCTAssertFalse(summary.collect().contains(#"my_summary_count 4000.0"#))
     }
     
     func testSummaryWithPreferredDisplayUnit() {
@@ -154,16 +157,16 @@ final class SummaryTests: XCTestCase {
         XCTAssertEqual(summary.collect(), """
         # HELP my_summary Summary for testing
         # TYPE my_summary summary
-        my_summary{quantile=\"0.5\"} 4.0
-        my_summary{quantile=\"0.9\"} 10000.0
-        my_summary{quantile=\"0.99\"} 10000.0
-        my_summary_count 5.0
-        my_summary_sum 10130.0
-        my_summary{quantile=\"0.5\", myValue=\"labels\"} 123.0
-        my_summary{quantile=\"0.9\", myValue=\"labels\"} 123.0
-        my_summary{quantile=\"0.99\", myValue=\"labels\"} 123.0
-        my_summary_count{myValue=\"labels\"} 1.0
-        my_summary_sum{myValue=\"labels\"} 123.0
+        my_summary{quantile="0.5"} 3.0
+        my_summary{quantile="0.9"} 10000.0
+        my_summary{quantile="0.99"} 10000.0
+        my_summary_count 4.0
+        my_summary_sum 10007.0
+        my_summary{quantile="0.5", myValue="labels"} 123.0
+        my_summary{quantile="0.9", myValue="labels"} 123.0
+        my_summary{quantile="0.99", myValue="labels"} 123.0
+        my_summary_count{myValue="labels"} 1.0
+        my_summary_sum{myValue="labels"} 123.0
         """)
     }
 
@@ -183,4 +186,32 @@ final class SummaryTests: XCTestCase {
         my_summary_sum 45045.0
         """)
     }
+
+    func testSummaryDoesNotReportWithNoLabelUsed() {
+        let summary = prom.createSummary(forType: Double.self, named: "my_summary", quantiles: [0.5, 0.99])
+        summary.observe(3, [("a", "b")])
+
+        XCTAssertEqual(summary.collect(), """
+        # TYPE my_summary summary
+        my_summary{quantile="0.5", a="b"} 3.0
+        my_summary{quantile="0.99", a="b"} 3.0
+        my_summary_count{a="b"} 1.0
+        my_summary_sum{a="b"} 3.0
+        """)
+
+        summary.observe(3)
+
+        XCTAssertEqual(summary.collect(), """
+        # TYPE my_summary summary
+        my_summary{quantile="0.5"} 3.0
+        my_summary{quantile="0.99"} 3.0
+        my_summary_count 1.0
+        my_summary_sum 3.0
+        my_summary{quantile="0.5", a="b"} 3.0
+        my_summary{quantile="0.99", a="b"} 3.0
+        my_summary_count{a="b"} 1.0
+        my_summary_sum{a="b"} 3.0
+        """)
+    }
+
 }

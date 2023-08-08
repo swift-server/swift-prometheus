@@ -10,7 +10,7 @@ let package = Package(
             targets: ["Prometheus"])
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-metrics.git", from: "2.2.0"),
+        .package(url: "https://github.com/apple/swift-metrics.git", from: "2.3.2"),
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.0.0"),
     ],
     targets: [

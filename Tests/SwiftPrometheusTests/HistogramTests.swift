@@ -55,8 +55,8 @@ final class HistogramTests: XCTestCase {
         try elg.syncShutdownGracefully()
 
         let output = histogram.collect()
-        XCTAssertTrue(output.contains("my_histogram_count 4000.0"))
-        XCTAssertTrue(output.contains("my_histogram_sum 4000.0"))
+        XCTAssertFalse(output.contains("my_histogram_count 4000.0"))
+        XCTAssertFalse(output.contains("my_histogram_sum 4000.0"))
 
         XCTAssertTrue(output.contains(#"my_histogram_count{myValue="1"} 2000.0"#))
         XCTAssertTrue(output.contains(#"my_histogram_sum{myValue="1"} 2000.0"#))
@@ -88,11 +88,11 @@ final class HistogramTests: XCTestCase {
         my_histogram_bucket{le="0.5"} 0.0
         my_histogram_bucket{le="1.0"} 1.0
         my_histogram_bucket{le="2.5"} 2.0
-        my_histogram_bucket{le="5.0"} 4.0
-        my_histogram_bucket{le="10.0"} 4.0
-        my_histogram_bucket{le="+Inf"} 4.0
-        my_histogram_count 4.0
-        my_histogram_sum 9.0
+        my_histogram_bucket{le="5.0"} 3.0
+        my_histogram_bucket{le="10.0"} 3.0
+        my_histogram_bucket{le="+Inf"} 3.0
+        my_histogram_count 3.0
+        my_histogram_sum 6.0
         my_histogram_bucket{myValue="labels", le="0.005"} 0.0
         my_histogram_bucket{myValue="labels", le="0.01"} 0.0
         my_histogram_bucket{myValue="labels", le="0.025"} 0.0
@@ -144,11 +144,11 @@ final class HistogramTests: XCTestCase {
         my_histogram_bucket{le="0.5"} 0.0
         my_histogram_bucket{le="1.0"} 1.0
         my_histogram_bucket{le="2.0"} 2.0
-        my_histogram_bucket{le="3.0"} 4.0
-        my_histogram_bucket{le="5.0"} 4.0
-        my_histogram_bucket{le="+Inf"} 4.0
-        my_histogram_count 4.0
-        my_histogram_sum 9.0
+        my_histogram_bucket{le="3.0"} 3.0
+        my_histogram_bucket{le="5.0"} 3.0
+        my_histogram_bucket{le="+Inf"} 3.0
+        my_histogram_count 3.0
+        my_histogram_sum 6.0
         my_histogram_bucket{myValue="labels", le="0.5"} 0.0
         my_histogram_bucket{myValue="labels", le="1.0"} 0.0
         my_histogram_bucket{myValue="labels", le="2.0"} 0.0
@@ -157,6 +157,45 @@ final class HistogramTests: XCTestCase {
         my_histogram_bucket{myValue="labels", le="+Inf"} 1.0
         my_histogram_count{myValue="labels"} 1.0
         my_histogram_sum{myValue="labels"} 3.0
+        """)
+    }
+
+    func testHistogramDoesNotReportWithNoLabelUsed() {
+        let histogram = prom.createHistogram(forType: Double.self, named: "my_histogram", buckets: [0.5, 1, 2, 3, 5, Double.greatestFiniteMagnitude])
+        histogram.observe(3, [("a", "b")])
+
+        XCTAssertEqual(histogram.collect(), """
+        # TYPE my_histogram histogram
+        my_histogram_bucket{le="0.5", a="b"} 0.0
+        my_histogram_bucket{le="1.0", a="b"} 0.0
+        my_histogram_bucket{le="2.0", a="b"} 0.0
+        my_histogram_bucket{le="3.0", a="b"} 1.0
+        my_histogram_bucket{le="5.0", a="b"} 1.0
+        my_histogram_bucket{le="+Inf", a="b"} 1.0
+        my_histogram_count{a="b"} 1.0
+        my_histogram_sum{a="b"} 3.0
+        """)
+
+        histogram.observe(3)
+
+        XCTAssertEqual(histogram.collect(), """
+        # TYPE my_histogram histogram
+        my_histogram_bucket{le="0.5"} 0.0
+        my_histogram_bucket{le="1.0"} 0.0
+        my_histogram_bucket{le="2.0"} 0.0
+        my_histogram_bucket{le="3.0"} 1.0
+        my_histogram_bucket{le="5.0"} 1.0
+        my_histogram_bucket{le="+Inf"} 1.0
+        my_histogram_count 1.0
+        my_histogram_sum 3.0
+        my_histogram_bucket{le="0.5", a="b"} 0.0
+        my_histogram_bucket{le="1.0", a="b"} 0.0
+        my_histogram_bucket{le="2.0", a="b"} 0.0
+        my_histogram_bucket{le="3.0", a="b"} 1.0
+        my_histogram_bucket{le="5.0", a="b"} 1.0
+        my_histogram_bucket{le="+Inf", a="b"} 1.0
+        my_histogram_count{a="b"} 1.0
+        my_histogram_sum{a="b"} 3.0
         """)
     }
 }

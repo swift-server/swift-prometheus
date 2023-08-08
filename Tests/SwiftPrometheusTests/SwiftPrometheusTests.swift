@@ -48,4 +48,23 @@ final class SwiftPrometheusTests: XCTestCase {
             XCTAssertEqual(metricsString, "# HELP my_counter Counter for testing\n# TYPE my_counter counter\nmy_counter 30\nmy_counter{myValue=\"labels\"} 30\n")
         }
     }
+
+    func testCounterDoesNotReportWithNoLabelUsed() {
+        let counter = prom.createCounter(forType: Int.self, named: "my_counter")
+        counter.inc(1, [("a", "b")])
+
+        XCTAssertEqual(counter.collect(), """
+        # TYPE my_counter counter
+        my_counter{a="b"} 1
+        """)
+
+        counter.inc()
+
+        XCTAssertEqual(counter.collect(), """
+        # TYPE my_counter counter
+        my_counter 1
+        my_counter{a="b"} 1
+        """)
+    }
+
 }
