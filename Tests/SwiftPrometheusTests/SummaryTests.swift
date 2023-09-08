@@ -24,7 +24,6 @@ final class SummaryTests: XCTestCase {
     
     func testSummary() {
         let summary = Timer(label: "my_summary")
-        summary.handler.preferDisplayUnit(.nanoseconds)
 
         summary.recordNanoseconds(1)
         summary.recordNanoseconds(2)
