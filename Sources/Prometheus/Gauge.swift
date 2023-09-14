@@ -25,7 +25,7 @@ public final class Gauge: Sendable {
     init(name: String, labels: [(String, String)]) {
         self.name = name
         self.labels = labels
-        
+
         var prerendered = [UInt8]()
         prerendered.reserveCapacity(64)
         prerendered.append(contentsOf: name.utf8)

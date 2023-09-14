@@ -16,7 +16,6 @@ import CoreMetrics
 
 /// A wrapper around ``PrometheusClient`` to implement the `swift-metrics` `MetricsFactory` protocol
 public struct PrometheusMetricsFactory: Sendable {
-
     /// The underlying ``PrometheusClient`` that is used to generate
     public var client: PrometheusCollectorRegistry
 
@@ -65,7 +64,7 @@ public struct PrometheusMetricsFactory: Sendable {
             1000,
             2500,
             5000,
-            10000
+            10000,
         ]
 
         self.labelAndDimensionSanitizer = { ($0, $1) }

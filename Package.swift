@@ -42,7 +42,7 @@ let package = Package(
         .testTarget(
             name: "PrometheusTests",
             dependencies: [
-                "Prometheus"
+                "Prometheus",
             ]
         ),
     ]

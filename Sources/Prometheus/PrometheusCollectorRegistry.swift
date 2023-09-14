@@ -30,7 +30,7 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
             self.labels = labels
         }
 
-        static func ==(lhs: Self, rhs: Self) -> Bool {
+        static func == (lhs: Self, rhs: Self) -> Bool {
             guard lhs.labels.count == rhs.labels.count else { return false }
 
             for (lhs, rhs) in zip(lhs.labels, rhs.labels) {
@@ -67,7 +67,7 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     public init() {}
 
     // MARK: Creating Metrics
-    
+
     /// Creates a new ``Counter`` collector or returns the already existing one with the same name.
     ///
     /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
@@ -232,7 +232,7 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     ///
     /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
     /// created ``TimeHistogram`` will be part of the export.
-    /// 
+    ///
     /// - Parameter name: A name to identify ``TimeHistogram``'s value.
     /// - Parameter buckets: Define the buckets that shall be used within the ``TimeHistogram``
     /// - Returns: A ``TimeHistogram`` that is registered with this ``PrometheusCollectorRegistry``
@@ -509,7 +509,7 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     }
 }
 
-extension Array where Element == (String, String) {
+extension Array<(String, String)> {
     fileprivate var allLabelNames: [String] {
         var result = [String]()
         result.reserveCapacity(self.count)
@@ -522,7 +522,7 @@ extension Array where Element == (String, String) {
     }
 }
 
-extension Array where Element == UInt8 {
+extension Array<UInt8> {
     fileprivate mutating func addTypeLine(label: String, type: String) {
         self.append(contentsOf: #"# TYPE "#.utf8)
         self.append(contentsOf: label.utf8)
