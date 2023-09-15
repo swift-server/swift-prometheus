@@ -20,7 +20,7 @@ import CoreMetrics
 /// method to export the metrics form registered collectors into a Prometheus compatible format.
 ///
 /// To use a ``PrometheusCollectorRegistry`` with `swift-metrics` use the ``PrometheusMetricsFactory``.
-public final class PrometheusCollectorRegistry: @unchecked Sendable {
+public final class PrometheusCollectorRegistry: Sendable {
     // Sendability is enforced through the internal `lock`
 
     private struct LabelsKey: Hashable, Sendable {
@@ -60,8 +60,7 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
         case valueHistogramWithLabels([String], [LabelsKey: ValueHistogram], [Double])
     }
 
-    private let lock = NIOLock()
-    private var _store = [String: Metric]()
+    private let box = NIOLockedValueBox([String: Metric]())
 
     /// Create a new collector registry
     public init() {}
@@ -76,8 +75,8 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     /// - Parameter name: A name to identify ``Counter``'s value.
     /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeCounter(name: String) -> Counter {
-        self.lock.withLock { () -> Counter in
-            if let value = self._store[name] {
+        self.box.withLockedValue { store -> Counter in
+            if let value = store[name] {
                 guard case .counter(let counter) = value else {
                     fatalError("""
                         Could not make Counter with name: \(name), since another metric type
@@ -89,7 +88,7 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
                 return counter
             } else {
                 let counter = Counter(name: name, labels: [])
-                self._store[name] = .counter(counter)
+                store[name] = .counter(counter)
                 return counter
             }
         }
@@ -109,8 +108,8 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
             return self.makeCounter(name: name)
         }
 
-        return self.lock.withLock { () -> Counter in
-            if let value = self._store[name] {
+        return self.box.withLockedValue { store -> Counter in
+            if let value = store[name] {
                 guard case .counterWithLabels(let labelNames, var dimensionLookup) = value else {
                     fatalError("""
                         Could not make Counter with name: \(name) and labels: \(labels), since another
@@ -136,13 +135,13 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
 
                 let counter = Counter(name: name, labels: labels)
                 dimensionLookup[key] = counter
-                self._store[name] = .counterWithLabels(labelNames, dimensionLookup)
+                store[name] = .counterWithLabels(labelNames, dimensionLookup)
                 return counter
             } else {
                 let labelNames = labels.allLabelNames
                 let counter = Counter(name: name, labels: labels)
 
-                self._store[name] = .counterWithLabels(labelNames, [LabelsKey(labels): counter])
+                store[name] = .counterWithLabels(labelNames, [LabelsKey(labels): counter])
                 return counter
             }
         }
@@ -156,8 +155,8 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     /// - Parameter name: A name to identify ``Gauge``'s value.
     /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeGauge(name: String) -> Gauge {
-        self.lock.withLock { () -> Gauge in
-            if let value = self._store[name] {
+        self.box.withLockedValue { store -> Gauge in
+            if let value = store[name] {
                 guard case .gauge(let gauge) = value else {
                     fatalError("""
                         Could not make Gauge with name: \(name), since another metric type already
@@ -169,7 +168,7 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
                 return gauge
             } else {
                 let gauge = Gauge(name: name, labels: [])
-                self._store[name] = .gauge(gauge)
+                store[name] = .gauge(gauge)
                 return gauge
             }
         }
@@ -189,8 +188,8 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
             return self.makeGauge(name: name)
         }
 
-        return self.lock.withLock { () -> Gauge in
-            if let value = self._store[name] {
+        return self.box.withLockedValue { store -> Gauge in
+            if let value = store[name] {
                 guard case .gaugeWithLabels(let labelNames, var dimensionLookup) = value else {
                     fatalError("""
                         Could not make Gauge with name: \(name) and labels: \(labels), since another
@@ -216,13 +215,13 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
 
                 let gauge = Gauge(name: name, labels: labels)
                 dimensionLookup[key] = gauge
-                self._store[name] = .gaugeWithLabels(labelNames, dimensionLookup)
+                store[name] = .gaugeWithLabels(labelNames, dimensionLookup)
                 return gauge
             } else {
                 let labelNames = labels.allLabelNames
                 let gauge = Gauge(name: name, labels: labels)
 
-                self._store[name] = .gaugeWithLabels(labelNames, [LabelsKey(labels): gauge])
+                store[name] = .gaugeWithLabels(labelNames, [LabelsKey(labels): gauge])
                 return gauge
             }
         }
@@ -237,8 +236,8 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     /// - Parameter buckets: Define the buckets that shall be used within the ``TimeHistogram``
     /// - Returns: A ``TimeHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeTimeHistogram(name: String, buckets: [Duration]) -> TimeHistogram {
-        self.lock.withLock { () -> TimeHistogram in
-            if let value = self._store[name] {
+        self.box.withLockedValue { store -> TimeHistogram in
+            if let value = store[name] {
                 guard case .timeHistogram(let histogram) = value else {
                     fatalError("""
                         Could not make TimeHistogram with name: \(name), since another
@@ -250,7 +249,7 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
                 return histogram
             } else {
                 let gauge = TimeHistogram(name: name, labels: [], buckets: buckets)
-                self._store[name] = .timeHistogram(gauge)
+                store[name] = .timeHistogram(gauge)
                 return gauge
             }
         }
@@ -271,8 +270,8 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
             return self.makeTimeHistogram(name: name, buckets: buckets)
         }
 
-        return self.lock.withLock { () -> TimeHistogram in
-            if let value = self._store[name] {
+        return self.box.withLockedValue { store -> TimeHistogram in
+            if let value = store[name] {
                 guard case .timeHistogramWithLabels(let labelNames, var dimensionLookup, let storedBuckets) = value else {
                     fatalError("""
                         Could not make TimeHistogram with name: \(name) and labels: \(labels), since another
@@ -308,13 +307,13 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
 
                 let histogram = TimeHistogram(name: name, labels: labels, buckets: storedBuckets)
                 dimensionLookup[key] = histogram
-                self._store[name] = .timeHistogramWithLabels(labelNames, dimensionLookup, storedBuckets)
+                store[name] = .timeHistogramWithLabels(labelNames, dimensionLookup, storedBuckets)
                 return histogram
             } else {
                 let labelNames = labels.allLabelNames
                 let histogram = TimeHistogram(name: name, labels: labels, buckets: buckets)
 
-                self._store[name] = .timeHistogramWithLabels(labelNames, [LabelsKey(labels): histogram], buckets)
+                store[name] = .timeHistogramWithLabels(labelNames, [LabelsKey(labels): histogram], buckets)
                 return histogram
             }
         }
@@ -329,8 +328,8 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     /// - Parameter buckets: Define the buckets that shall be used within the ``ValueHistogram``
     /// - Returns: A ``ValueHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeValueHistogram(name: String, buckets: [Double]) -> ValueHistogram {
-        self.lock.withLock { () -> ValueHistogram in
-            if let value = self._store[name] {
+        self.box.withLockedValue { store -> ValueHistogram in
+            if let value = store[name] {
                 guard case .valueHistogram(let histogram) = value else {
                     fatalError()
                 }
@@ -338,7 +337,7 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
                 return histogram
             } else {
                 let gauge = ValueHistogram(name: name, labels: [], buckets: buckets)
-                self._store[name] = .valueHistogram(gauge)
+                store[name] = .valueHistogram(gauge)
                 return gauge
             }
         }
@@ -359,8 +358,8 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
             return self.makeValueHistogram(name: name, buckets: buckets)
         }
 
-        return self.lock.withLock { () -> ValueHistogram in
-            if let value = self._store[name] {
+        return self.box.withLockedValue { store -> ValueHistogram in
+            if let value = store[name] {
                 guard case .valueHistogramWithLabels(let labelNames, var dimensionLookup, let storedBuckets) = value else {
                     fatalError()
                 }
@@ -376,13 +375,13 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
 
                 let histogram = ValueHistogram(name: name, labels: labels, buckets: storedBuckets)
                 dimensionLookup[key] = histogram
-                self._store[name] = .valueHistogramWithLabels(labelNames, dimensionLookup, storedBuckets)
+                store[name] = .valueHistogramWithLabels(labelNames, dimensionLookup, storedBuckets)
                 return histogram
             } else {
                 let labelNames = labels.allLabelNames
                 let histogram = ValueHistogram(name: name, labels: labels, buckets: buckets)
 
-                self._store[name] = .valueHistogramWithLabels(labelNames, [LabelsKey(labels): histogram], buckets)
+                store[name] = .valueHistogramWithLabels(labelNames, [LabelsKey(labels): histogram], buckets)
                 return histogram
             }
         }
@@ -391,16 +390,16 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     // MARK: Destroying Metrics
 
     public func destroyCounter(_ counter: Counter) {
-        self.lock.withLock {
-            switch self._store[counter.name] {
+        self.box.withLockedValue { store in
+            switch store[counter.name] {
             case .counter(let storedCounter):
                 guard storedCounter === counter else { return }
-                self._store.removeValue(forKey: counter.name)
+                store.removeValue(forKey: counter.name)
             case .counterWithLabels(let labelNames, var dimensions):
                 let labelsKey = LabelsKey(counter.labels)
                 guard dimensions[labelsKey] === counter else { return }
                 dimensions.removeValue(forKey: labelsKey)
-                self._store[counter.name] = .counterWithLabels(labelNames, dimensions)
+                store[counter.name] = .counterWithLabels(labelNames, dimensions)
             default:
                 return
             }
@@ -408,16 +407,16 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     }
 
     public func destroyGauge(_ gauge: Gauge) {
-        self.lock.withLock {
-            switch self._store[gauge.name] {
+        self.box.withLockedValue { store in
+            switch store[gauge.name] {
             case .gauge(let storedGauge):
                 guard storedGauge === gauge else { return }
-                self._store.removeValue(forKey: gauge.name)
+                store.removeValue(forKey: gauge.name)
             case .gaugeWithLabels(let labelNames, var dimensions):
                 let dimensionsKey = LabelsKey(gauge.labels)
                 guard dimensions[dimensionsKey] === gauge else { return }
                 dimensions.removeValue(forKey: dimensionsKey)
-                self._store[gauge.name] = .gaugeWithLabels(labelNames, dimensions)
+                store[gauge.name] = .gaugeWithLabels(labelNames, dimensions)
             default:
                 return
             }
@@ -425,16 +424,16 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     }
 
     public func destroyTimeHistogram(_ histogram: TimeHistogram) {
-        self.lock.withLock {
-            switch self._store[histogram.name] {
+        self.box.withLockedValue { store in
+            switch store[histogram.name] {
             case .timeHistogram(let storedHistogram):
                 guard storedHistogram === histogram else { return }
-                self._store.removeValue(forKey: histogram.name)
+                store.removeValue(forKey: histogram.name)
             case .timeHistogramWithLabels(let labelNames, var dimensions, let buckets):
                 let dimensionsKey = LabelsKey(histogram.labels)
                 guard dimensions[dimensionsKey] === histogram else { return }
                 dimensions.removeValue(forKey: dimensionsKey)
-                self._store[histogram.name] = .timeHistogramWithLabels(labelNames, dimensions, buckets)
+                store[histogram.name] = .timeHistogramWithLabels(labelNames, dimensions, buckets)
             default:
                 return
             }
@@ -442,16 +441,16 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     }
 
     public func destroyValueHistogram(_ histogram: ValueHistogram) {
-        self.lock.withLock {
-            switch self._store[histogram.name] {
+        self.box.withLockedValue { store in
+            switch store[histogram.name] {
             case .valueHistogram(let storedHistogram):
                 guard storedHistogram === histogram else { return }
-                self._store.removeValue(forKey: histogram.name)
+                store.removeValue(forKey: histogram.name)
             case .valueHistogramWithLabels(let labelNames, var dimensions, let buckets):
                 let dimensionsKey = LabelsKey(histogram.labels)
                 guard dimensions[dimensionsKey] === histogram else { return }
                 dimensions.removeValue(forKey: dimensionsKey)
-                self._store[histogram.name] = .valueHistogramWithLabels(labelNames, dimensions, buckets)
+                store[histogram.name] = .valueHistogramWithLabels(labelNames, dimensions, buckets)
             default:
                 return
             }
@@ -461,7 +460,7 @@ public final class PrometheusCollectorRegistry: @unchecked Sendable {
     // MARK: Emitting
 
     public func emit(into buffer: inout [UInt8]) {
-        let metrics = self.lock.withLock { self._store }
+        let metrics = self.box.withLockedValue { $0 }
 
         for (label, metric) in metrics {
             switch metric {

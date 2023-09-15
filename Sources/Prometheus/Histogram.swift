@@ -14,24 +14,33 @@
 
 import CoreMetrics
 
-public protocol Bucketable: AdditiveArithmetic, Comparable {
+public protocol Bucketable: AdditiveArithmetic, Comparable, Sendable {
     var bucketRepresentation: String { get }
 }
 
 public typealias TimeHistogram = Histogram<Duration>
 public typealias ValueHistogram = Histogram<Double>
 
-public final class Histogram<Value: Bucketable>: @unchecked Sendable {
-    private let lock = NIOLock()
-
+public final class Histogram<Value: Bucketable>: Sendable {
     let name: String
     let labels: [(String, String)]
 
-    private var _buckets: [(Value, Int)]
-    private var _sum: Value
-    private var _count: Int
+    @usableFromInline
+    struct State: Sendable {
+        @usableFromInline var buckets: [(Value, Int)]
+        @usableFromInline var sum: Value
+        @usableFromInline var count: Int
 
-    private let prerenderedLabels: [UInt8]?
+        @inlinable
+        init(buckets: [Value]) {
+            self.sum = .zero
+            self.count = 0
+            self.buckets = buckets.map { ($0, 0) }
+        }
+    }
+
+    @usableFromInline let box: NIOLockedValueBox<State>
+    let prerenderedLabels: [UInt8]?
 
     init(name: String, labels: [(String, String)], buckets: [Value]) {
         self.name = name
@@ -39,20 +48,18 @@ public final class Histogram<Value: Bucketable>: @unchecked Sendable {
 
         self.prerenderedLabels = Self.prerenderLabels(labels)
 
-        self._buckets = buckets.map { ($0, 0) }
-        self._sum = .zero
-        self._count = 0
+        self.box = .init(.init(buckets: buckets))
     }
 
     public func record(_ value: Value) {
-        self.lock.withLock {
-            for i in self._buckets.startIndex..<self._buckets.endIndex {
-                if self._buckets[i].0 >= value {
-                    self._buckets[i].1 += 1
+        self.box.withLockedValue { state in
+            for i in state.buckets.startIndex..<state.buckets.endIndex {
+                if state.buckets[i].0 >= value {
+                    state.buckets[i].1 += 1
                 }
             }
-            self._sum += value
-            self._count += 1
+            state.sum += value
+            state.count += 1
         }
     }
 }
@@ -74,9 +81,9 @@ extension Histogram: CoreMetrics.RecorderHandler where Value == Double {
 
 extension Histogram: PrometheusMetric {
     func emit(into buffer: inout [UInt8]) {
-        let (buckets, sum, count) = self.lock.withLock { (self._buckets, self._sum, self._count) }
+        let state = self.box.withLockedValue { $0 }
 
-        for bucket in buckets {
+        for bucket in state.buckets {
             buffer.append(contentsOf: self.name.utf8)
             buffer.append(contentsOf: #"_bucket{"#.utf8)
             if let prerenderedLabels {
@@ -99,7 +106,7 @@ extension Histogram: PrometheusMetric {
             buffer.append(UInt8(ascii: ","))
         }
         buffer.append(contentsOf: #"le="+Inf"} "#.utf8)
-        buffer.append(contentsOf: "\(count)".utf8)
+        buffer.append(contentsOf: "\(state.count)".utf8)
         buffer.append(contentsOf: #"\#n"#.utf8)
 
         // sum
@@ -112,7 +119,7 @@ extension Histogram: PrometheusMetric {
         } else {
             buffer.append(UInt8(ascii: " "))
         }
-        buffer.append(contentsOf: "\(sum.bucketRepresentation)".utf8)
+        buffer.append(contentsOf: "\(state.sum.bucketRepresentation)".utf8)
         buffer.append(contentsOf: #"\#n"#.utf8)
 
         // count
@@ -125,7 +132,7 @@ extension Histogram: PrometheusMetric {
         } else {
             buffer.append(UInt8(ascii: " "))
         }
-        buffer.append(contentsOf: "\(count)".utf8)
+        buffer.append(contentsOf: "\(state.count)".utf8)
         buffer.append(contentsOf: #"\#n"#.utf8)
     }
 }
