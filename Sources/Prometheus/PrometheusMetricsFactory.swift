@@ -14,12 +14,14 @@
 
 import CoreMetrics
 
-/// A wrapper around ``PrometheusClient`` to implement the `swift-metrics` `MetricsFactory` protocol
+/// A wrapper around ``PrometheusCollectorRegistry`` to implement the `swift-metrics` `MetricsFactory` protocol
 public struct PrometheusMetricsFactory: Sendable {
-    /// The underlying ``PrometheusClient`` that is used to generate
+    /// The underlying ``PrometheusCollectorRegistry`` that is used to generate
     public var client: PrometheusCollectorRegistry
 
-    /// The histogram buckets for a ``TimeHistogram``
+    /// The default histogram buckets for a ``TimeHistogram``. If there is no explicit overwrite
+    /// via ``timeHistogramBuckets``, the buckets provided here will be used for any new
+    /// Swift Metrics `Timer` type.
     public var defaultTimeHistogramBuckets: [Duration]
 
     /// The histogram buckets for a ``TimeHistogram`` per Timer label
@@ -27,11 +29,14 @@ public struct PrometheusMetricsFactory: Sendable {
 
     /// The default histogram buckets for a ``ValueHistogram``. If there is no explicit overwrite
     /// via ``valueHistogramBuckets``, the buckets provided here will be used for any new
-    /// Swift Metrics Summary type.
+    /// Swift Metrics `Summary` type.
     public var defaultValueHistogramBuckets: [Double]
 
+    /// The histogram buckets for a ``ValueHistogram`` per label
     public var valueHistogramBuckets: [String: [Double]]
 
+    /// A closure to modify the the label and dimension names used in the Swift Metrics API to something
+    /// that fits 
     public var labelAndDimensionSanitizer: @Sendable (_ label: String, _ dimensions: [(String, String)]) -> (String, [(String, String)])
 
     public init(client: PrometheusCollectorRegistry) {

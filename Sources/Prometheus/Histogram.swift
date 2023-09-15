@@ -18,7 +18,7 @@ public protocol Bucketable: AdditiveArithmetic, Comparable, Sendable {
     var bucketRepresentation: String { get }
 }
 
-public typealias TimeHistogram = Histogram<Duration>
+public typealias DurationHistogram = Histogram<Duration>
 public typealias ValueHistogram = Histogram<Double>
 
 public final class Histogram<Value: Bucketable>: Sendable {

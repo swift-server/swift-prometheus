@@ -16,18 +16,20 @@ import Atomics
 import CoreMetrics
 
 public final class Counter: Sendable {
-    let intAtomic = ManagedAtomic(Int64(0))
-    let floatAtomic = ManagedAtomic(Double(0).bitPattern)
+    private let intAtomic = ManagedAtomic(Int64(0))
+    private let floatAtomic = ManagedAtomic(Double(0).bitPattern)
 
     let name: String
     let labels: [(String, String)]
-    let prerenderedExport: [UInt8]
+    private let prerenderedExport: [UInt8]
 
     init(name: String, labels: [(String, String)]) {
         self.name = name
         self.labels = labels
 
         var prerendered = [UInt8]()
+        // 64 bytes is a good tradeoff to prevent reallocs lots of reallocs when appending names
+        // and memory footprint.
         prerendered.reserveCapacity(64)
         prerendered.append(contentsOf: name.utf8)
         if let prerenderedLabels = Self.prerenderLabels(labels) {
