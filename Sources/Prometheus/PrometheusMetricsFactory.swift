@@ -100,7 +100,7 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
     public func makeTimer(label: String, dimensions: [(String, String)]) -> CoreMetrics.TimerHandler {
         let (label, dimensions) = self.labelAndDimensionSanitizer(label, dimensions)
         let buckets = self.timeHistogramBuckets[label] ?? self.defaultTimeHistogramBuckets
-        return self.client.makeTimeHistogram(name: label, labels: dimensions, buckets: buckets)
+        return self.client.makeDurationHistogram(name: label, labels: dimensions, buckets: buckets)
     }
 
     public func destroyCounter(_ handler: CoreMetrics.CounterHandler) {

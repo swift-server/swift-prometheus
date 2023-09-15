@@ -233,7 +233,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter name: A name to identify ``DurationHistogram``'s value.
     /// - Parameter buckets: Define the buckets that shall be used within the ``DurationHistogram``
     /// - Returns: A ``DurationHistogram`` that is registered with this ``PrometheusCollectorRegistry``
-    public func makeTimeHistogram(name: String, buckets: [Duration]) -> DurationHistogram {
+    public func makeDurationHistogram(name: String, buckets: [Duration]) -> DurationHistogram {
         self.box.withLockedValue { store -> DurationHistogram in
             if let value = store[name] {
                 guard case .durationHistogram(let histogram) = value else {
@@ -263,9 +263,9 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///                     what’s actually being measured in a Prometheus metric.
     /// - Parameter buckets: Define the buckets that shall be used within the ``DurationHistogram``
     /// - Returns: A ``DurationHistogram`` that is registered with this ``PrometheusCollectorRegistry``
-    public func makeTimeHistogram(name: String, labels: [(String, String)], buckets: [Duration]) -> DurationHistogram {
+    public func makeDurationHistogram(name: String, labels: [(String, String)], buckets: [Duration]) -> DurationHistogram {
         guard !labels.isEmpty else {
-            return self.makeTimeHistogram(name: name, buckets: buckets)
+            return self.makeDurationHistogram(name: name, buckets: buckets)
         }
 
         return self.box.withLockedValue { store -> DurationHistogram in

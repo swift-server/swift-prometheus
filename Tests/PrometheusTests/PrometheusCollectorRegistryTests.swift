@@ -115,8 +115,8 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
     func testAskingForTheSameTimeHistogramReturnsTheSameTimeHistogram() {
         let client = PrometheusCollectorRegistry()
-        let histogram1 = client.makeTimeHistogram(name: "foo", buckets: [.seconds(1), .seconds(2), .seconds(3)])
-        let histogram2 = client.makeTimeHistogram(name: "foo", buckets: [.seconds(1), .seconds(2), .seconds(3)])
+        let histogram1 = client.makeDurationHistogram(name: "foo", buckets: [.seconds(1), .seconds(2), .seconds(3)])
+        let histogram2 = client.makeDurationHistogram(name: "foo", buckets: [.seconds(1), .seconds(2), .seconds(3)])
 
         XCTAssert(histogram1 === histogram2)
         histogram1.record(.milliseconds(2500))
@@ -139,8 +139,8 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
     func testAskingForTheSameTimeHistogramWithLabelsReturnsTheSameTimeHistogram() {
         let client = PrometheusCollectorRegistry()
-        let histogram1 = client.makeTimeHistogram(name: "foo", labels: [("bar", "baz")], buckets: [.seconds(1), .seconds(2), .seconds(3)])
-        let histogram2 = client.makeTimeHistogram(name: "foo", labels: [("bar", "baz")], buckets: [.seconds(1), .seconds(2), .seconds(3)])
+        let histogram1 = client.makeDurationHistogram(name: "foo", labels: [("bar", "baz")], buckets: [.seconds(1), .seconds(2), .seconds(3)])
+        let histogram2 = client.makeDurationHistogram(name: "foo", labels: [("bar", "baz")], buckets: [.seconds(1), .seconds(2), .seconds(3)])
 
         XCTAssert(histogram1 === histogram2)
         histogram1.record(.milliseconds(2500))

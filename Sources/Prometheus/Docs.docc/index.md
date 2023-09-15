@@ -15,5 +15,5 @@ values in the Prometheus export format.
 - ``Gauge``
 - ``Histogram``
     - ``Bucketable``
-- ``TimeHistogram``
+- ``DurationHistogram``
 - ``ValueHistogram``

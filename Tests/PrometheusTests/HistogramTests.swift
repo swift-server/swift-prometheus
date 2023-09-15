@@ -18,7 +18,7 @@ import Prometheus
 final class HistogramTests: XCTestCase {
     func testHistogramWithoutDimensions() {
         let client = PrometheusCollectorRegistry()
-        let histogram = client.makeTimeHistogram(name: "foo", labels: [], buckets: [
+        let histogram = client.makeDurationHistogram(name: "foo", labels: [], buckets: [
             .milliseconds(100),
             .milliseconds(250),
             .milliseconds(500),
@@ -112,7 +112,7 @@ final class HistogramTests: XCTestCase {
 
     func testHistogramWithOneDimension() {
         let client = PrometheusCollectorRegistry()
-        let histogram = client.makeTimeHistogram(name: "foo", labels: [("bar", "baz")], buckets: [
+        let histogram = client.makeDurationHistogram(name: "foo", labels: [("bar", "baz")], buckets: [
             .milliseconds(100),
             .milliseconds(250),
             .milliseconds(500),
@@ -205,7 +205,7 @@ final class HistogramTests: XCTestCase {
 
     func testHistogramWithTwoDimension() {
         let client = PrometheusCollectorRegistry()
-        let histogram = client.makeTimeHistogram(name: "foo", labels: [("bar", "baz"), ("abc", "xyz")], buckets: [
+        let histogram = client.makeDurationHistogram(name: "foo", labels: [("bar", "baz"), ("abc", "xyz")], buckets: [
             .milliseconds(100),
             .milliseconds(250),
             .milliseconds(500),
