@@ -35,8 +35,8 @@ public struct PrometheusMetricsFactory: Sendable {
     /// The histogram buckets for a ``ValueHistogram`` per label
     public var valueHistogramBuckets: [String: [Double]]
 
-    /// A closure to modify the the label and dimension names used in the Swift Metrics API to something
-    /// that fits 
+    /// A closure to modify the label and dimension names used in the Swift Metrics API. This allows users
+    /// to overwrite the Metric names in third party packages.
     public var labelAndDimensionSanitizer: @Sendable (_ label: String, _ dimensions: [(String, String)]) -> (String, [(String, String)])
 
     public init(client: PrometheusCollectorRegistry) {
