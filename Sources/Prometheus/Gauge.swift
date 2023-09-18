@@ -80,6 +80,16 @@ extension Gauge: CoreMetrics.RecorderHandler {
     }
 }
 
+extension Gauge: CoreMetrics.MeterHandler {
+    public func set(_ value: Double) {
+        self.set(to: value)
+    }
+    
+    public func set(_ value: Int64) {
+        self.set(to: Double(value))
+    }
+}
+
 extension Gauge: PrometheusMetric {
     func emit(into buffer: inout [UInt8]) {
         let value = Double(bitPattern: self.atomic.load(ordering: .relaxed))
