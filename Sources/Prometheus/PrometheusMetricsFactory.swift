@@ -16,8 +16,16 @@ import CoreMetrics
 
 /// A wrapper around ``PrometheusCollectorRegistry`` to implement the `swift-metrics` `MetricsFactory` protocol
 public struct PrometheusMetricsFactory: Sendable {
-    /// The underlying ``PrometheusCollectorRegistry`` that is used to generate
-    public var client: PrometheusCollectorRegistry
+    private static let _defaultRegistry = PrometheusCollectorRegistry()
+
+    /// The default ``PrometheusCollectorRegistry``, which is used inside the ``PrometheusMetricsFactory``
+    /// if no other is provided in ``init(client:)`` or set via ``PrometheusMetricsFactory/client``
+    public static var defaultRegistry: PrometheusCollectorRegistry {
+        self._defaultRegistry
+    }
+
+    /// The underlying ``PrometheusCollectorRegistry`` that is used to generate the swift-metrics handlers
+    public var registry: PrometheusCollectorRegistry
 
     /// The default histogram buckets for a ``TimeHistogram``. If there is no explicit overwrite
     /// via ``timeHistogramBuckets``, the buckets provided here will be used for any new
@@ -39,8 +47,8 @@ public struct PrometheusMetricsFactory: Sendable {
     /// to overwrite the Metric names in third party packages.
     public var labelAndDimensionSanitizer: @Sendable (_ label: String, _ dimensions: [(String, String)]) -> (String, [(String, String)])
 
-    public init(client: PrometheusCollectorRegistry) {
-        self.client = client
+    public init(client: PrometheusCollectorRegistry = Self.defaultRegistry) {
+        self.registry = client
 
         self.timeHistogramBuckets = [:]
         self.defaultTimeHistogramBuckets = [
@@ -79,50 +87,50 @@ public struct PrometheusMetricsFactory: Sendable {
 extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CoreMetrics.CounterHandler {
         let (label, dimensions) = self.labelAndDimensionSanitizer(label, dimensions)
-        return self.client.makeCounter(name: label, labels: dimensions)
+        return self.registry.makeCounter(name: label, labels: dimensions)
     }
 
     public func makeFloatingPointCounter(label: String, dimensions: [(String, String)]) -> FloatingPointCounterHandler {
         let (label, dimensions) = self.labelAndDimensionSanitizer(label, dimensions)
-        return self.client.makeCounter(name: label, labels: dimensions)
+        return self.registry.makeCounter(name: label, labels: dimensions)
     }
 
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> CoreMetrics.RecorderHandler {
         let (label, dimensions) = self.labelAndDimensionSanitizer(label, dimensions)
         if aggregate {
             let buckets = self.valueHistogramBuckets[label] ?? self.defaultValueHistogramBuckets
-            return self.client.makeValueHistogram(name: label, labels: dimensions, buckets: buckets)
+            return self.registry.makeValueHistogram(name: label, labels: dimensions, buckets: buckets)
         } else {
-            return self.client.makeGauge(name: label, labels: dimensions)
+            return self.registry.makeGauge(name: label, labels: dimensions)
         }
     }
 
     public func makeTimer(label: String, dimensions: [(String, String)]) -> CoreMetrics.TimerHandler {
         let (label, dimensions) = self.labelAndDimensionSanitizer(label, dimensions)
         let buckets = self.timeHistogramBuckets[label] ?? self.defaultTimeHistogramBuckets
-        return self.client.makeDurationHistogram(name: label, labels: dimensions, buckets: buckets)
+        return self.registry.makeDurationHistogram(name: label, labels: dimensions, buckets: buckets)
     }
 
     public func destroyCounter(_ handler: CoreMetrics.CounterHandler) {
         guard let counter = handler as? Counter else {
             return
         }
-        self.client.destroyCounter(counter)
+        self.registry.destroyCounter(counter)
     }
 
     public func destroyFloatingPointCounter(_ handler: FloatingPointCounterHandler) {
         guard let counter = handler as? Counter else {
             return
         }
-        self.client.destroyCounter(counter)
+        self.registry.destroyCounter(counter)
     }
 
     public func destroyRecorder(_ handler: CoreMetrics.RecorderHandler) {
         switch handler {
         case let gauge as Gauge:
-            self.client.destroyGauge(gauge)
+            self.registry.destroyGauge(gauge)
         case let histogram as Histogram<Double>:
-            self.client.destroyValueHistogram(histogram)
+            self.registry.destroyValueHistogram(histogram)
         default:
             break
         }
@@ -132,6 +140,6 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
         guard let histogram = handler as? Histogram<Duration> else {
             return
         }
-        self.client.destroyTimeHistogram(histogram)
+        self.registry.destroyTimeHistogram(histogram)
     }
 }
