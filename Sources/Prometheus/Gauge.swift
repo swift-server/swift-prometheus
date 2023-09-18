@@ -15,6 +15,10 @@
 import Atomics
 import CoreMetrics
 
+/// A gauge is a metric that represents a single numerical value that can arbitrarily go up and down.
+///
+/// Gauges are typically used for measured values like temperatures or current memory usage, but
+/// also "counts" that can go up and down, like the number of concurrent requests.
 public final class Gauge: Sendable {
     let atomic = ManagedAtomic(Double.zero.bitPattern)
 
@@ -27,6 +31,8 @@ public final class Gauge: Sendable {
         self.labels = labels
 
         var prerendered = [UInt8]()
+        // 64 bytes is a good tradeoff to prevent reallocs lots of reallocs when appending names
+        // and memory footprint.
         prerendered.reserveCapacity(64)
         prerendered.append(contentsOf: name.utf8)
         if let prerenderedLabels = Self.prerenderLabels(labels) {

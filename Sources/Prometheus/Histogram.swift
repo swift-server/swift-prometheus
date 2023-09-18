@@ -14,13 +14,18 @@
 
 import CoreMetrics
 
+/// A type that can be used in a ``Histogram`` to create bucket boundaries
 public protocol Bucketable: AdditiveArithmetic, Comparable, Sendable {
+    /// A string representation that is used in the Prometheus export
     var bucketRepresentation: String { get }
 }
 
+/// A Histogram to record timings
 public typealias DurationHistogram = Histogram<Duration>
+/// A Histogram to record floating point values
 public typealias ValueHistogram = Histogram<Double>
 
+/// A generic Histogram implementation
 public final class Histogram<Value: Bucketable>: Sendable {
     let name: String
     let labels: [(String, String)]
