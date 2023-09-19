@@ -105,6 +105,10 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
         }
     }
 
+    public func makeMeter(label: String, dimensions: [(String, String)]) -> CoreMetrics.MeterHandler {
+        return self.registry.makeGauge(name: label, labels: dimensions)
+    }
+
     public func makeTimer(label: String, dimensions: [(String, String)]) -> CoreMetrics.TimerHandler {
         let (label, dimensions) = self.labelAndDimensionSanitizer(label, dimensions)
         let buckets = self.timeHistogramBuckets[label] ?? self.defaultTimeHistogramBuckets
@@ -134,6 +138,13 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
         default:
             break
         }
+    }
+
+    public func destroyMeter(_ handler: CoreMetrics.MeterHandler) {
+        guard let gauge = handler as? Gauge else {
+            return
+        }
+        self.registry.destroyGauge(gauge)
     }
 
     public func destroyTimer(_ handler: CoreMetrics.TimerHandler) {

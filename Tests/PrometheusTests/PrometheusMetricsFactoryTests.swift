@@ -69,6 +69,57 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         )
     }
 
+    func testMakeMeters() {
+        let client = PrometheusCollectorRegistry()
+        let factory = PrometheusMetricsFactory(client: client)
+
+        let maybeGauge = factory.makeMeter(label: "foo", dimensions: [("bar", "baz")])
+        XCTAssertNotNil(maybeGauge as? Gauge)
+
+        maybeGauge.increment(by: 1)
+        maybeGauge.decrement(by: 7)
+
+        var buffer = [UInt8]()
+        client.emit(into: &buffer)
+        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+            # TYPE foo gauge
+            foo{bar="baz"} -6.0
+
+            """
+        )
+
+        // set to double value
+        maybeGauge.set(12.45)
+        buffer.removeAll(keepingCapacity: true)
+        client.emit(into: &buffer)
+        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+            # TYPE foo gauge
+            foo{bar="baz"} 12.45
+
+            """
+        )
+
+        // set to int value
+        maybeGauge.set(Int64(42)) // needs explicit cast... otherwise ambigious
+        buffer.removeAll(keepingCapacity: true)
+        client.emit(into: &buffer)
+        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+            # TYPE foo gauge
+            foo{bar="baz"} 42.0
+
+            """
+        )
+
+        factory.destroyMeter(maybeGauge)
+        buffer.removeAll(keepingCapacity: true)
+        client.emit(into: &buffer)
+        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+            # TYPE foo gauge
+
+            """
+        )
+    }
+
     func testTwoMetricFactoriesUseTheSameUnderlyingCollectorRegsitry() {
         let first = PrometheusMetricsFactory()
         let second = PrometheusMetricsFactory()
