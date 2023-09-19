@@ -120,4 +120,10 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         )
     }
 
+    func testTwoMetricFactoriesUseTheSameUnderlyingCollectorRegsitry() {
+        let first = PrometheusMetricsFactory()
+        let second = PrometheusMetricsFactory()
+
+        XCTAssert(first.registry === second.registry)
+    }
 }
