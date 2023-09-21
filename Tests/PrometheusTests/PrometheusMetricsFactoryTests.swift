@@ -17,16 +17,16 @@ import Prometheus
 
 final class PrometheusMetricsFactoryTests: XCTestCase {
     func testMakeTimers() {
-        let client = PrometheusCollectorRegistry()
-        let factory = PrometheusMetricsFactory(client: client)
+        let registry = PrometheusCollectorRegistry()
+        let factory = PrometheusMetricsFactory(registry: registry)
 
         let timer = factory.makeTimer(label: "foo", dimensions: [("bar", "baz")])
         XCTAssertNotNil(timer as? Histogram<Duration>)
     }
 
     func testMakeRecorders() {
-        let client = PrometheusCollectorRegistry()
-        let factory = PrometheusMetricsFactory(client: client)
+        let registry = PrometheusCollectorRegistry()
+        let factory = PrometheusMetricsFactory(registry: registry)
 
         let maybeGauge = factory.makeRecorder(label: "foo", dimensions: [("bar", "baz")], aggregate: false)
         XCTAssertNotNil(maybeGauge as? Gauge)
@@ -36,8 +36,8 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
     }
 
     func testMakeCounters() {
-        let client = PrometheusCollectorRegistry()
-        let factory = PrometheusMetricsFactory(client: client)
+        let registry = PrometheusCollectorRegistry()
+        let factory = PrometheusMetricsFactory(registry: registry)
 
         let maybeCounter = factory.makeCounter(label: "foo", dimensions: [("bar", "baz")])
         XCTAssertNotNil(maybeCounter as? Counter)
@@ -51,7 +51,7 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         maybeFloatingPointCounter.increment(by: 2.5)
 
         var buffer = [UInt8]()
-        client.emit(into: &buffer)
+        registry.emit(into: &buffer)
         XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
             # TYPE foo counter
             foo{bar="baz"} 3.5
@@ -61,7 +61,7 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
 
         factory.destroyCounter(maybeCounter)
         buffer.removeAll(keepingCapacity: true)
-        client.emit(into: &buffer)
+        registry.emit(into: &buffer)
         XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
             # TYPE foo counter
 
@@ -70,8 +70,8 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
     }
 
     func testMakeMeters() {
-        let client = PrometheusCollectorRegistry()
-        let factory = PrometheusMetricsFactory(client: client)
+        let registry = PrometheusCollectorRegistry()
+        let factory = PrometheusMetricsFactory(registry: registry)
 
         let maybeGauge = factory.makeMeter(label: "foo", dimensions: [("bar", "baz")])
         XCTAssertNotNil(maybeGauge as? Gauge)
@@ -80,7 +80,7 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         maybeGauge.decrement(by: 7)
 
         var buffer = [UInt8]()
-        client.emit(into: &buffer)
+        registry.emit(into: &buffer)
         XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
             # TYPE foo gauge
             foo{bar="baz"} -6.0
@@ -91,7 +91,7 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         // set to double value
         maybeGauge.set(12.45)
         buffer.removeAll(keepingCapacity: true)
-        client.emit(into: &buffer)
+        registry.emit(into: &buffer)
         XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
             # TYPE foo gauge
             foo{bar="baz"} 12.45
@@ -102,7 +102,7 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         // set to int value
         maybeGauge.set(Int64(42)) // needs explicit cast... otherwise ambigious
         buffer.removeAll(keepingCapacity: true)
-        client.emit(into: &buffer)
+        registry.emit(into: &buffer)
         XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
             # TYPE foo gauge
             foo{bar="baz"} 42.0
@@ -112,7 +112,7 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
 
         factory.destroyMeter(maybeGauge)
         buffer.removeAll(keepingCapacity: true)
-        client.emit(into: &buffer)
+        registry.emit(into: &buffer)
         XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
             # TYPE foo gauge
 

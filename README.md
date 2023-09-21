@@ -1,139 +1,23 @@
-[![Swift 5.2](https://img.shields.io/badge/swift-5.2-orange.svg?style=flat)](http://swift.org)
+# Swift Prometheus
 
-# SwiftPrometheus, Prometheus client for Swift
+[![sswg:sandbox](https://img.shields.io/badge/sswg-sandbox-yellow.svg)][SSWG-Incubation]
+[![Documentation](http://img.shields.io/badge/read_the-docs-2196f3.svg)][Documentation]
 
-A prometheus client for Swift supporting counters, gauges, histograms, summaries and info.
-
-# Installation
-
-SwiftPrometheus is available through SPM. To include it in your project add the following dependency to your `Package.swift`:
-```swift
-.package(url: "https://github.com/swift-server-community/SwiftPrometheus.git", from: "1.0.2")
-```
-
-# Usage
-
-To see a working demo, see [PrometheusExample](./Sources/PrometheusExample/main.swift).
-
-First, we have to create an instance of our `PrometheusClient`:
-
-```swift
-import Prometheus
-let myProm = PrometheusClient()
-```
-
-## Usage with SwiftMetrics
-_For more details about swift-metrics, please view [the GitHub repo](https://github.com/apple/swift-metrics)._
-
-Starting with SwiftPrometheus [1.0.0-alpha.10](https://github.com/swift-server-community/SwiftPrometheus/releases/tag/1.0.0-alpha.10) `MetricsSystem` is no longer directly configured with a `PrometheusClient`.
-
-Instead, create a `PrometheusMetricsFactory` instance wrapping a `PrometheusClient`.
-
-```swift
-let myProm = PrometheusClient()
-MetricsSystem.bootstrap(PrometheusMetricsFactory(client: myProm))
-```
-
-Along with a `PrometheusClient`, `PrometheusMetricsFactory` can take a `Configuration` object setting the following properties:
-- A `LabelSanitizer` used to sanitize metric names to valid Prometheus values. A default implementation is provided.
-- The Prometheus metric type to use for swift-metrics' `Timer`. Can be a `Histogram` or a `Summary`. Note that when using `Histogram`, `preferredDisplayUnit` will not be observed.
-- Default buckets for use by aggregating swift-metrics `Recorder` instances.
-
-### Before Alpha 10
-
-To use SwiftPrometheus with swift-metrics, you need to configure the backend inside the `MetricsSystem`:
-
-```swift
-import Metrics
-import Prometheus
-let myProm = PrometheusClient()
-MetricsSystem.bootstrap(myProm)
-```
-
-To use prometheus-specific features in a later stage of your program, or to get your metrics out of the system, there is a convenience method added to `MetricsSystem`:
-
-```swift
-// This returns the same instance passed in to `.bootstrap()` earlier.
-let promInstance = try MetricsSystem.prometheus()
-print(promInstance.collect())
-```
-
-You can then use the same APIs described in the rest of this README.
-
-## Counter
-
-Counters go up (they can only increase in value), and reset when the process restarts.
-
-```swift
-let counter = myProm.createCounter(forType: Int.self, named: "my_counter")
-counter.inc() // Increment by 1
-counter.inc(12) // Increment by given value
-```
-
-## Gauge
-
-Gauges can go up and down, they represent a "point-in-time" snapshot of a value. This is similar to the speedometer of a car.
-
-```swift
-let gauge = myProm.createGauge(forType: Int.self, named: "my_gauge")
-gauge.inc() // Increment by 1
-gauge.dec(19) // Decrement by given value
-gauge.set(12) // Set to a given value
-```
-
-## Histogram
-
-Histograms track the size and number of events in buckets. This allows for aggregatable calculation of quantiles.
-
-```swift
-let histogram = myProm.createHistogram(forType: Double.self, named: "my_histogram")
-histogram.observe(4.7) // Observe the given value
-```
-
-## Summary
-
-Summaries track the size and number of events
-
-```swift
-let summary = myProm.createSummary(forType: Double.self, named: "my_summary")
-summary.observe(4.7) // Observe the given value
-```
-
-## Labels
-All metric types support adding labels, allowing for grouping of related metrics. Labels are passed when recording values to your metric as an instance of `DimensionLabels`, or as an array of `(String, String)`.
-
-Example with a counter:
-
-```swift
-let counter = myProm.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter")
-
-let counter = prom.createCounter(forType: Int.self, named: "my_counter", helpText: "Just a counter")
-
-counter.inc(12, .init([("route", "/users")]))
-// OR
-counter.inc(12, [("route", "/users")])
-```
-
-# Exporting
-
-Prometheus itself is designed to "pull" metrics from a destination. Following this pattern, SwiftPrometheus is designed to expose metrics, as opposed to submitted/exporting them directly to Prometheus itself. SwiftPrometheus produces a formatted string that Prometheus can parse, which can be integrated into your own application.
-
-By default, this should be accessible on your main serving port, at the `/metrics` endpoint. An example in [Vapor](https://vapor.codes)  4 syntax looks like:
-
-```swift
-app.get("metrics") { req async throws -> String in
-    return try await MetricsSystem.prometheus().collect()
-}
-```
+A prometheus client for Swift supporting counters, gauges and histograms. Swift Prometheus 
+implements the Swift Metrics API.
 
 ## Security
 
 Please see [SECURITY.md](SECURITY.md) for details on the security process.
 
-# Contributing
+## Contributing
 
 All contributions are most welcome!
 
-If you think of some cool new feature that should be included, please [create an issue](https://github.com/swift-server-community/SwiftPrometheus/issues/new/choose). Or, if you want to implement it yourself, [fork this repo](https://github.com/swift-server-community/SwiftPrometheus/fork) and submit a PR!
+If you think of some cool new feature that should be included, please [create an issue](https://github.com/swift-server/swift-prometheus/issues/new). 
+Or, if you want to implement it yourself, [fork this repo](https://github.com/swift-server/swift-prometheus/fork) and submit a PR!
 
-If you find a bug or have issues, please [create an issue](https://github.com/swift-server-community/SwiftPrometheus/issues/new/choose) explaining your problems. Please include as much information as possible, so it's easier for me to reproduce (Framework, OS, Swift version, terminal output, etc.)
+If you find a bug or have issues, please [create an issue](https://github.com/swift-server-community/SwiftPrometheus/issues/new) explaining your problems. Please include as much information as possible, so it's easier for us to reproduce (Framework, OS, Swift version, terminal output, etc.)
+
+[Documentation]: https://swiftpackageindex.com/swift-server/swift-prometheus/documentation/prometheus
+[SSWG-Incubation]: https://www.swift.org/sswg/incubation-process.html
