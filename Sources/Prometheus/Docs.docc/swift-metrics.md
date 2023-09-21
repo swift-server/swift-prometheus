@@ -37,7 +37,7 @@ Next, add the dependencies to your target.
 ### Setting up Prometheus to export to Swift Metrics
 
 At application startup you need to create a ``PrometheusMetricsFactory`` to register it as
-metrics backend for swift-metrics:
+the metrics backend for swift-metrics:
 
 ```swift
 import Metrics
