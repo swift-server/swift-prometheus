@@ -28,12 +28,12 @@ public struct PrometheusMetricsFactory: Sendable {
     public var registry: PrometheusCollectorRegistry
 
     /// The default histogram buckets for a ``TimeHistogram``. If there is no explicit overwrite
-    /// via ``timeHistogramBuckets``, the buckets provided here will be used for any new
+    /// via ``durationHistogramBuckets``, the buckets provided here will be used for any new
     /// Swift Metrics `Timer` type.
-    public var defaultTimeHistogramBuckets: [Duration]
+    public var defaultDurationHistogramBuckets: [Duration]
 
     /// The histogram buckets for a ``TimeHistogram`` per Timer label
-    public var timeHistogramBuckets: [String: [Duration]]
+    public var durationHistogramBuckets: [String: [Duration]]
 
     /// The default histogram buckets for a ``ValueHistogram``. If there is no explicit overwrite
     /// via ``valueHistogramBuckets``, the buckets provided here will be used for any new
@@ -43,15 +43,15 @@ public struct PrometheusMetricsFactory: Sendable {
     /// The histogram buckets for a ``ValueHistogram`` per label
     public var valueHistogramBuckets: [String: [Double]]
 
-    /// A closure to modify the label and dimension names used in the Swift Metrics API. This allows users
+    /// A closure to modify the name and labels used in the Swift Metrics API. This allows users
     /// to overwrite the Metric names in third party packages.
-    public var labelAndDimensionSanitizer: @Sendable (_ label: String, _ dimensions: [(String, String)]) -> (String, [(String, String)])
+    public var nameAndLabelSanitizer: @Sendable (_ name: String, _ labels: [(String, String)]) -> (String, [(String, String)])
 
-    public init(client: PrometheusCollectorRegistry = Self.defaultRegistry) {
-        self.registry = client
+    public init(registry: PrometheusCollectorRegistry = Self.defaultRegistry) {
+        self.registry = registry
 
-        self.timeHistogramBuckets = [:]
-        self.defaultTimeHistogramBuckets = [
+        self.durationHistogramBuckets = [:]
+        self.defaultDurationHistogramBuckets = [
             .milliseconds(5),
             .milliseconds(10),
             .milliseconds(25),
@@ -80,23 +80,23 @@ public struct PrometheusMetricsFactory: Sendable {
             10000,
         ]
 
-        self.labelAndDimensionSanitizer = { ($0, $1) }
+        self.nameAndLabelSanitizer = { ($0, $1) }
     }
 }
 
 extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CoreMetrics.CounterHandler {
-        let (label, dimensions) = self.labelAndDimensionSanitizer(label, dimensions)
+        let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         return self.registry.makeCounter(name: label, labels: dimensions)
     }
 
     public func makeFloatingPointCounter(label: String, dimensions: [(String, String)]) -> FloatingPointCounterHandler {
-        let (label, dimensions) = self.labelAndDimensionSanitizer(label, dimensions)
+        let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         return self.registry.makeCounter(name: label, labels: dimensions)
     }
 
     public func makeRecorder(label: String, dimensions: [(String, String)], aggregate: Bool) -> CoreMetrics.RecorderHandler {
-        let (label, dimensions) = self.labelAndDimensionSanitizer(label, dimensions)
+        let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         if aggregate {
             let buckets = self.valueHistogramBuckets[label] ?? self.defaultValueHistogramBuckets
             return self.registry.makeValueHistogram(name: label, labels: dimensions, buckets: buckets)
@@ -110,8 +110,8 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
     }
 
     public func makeTimer(label: String, dimensions: [(String, String)]) -> CoreMetrics.TimerHandler {
-        let (label, dimensions) = self.labelAndDimensionSanitizer(label, dimensions)
-        let buckets = self.timeHistogramBuckets[label] ?? self.defaultTimeHistogramBuckets
+        let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
+        let buckets = self.durationHistogramBuckets[label] ?? self.defaultDurationHistogramBuckets
         return self.registry.makeDurationHistogram(name: label, labels: dimensions, buckets: buckets)
     }
 
