@@ -45,7 +45,7 @@ public struct PrometheusMetricsFactory: Sendable {
 
     /// A closure to modify the name and labels used in the Swift Metrics API. This allows users
     /// to overwrite the Metric names in third party packages.
-    public var nameAndLabelSanitizer: @Sendable (_ label: String, _ dimensions: [(String, String)]) -> (String, [(String, String)])
+    public var nameAndLabelSanitizer: @Sendable (_ name: String, _ labels: [(String, String)]) -> (String, [(String, String)])
 
     public init(registry: PrometheusCollectorRegistry = Self.defaultRegistry) {
         self.registry = registry
