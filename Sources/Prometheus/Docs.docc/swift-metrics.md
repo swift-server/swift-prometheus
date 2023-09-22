@@ -1,7 +1,7 @@
-# Usage with SwiftMetrics
+# Emit metrics collected by Swift Metrics
 
-In this article you will learn how Swift Prometheus integrates with Swift Metrics and how you can
-use both libraries together.
+Learn how Swift Prometheus integrates with Swift Metrics – an abstract API that is widely used in 
+the swift-server ecosystem.
 
 ## Overview
 
@@ -101,6 +101,11 @@ Metrics.Counter(label: "my_counter") // will show up in Prometheus exports as `c
 
 This can be particularly usefull, if you want to change the names and labels for metrics that are
 generated in a third party library.
+
+> Important: Please note, that all Prometheus metrics with the same name, **must** use the same 
+> label names.
+> Use the ``PrometheusMetricsFactory/nameAndLabelSanitizer`` to ensure this remains true metrics 
+> that are created in third party libraries. See <doc:labels> for more information about this.
 
 ### Defining Buckets for Histograms
 

@@ -9,6 +9,8 @@ values in the Prometheus text format.
 
 ``Prometheus`` integrates with [Swift Metrics](doc:swift-metrics).
 
+For general advice on how to use `Prometheus` make sure to also read the [Prometheus documentation][prometheus-docs].
+
 ## Installation
 
 ``Prometheus`` is available through Swift Package Manager. To include it in your project add the 
@@ -68,6 +70,7 @@ print(String(decoding: buffer, as: Unicode.UTF8.self))
 ### Getting started
 
 - <doc:swift-metrics>
+- <doc:labels>
 - ``PrometheusCollectorRegistry``
 - ``PrometheusMetricsFactory``
 
@@ -79,3 +82,5 @@ print(String(decoding: buffer, as: Unicode.UTF8.self))
 - ``Histogram``
 - ``DurationHistogram``
 - ``ValueHistogram``
+
+[prometheus-docs]: https://prometheus.io/docs/introduction/overview/
