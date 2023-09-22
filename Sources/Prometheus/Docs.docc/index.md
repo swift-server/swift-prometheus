@@ -52,7 +52,7 @@ myGauge.increment()
 myGauge.decrement()
 ```
 
-Lastly, you can use your ``PrometheusCollectorRegistry`` to generate a Prometheus export as in the 
+Lastly, you can use your ``PrometheusCollectorRegistry`` to generate a Prometheus export in the 
 text representation:
 
 ```swift

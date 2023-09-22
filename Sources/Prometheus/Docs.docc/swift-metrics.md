@@ -36,7 +36,7 @@ Next, add the dependencies to your target.
 
 ### Setting up Prometheus to export to Swift Metrics
 
-At application startup you need to create a ``PrometheusMetricsFactory`` to register it as
+At application startup you need to create a ``PrometheusMetricsFactory`` and register it as
 the metrics backend for swift-metrics:
 
 ```swift
@@ -106,8 +106,8 @@ generated in a third party library.
 
 #### Default buckets
 
-Swift Metric ``Timer``s are backed by a Promtheus ``DurationHistogram`` and Swift Metric 
-``Recorder``s, that aggregate are backed by a Prometheus ``ValueHistogram``. As a user, you can 
+Swift Metric ``Timer``s are backed by a Prometheus ``DurationHistogram`` and Swift Metric 
+``Recorder``s that aggregate are backed by a Prometheus ``ValueHistogram``. As a user, you can 
 specify which buckets shall be used within the backing ``Histogram``s.
 
 ```swift
