@@ -7,7 +7,7 @@ Learn how to use Labels in Prometheus, the benefits of doing so, and how to avoi
 Prometheus Collectors have a name and they may have labels. Labels specify the metrics further. For
 example you might have a ``Counter`` with the name `http_responses_total`. You may now add a label
 `code` that specifies the http status response code. This way you are able to query how many http
-responses were send. But you can also filter this by response code.
+responses were sent. But you can also filter this by response code.
 
 Read more about the benefits of using Labels in the [Prometheus best practices documentation][prometheus-use-labels].
 
@@ -42,7 +42,7 @@ default:
 > Important: Please note, that all metrics with the same name, **must** use the same label names. 
 
 Prometheus requires that for the same metric name all labels names must be the same. Swift 
-Prometheus ensures that by crashing, if the label names or the metric type does not match a 
+Prometheus enforces this by crashing if the label names or the metric type does not match a 
 previously registered metric with the same name.
 
 #### Examples:
