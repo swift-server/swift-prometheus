@@ -1,6 +1,6 @@
 # Use Labels in Swift Prometheus
 
-Learn about the benefits and gotchas of using Labels in Prometheus.
+Learn how to use Labels in Prometheus, the benefits of doing so, and how to avoid common mistakes.
 
 ## Overview
 
