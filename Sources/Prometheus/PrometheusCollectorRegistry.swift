@@ -386,8 +386,13 @@ public final class PrometheusCollectorRegistry: Sendable {
     }
 
     // MARK: Destroying Metrics
-
-    public func destroyCounter(_ counter: Counter) {
+    
+    /// Unregisters a ``Counter`` from the ``PrometheusCollectorRegistry``. This means that the provided ``Counter``
+    /// will not be included in future ``emit(into:)`` calls.
+    ///
+    /// - Note: If the provided ``Counter`` is unknown to the registry this function call will be ignored
+    /// - Parameter counter: The ``Counter`` that shall be removed from the registry
+    public func unregisterCounter(_ counter: Counter) {
         self.box.withLockedValue { store in
             switch store[counter.name] {
             case .counter(let storedCounter):
@@ -404,7 +409,12 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
-    public func destroyGauge(_ gauge: Gauge) {
+    /// Unregisters a ``Gauge`` from the ``PrometheusCollectorRegistry``. This means that the provided ``Gauge``
+    /// will not be included in future ``emit(into:)`` calls.
+    ///
+    /// - Note: If the provided ``Gauge`` is unknown to the registry this function call will be ignored
+    /// - Parameter gauge: The ``Gauge`` that shall be removed from the registry
+    public func unregisterGauge(_ gauge: Gauge) {
         self.box.withLockedValue { store in
             switch store[gauge.name] {
             case .gauge(let storedGauge):
@@ -421,7 +431,12 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
-    public func destroyTimeHistogram(_ histogram: DurationHistogram) {
+    /// Unregisters a ``DurationHistogram`` from the ``PrometheusCollectorRegistry``. This means that this ``DurationHistogram``
+    /// will not be included in future ``emit(into:)`` calls.
+    ///
+    /// - Note: If the provided ``DurationHistogram`` is unknown to the registry this function call will be ignored
+    /// - Parameter histogram: The ``DurationHistogram`` that shall be removed from the registry
+    public func unregisterTimeHistogram(_ histogram: DurationHistogram) {
         self.box.withLockedValue { store in
             switch store[histogram.name] {
             case .durationHistogram(let storedHistogram):
@@ -438,7 +453,12 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
-    public func destroyValueHistogram(_ histogram: ValueHistogram) {
+    /// Unregisters a ``ValueHistogram`` from the ``PrometheusCollectorRegistry``. This means that this ``ValueHistogram``
+    /// will not be included in future ``emit(into:)`` calls.
+    ///
+    /// - Note: If the provided ``ValueHistogram`` is unknown to the registry this function call will be ignored
+    /// - Parameter histogram: The ``ValueHistogram`` that shall be removed from the registry
+    public func unregisterValueHistogram(_ histogram: ValueHistogram) {
         self.box.withLockedValue { store in
             switch store[histogram.name] {
             case .valueHistogram(let storedHistogram):

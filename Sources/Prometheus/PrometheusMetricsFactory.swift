@@ -119,22 +119,22 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
         guard let counter = handler as? Counter else {
             return
         }
-        self.registry.destroyCounter(counter)
+        self.registry.unregisterCounter(counter)
     }
 
     public func destroyFloatingPointCounter(_ handler: FloatingPointCounterHandler) {
         guard let counter = handler as? Counter else {
             return
         }
-        self.registry.destroyCounter(counter)
+        self.registry.unregisterCounter(counter)
     }
 
     public func destroyRecorder(_ handler: CoreMetrics.RecorderHandler) {
         switch handler {
         case let gauge as Gauge:
-            self.registry.destroyGauge(gauge)
+            self.registry.unregisterGauge(gauge)
         case let histogram as Histogram<Double>:
-            self.registry.destroyValueHistogram(histogram)
+            self.registry.unregisterValueHistogram(histogram)
         default:
             break
         }
@@ -144,13 +144,13 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
         guard let gauge = handler as? Gauge else {
             return
         }
-        self.registry.destroyGauge(gauge)
+        self.registry.unregisterGauge(gauge)
     }
 
     public func destroyTimer(_ handler: CoreMetrics.TimerHandler) {
         guard let histogram = handler as? Histogram<Duration> else {
             return
         }
-        self.registry.destroyTimeHistogram(histogram)
+        self.registry.unregisterTimeHistogram(histogram)
     }
 }
