@@ -3,7 +3,8 @@
 [![sswg:sandbox](https://img.shields.io/badge/sswg-sandbox-yellow.svg)][SSWG-Incubation]
 [![Documentation](http://img.shields.io/badge/read_the-docs-2196f3.svg)][Documentation]
 
-A prometheus client for Swift supporting counters, gauges and histograms. Swift Prometheus 
+A Swift client for the [Prometheus](https://github.com/prometheus/prometheus) monitoring system,
+supporting counters, gauges and histograms. Swift Prometheus 
 implements the Swift Metrics API.
 
 ## Security
