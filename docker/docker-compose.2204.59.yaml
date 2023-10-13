@@ -6,7 +6,8 @@ services:
     image: prometheus:22.04-5.9
     build:
       args:
-        base_image: "swiftlang/swift:nightly-5.9-jammy"
+        ubuntu_version: "jammy"
+        swift_version: "5.9"
 
   documentation-check:
     image: prometheus:22.04-5.9
@@ -14,8 +15,14 @@ services:
   test:
     image: prometheus:22.04-5.9
     environment:
+      - SWIFT_VERSION=main
       - IMPORT_CHECK_ARG=--explicit-target-dependency-import-check error
       #- SANITIZER_ARG=--sanitize=thread
+
+  update-benchmark-baseline:
+    image: prometheus:22.04-5.9
+    environment:
+      - SWIFT_VERSION=5.9
 
   shell:
     image: prometheus:22.04-5.9

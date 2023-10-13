@@ -18,7 +18,7 @@ import PackageDescription
 let package = Package(
     name: "benchmarks",
     platforms: [
-        .macOS("13"),
+        .macOS("14"),
     ],
     dependencies: [
         .package(path: "../"),
@@ -29,10 +29,12 @@ let package = Package(
             name: "PrometheusBenchmarks",
             dependencies: [
                 .product(name: "Benchmark", package: "package-benchmark"),
-                .product(name: "BenchmarkPlugin", package: "package-benchmark"),
                 .product(name: "Prometheus", package: "swift-prometheus"),
             ],
-            path: "Benchmarks/PrometheusBenchmarks"
+            path: "Benchmarks/PrometheusBenchmarks",
+            plugins: [
+                .plugin(name: "BenchmarkPlugin", package: "package-benchmark"),
+            ]
         ),
     ]
 )

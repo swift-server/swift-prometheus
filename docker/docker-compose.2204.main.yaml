@@ -17,5 +17,8 @@ services:
       - IMPORT_CHECK_ARG=--explicit-target-dependency-import-check error
       #- SANITIZER_ARG=--sanitize=thread
 
+  update-benchmark-baseline:
+    image: prometheus:22.04-main
+
   shell:
     image: prometheus:22.04-main
