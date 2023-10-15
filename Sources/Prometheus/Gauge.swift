@@ -84,7 +84,7 @@ extension Gauge: CoreMetrics.MeterHandler {
     public func set(_ value: Double) {
         self.set(to: value)
     }
-    
+
     public func set(_ value: Int64) {
         self.set(to: Double(value))
     }

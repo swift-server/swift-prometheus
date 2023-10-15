@@ -26,82 +26,82 @@
 //===----------------------------------------------------------------------===//
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif os(Windows)
-import ucrt
-import WinSDK
+    import ucrt
+    import WinSDK
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #elseif canImport(Musl)
-import Musl
+    import Musl
 #else
-#error("The concurrency NIOLock module was unable to identify your C library.")
+    #error("The concurrency NIOLock module was unable to identify your C library.")
 #endif
 
 #if os(Windows)
-@usableFromInline
-typealias LockPrimitive = SRWLOCK
+    @usableFromInline
+    typealias LockPrimitive = SRWLOCK
 #else
-@usableFromInline
-typealias LockPrimitive = pthread_mutex_t
+    @usableFromInline
+    typealias LockPrimitive = pthread_mutex_t
 #endif
 
 @usableFromInline
-enum LockOperations { }
+enum LockOperations {}
 
 extension LockOperations {
     @inlinable
     static func create(_ mutex: UnsafeMutablePointer<LockPrimitive>) {
         mutex.assertValidAlignment()
 
-#if os(Windows)
-        InitializeSRWLock(mutex)
-#else
-        var attr = pthread_mutexattr_t()
-        pthread_mutexattr_init(&attr)
-        debugOnly {
-            pthread_mutexattr_settype(&attr, .init(PTHREAD_MUTEX_ERRORCHECK))
-        }
+        #if os(Windows)
+            InitializeSRWLock(mutex)
+        #else
+            var attr = pthread_mutexattr_t()
+            pthread_mutexattr_init(&attr)
+            debugOnly {
+                pthread_mutexattr_settype(&attr, .init(PTHREAD_MUTEX_ERRORCHECK))
+            }
 
-        let err = pthread_mutex_init(mutex, &attr)
-        precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
-#endif
+            let err = pthread_mutex_init(mutex, &attr)
+            precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
+        #endif
     }
 
     @inlinable
     static func destroy(_ mutex: UnsafeMutablePointer<LockPrimitive>) {
         mutex.assertValidAlignment()
 
-#if os(Windows)
-        // SRWLOCK does not need to be free'd
-#else
-        let err = pthread_mutex_destroy(mutex)
-        precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
-#endif
+        #if os(Windows)
+            // SRWLOCK does not need to be free'd
+        #else
+            let err = pthread_mutex_destroy(mutex)
+            precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
+        #endif
     }
 
     @inlinable
     static func lock(_ mutex: UnsafeMutablePointer<LockPrimitive>) {
         mutex.assertValidAlignment()
 
-#if os(Windows)
-        AcquireSRWLockExclusive(mutex)
-#else
-        let err = pthread_mutex_lock(mutex)
-        precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
-#endif
+        #if os(Windows)
+            AcquireSRWLockExclusive(mutex)
+        #else
+            let err = pthread_mutex_lock(mutex)
+            precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
+        #endif
     }
 
     @inlinable
     static func unlock(_ mutex: UnsafeMutablePointer<LockPrimitive>) {
         mutex.assertValidAlignment()
 
-#if os(Windows)
-        ReleaseSRWLockExclusive(mutex)
-#else
-        let err = pthread_mutex_unlock(mutex)
-        precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
-#endif
+        #if os(Windows)
+            ReleaseSRWLockExclusive(mutex)
+        #else
+            let err = pthread_mutex_unlock(mutex)
+            precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
+        #endif
     }
 }
 
@@ -188,7 +188,7 @@ final class LockStorage<Value>: ManagedBuffer<Value, LockPrimitive> {
     }
 }
 
-extension LockStorage: @unchecked Sendable { }
+extension LockStorage: @unchecked Sendable {}
 
 /// A threading lock based on `libpthread` instead of `libdispatch`.
 ///
@@ -251,7 +251,7 @@ extension NIOLock {
     }
 
     @inlinable
-    func withLockVoid(_ body: () throws -> Void) rethrows -> Void {
+    func withLockVoid(_ body: () throws -> Void) rethrows {
         try self.withLock(body)
     }
 }
@@ -272,6 +272,9 @@ extension UnsafeMutablePointer {
 /// https://forums.swift.org/t/support-debug-only-code/11037 for a discussion.
 @inlinable
 internal func debugOnly(_ body: () -> Void) {
-    assert({ body(); return true }())
+    assert(
+        {
+            body()
+            return true
+        }())
 }
-
