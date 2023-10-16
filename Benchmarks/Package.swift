@@ -18,7 +18,7 @@ import PackageDescription
 let package = Package(
     name: "benchmarks",
     platforms: [
-        .macOS("14"),
+        .macOS(.v13),
     ],
     dependencies: [
         .package(path: "../"),
