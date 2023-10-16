@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-import XCTest
 import Prometheus
+import XCTest
 
 final class PrometheusCollectorRegistryTests: XCTestCase {
     func testAskingForTheSameCounterReturnsTheSameCounter() {
@@ -27,7 +27,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo counter
             foo 3
 
@@ -46,7 +48,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo counter
             foo{bar="baz"} 3
 
@@ -71,7 +75,6 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
         XCTAssert(output.contains(#"foo{bar="xyz"} 2\#n"#))
     }
 
-
     func testAskingForTheSameGaugeReturnsTheSameGauge() {
         let client = PrometheusCollectorRegistry()
         let gauge1 = client.makeGauge(name: "foo")
@@ -84,7 +87,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo gauge
             foo 3.0
 
@@ -104,14 +109,15 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo gauge
             foo{bar="baz"} 3.0
 
             """
         )
     }
-
 
     func testAskingForTheSameTimeHistogramReturnsTheSameTimeHistogram() {
         let client = PrometheusCollectorRegistry()
@@ -124,7 +130,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{le="1.0"} 0
             foo_bucket{le="2.0"} 1
@@ -148,7 +156,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",le="1.0"} 0
             foo_bucket{bar="baz",le="2.0"} 1
@@ -161,7 +171,6 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
         )
     }
 
-
     func testAskingForTheSameValueHistogramReturnsTheSameTimeHistogram() {
         let client = PrometheusCollectorRegistry()
         let histogram1 = client.makeValueHistogram(name: "foo", buckets: [1, 2, 3])
@@ -173,7 +182,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{le="1.0"} 0
             foo_bucket{le="2.0"} 1
@@ -197,7 +208,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",le="1.0"} 0
             foo_bucket{bar="baz",le="2.0"} 1

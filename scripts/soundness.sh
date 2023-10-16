@@ -38,7 +38,7 @@ fi
 printf "\033[0;32mokay.\033[0m\n"
 
 printf "=> Checking format... "
-output=$(swift-format lint --configuration .swift-format --recursive Sources 2>&1)  # Capture the command's output
+output=$(swift-format lint --configuration .swift-format --recursive Sources Tests 2>&1)  # Capture the command's output
 if [ -n "$output" ]; then
     printf "\033[0;31mformatting issues!\033[0m\n"
     exit 1

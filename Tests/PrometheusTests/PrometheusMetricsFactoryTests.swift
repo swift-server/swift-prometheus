@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-import XCTest
 import Prometheus
+import XCTest
 
 final class PrometheusMetricsFactoryTests: XCTestCase {
     func testMakeTimers() {
@@ -52,7 +52,9 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
 
         var buffer = [UInt8]()
         registry.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo counter
             foo{bar="baz"} 3.5
 
@@ -62,7 +64,9 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         factory.destroyCounter(maybeCounter)
         buffer.removeAll(keepingCapacity: true)
         registry.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo counter
 
             """
@@ -81,7 +85,9 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
 
         var buffer = [UInt8]()
         registry.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo gauge
             foo{bar="baz"} -6.0
 
@@ -92,7 +98,9 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         maybeGauge.set(12.45)
         buffer.removeAll(keepingCapacity: true)
         registry.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo gauge
             foo{bar="baz"} 12.45
 
@@ -100,10 +108,12 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         )
 
         // set to int value
-        maybeGauge.set(Int64(42)) // needs explicit cast... otherwise ambigious
+        maybeGauge.set(Int64(42))  // needs explicit cast... otherwise ambigious
         buffer.removeAll(keepingCapacity: true)
         registry.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo gauge
             foo{bar="baz"} 42.0
 
@@ -113,7 +123,9 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         factory.destroyMeter(maybeGauge)
         buffer.removeAll(keepingCapacity: true)
         registry.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo gauge
 
             """
