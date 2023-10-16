@@ -26,24 +26,24 @@
 //===----------------------------------------------------------------------===//
 
 #if canImport(Darwin)
-    import Darwin
+import Darwin
 #elseif os(Windows)
-    import ucrt
-    import WinSDK
+import ucrt
+import WinSDK
 #elseif canImport(Glibc)
-    import Glibc
+import Glibc
 #elseif canImport(Musl)
-    import Musl
+import Musl
 #else
-    #error("The concurrency NIOLock module was unable to identify your C library.")
+#error("The concurrency NIOLock module was unable to identify your C library.")
 #endif
 
 #if os(Windows)
-    @usableFromInline
-    typealias LockPrimitive = SRWLOCK
+@usableFromInline
+typealias LockPrimitive = SRWLOCK
 #else
-    @usableFromInline
-    typealias LockPrimitive = pthread_mutex_t
+@usableFromInline
+typealias LockPrimitive = pthread_mutex_t
 #endif
 
 @usableFromInline
@@ -55,16 +55,16 @@ extension LockOperations {
         mutex.assertValidAlignment()
 
         #if os(Windows)
-            InitializeSRWLock(mutex)
+        InitializeSRWLock(mutex)
         #else
-            var attr = pthread_mutexattr_t()
-            pthread_mutexattr_init(&attr)
-            debugOnly {
-                pthread_mutexattr_settype(&attr, .init(PTHREAD_MUTEX_ERRORCHECK))
-            }
+        var attr = pthread_mutexattr_t()
+        pthread_mutexattr_init(&attr)
+        debugOnly {
+            pthread_mutexattr_settype(&attr, .init(PTHREAD_MUTEX_ERRORCHECK))
+        }
 
-            let err = pthread_mutex_init(mutex, &attr)
-            precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
+        let err = pthread_mutex_init(mutex, &attr)
+        precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
         #endif
     }
 
@@ -73,10 +73,10 @@ extension LockOperations {
         mutex.assertValidAlignment()
 
         #if os(Windows)
-            // SRWLOCK does not need to be free'd
+        // SRWLOCK does not need to be free'd
         #else
-            let err = pthread_mutex_destroy(mutex)
-            precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
+        let err = pthread_mutex_destroy(mutex)
+        precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
         #endif
     }
 
@@ -85,10 +85,10 @@ extension LockOperations {
         mutex.assertValidAlignment()
 
         #if os(Windows)
-            AcquireSRWLockExclusive(mutex)
+        AcquireSRWLockExclusive(mutex)
         #else
-            let err = pthread_mutex_lock(mutex)
-            precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
+        let err = pthread_mutex_lock(mutex)
+        precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
         #endif
     }
 
@@ -97,10 +97,10 @@ extension LockOperations {
         mutex.assertValidAlignment()
 
         #if os(Windows)
-            ReleaseSRWLockExclusive(mutex)
+        ReleaseSRWLockExclusive(mutex)
         #else
-            let err = pthread_mutex_unlock(mutex)
-            precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
+        let err = pthread_mutex_unlock(mutex)
+        precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
         #endif
     }
 }
@@ -276,5 +276,6 @@ internal func debugOnly(_ body: () -> Void) {
         {
             body()
             return true
-        }())
+        }()
+    )
 }

@@ -68,7 +68,11 @@ public final class Counter: Sendable {
         while true {
             let bits = self.floatAtomic.load(ordering: .relaxed)
             let value = Double(bitPattern: bits) + amount
-            let (exchanged, _) = self.floatAtomic.compareExchange(expected: bits, desired: value.bitPattern, ordering: .relaxed)
+            let (exchanged, _) = self.floatAtomic.compareExchange(
+                expected: bits,
+                desired: value.bitPattern,
+                ordering: .relaxed
+            )
             if exchanged {
                 break
             }

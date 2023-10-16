@@ -28,7 +28,8 @@ final class GaugeTests: XCTestCase {
             # TYPE foo gauge
             foo 0.0
 
-            """)
+            """
+        )
 
         // Set to 1
         buffer.removeAll(keepingCapacity: true)
@@ -40,7 +41,8 @@ final class GaugeTests: XCTestCase {
             # TYPE foo gauge
             foo 1.0
 
-            """)
+            """
+        )
 
         // Set to 2
         buffer.removeAll(keepingCapacity: true)
@@ -52,7 +54,8 @@ final class GaugeTests: XCTestCase {
             # TYPE foo gauge
             foo 2.0
 
-            """)
+            """
+        )
 
         // Set to 4
         buffer.removeAll(keepingCapacity: true)
@@ -64,7 +67,8 @@ final class GaugeTests: XCTestCase {
             # TYPE foo gauge
             foo 4.0
 
-            """)
+            """
+        )
 
         // Reset
         buffer.removeAll(keepingCapacity: true)
@@ -76,7 +80,8 @@ final class GaugeTests: XCTestCase {
             # TYPE foo gauge
             foo 0.0
 
-            """)
+            """
+        )
     }
 
     func testGaugeWithLabels() {
@@ -91,7 +96,8 @@ final class GaugeTests: XCTestCase {
             # TYPE foo gauge
             foo{bar="baz"} 0.0
 
-            """)
+            """
+        )
 
         // Set to 1
         buffer.removeAll(keepingCapacity: true)
@@ -103,7 +109,8 @@ final class GaugeTests: XCTestCase {
             # TYPE foo gauge
             foo{bar="baz"} 1.0
 
-            """)
+            """
+        )
 
         // Set to 2
         buffer.removeAll(keepingCapacity: true)
@@ -115,7 +122,8 @@ final class GaugeTests: XCTestCase {
             # TYPE foo gauge
             foo{bar="baz"} 2.0
 
-            """)
+            """
+        )
 
         // Set to 4
         buffer.removeAll(keepingCapacity: true)
@@ -127,7 +135,8 @@ final class GaugeTests: XCTestCase {
             # TYPE foo gauge
             foo{bar="baz"} 4.0
 
-            """)
+            """
+        )
 
         // Reset
         buffer.removeAll(keepingCapacity: true)
@@ -139,7 +148,8 @@ final class GaugeTests: XCTestCase {
             # TYPE foo gauge
             foo{bar="baz"} 0.0
 
-            """)
+            """
+        )
     }
 
     func testGaugeSetToFromMultipleTasks() async {

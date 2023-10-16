@@ -28,7 +28,8 @@ final class CounterTests: XCTestCase {
             # TYPE foo counter
             foo 0
 
-            """)
+            """
+        )
 
         // Increment by 1
         buffer.removeAll(keepingCapacity: true)
@@ -53,7 +54,8 @@ final class CounterTests: XCTestCase {
             # TYPE foo counter
             foo 2
 
-            """)
+            """
+        )
 
         // Increment by 2
         buffer.removeAll(keepingCapacity: true)
@@ -65,7 +67,8 @@ final class CounterTests: XCTestCase {
             # TYPE foo counter
             foo 4
 
-            """)
+            """
+        )
 
         // Increment by 2.5
         buffer.removeAll(keepingCapacity: true)
@@ -77,7 +80,8 @@ final class CounterTests: XCTestCase {
             # TYPE foo counter
             foo 6.5
 
-            """)
+            """
+        )
 
         // Reset
         buffer.removeAll(keepingCapacity: true)
@@ -89,7 +93,8 @@ final class CounterTests: XCTestCase {
             # TYPE foo counter
             foo 0
 
-            """)
+            """
+        )
     }
 
     func testCounterWithLabels() {
@@ -104,7 +109,8 @@ final class CounterTests: XCTestCase {
             # TYPE foo counter
             foo{bar="baz"} 0
 
-            """)
+            """
+        )
 
         // Increment by 1
         buffer.removeAll(keepingCapacity: true)
@@ -116,7 +122,8 @@ final class CounterTests: XCTestCase {
             # TYPE foo counter
             foo{bar="baz"} 1
 
-            """)
+            """
+        )
 
         // Increment by 1
         buffer.removeAll(keepingCapacity: true)
@@ -128,7 +135,8 @@ final class CounterTests: XCTestCase {
             # TYPE foo counter
             foo{bar="baz"} 2
 
-            """)
+            """
+        )
 
         // Increment by 2
         buffer.removeAll(keepingCapacity: true)
@@ -140,7 +148,8 @@ final class CounterTests: XCTestCase {
             # TYPE foo counter
             foo{bar="baz"} 4
 
-            """)
+            """
+        )
 
         // Reset
         buffer.removeAll(keepingCapacity: true)
@@ -152,6 +161,7 @@ final class CounterTests: XCTestCase {
             # TYPE foo counter
             foo{bar="baz"} 0
 
-            """)
+            """
+        )
     }
 }

@@ -54,7 +54,8 @@ final class HistogramTests: XCTestCase {
         XCTAssertEqual(
             String(
                 decoding: buffer,
-                as: Unicode.UTF8.self),
+                as: Unicode.UTF8.self
+            ),
             """
             # TYPE foo histogram
             foo_bucket{le="0.1"} 0
