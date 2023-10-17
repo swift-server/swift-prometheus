@@ -27,6 +27,7 @@ RUN mkdir -p $HOME/.tools
 RUN echo 'export PATH="$HOME/.tools:$PATH"' >> $HOME/.profile
 
 # swift-format (until part of the toolchain)
-RUN git clone --branch release/$swift_version --depth 1 https://github.com/apple/swift-format $HOME/.tools/swift-format
-RUN cd $HOME/.tools/swift-format && swift build -c release
-RUN ln -s $HOME/.tools/swift-format/.build/release/swift-format $HOME/.tools/swift-format
+RUN mkdir -p $HOME/.deps
+RUN git clone --branch release/$swift_version --depth 1 https://github.com/apple/swift-format $HOME/.deps/swift-format
+RUN cd $HOME/.deps/swift-format && swift build -c release
+RUN ln -s $HOME/.deps/swift-format/.build/release/swift-format $HOME/.tools
