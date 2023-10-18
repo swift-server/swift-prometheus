@@ -12,23 +12,29 @@
 //
 //===----------------------------------------------------------------------===//
 
-import XCTest
 import Prometheus
+import XCTest
 
 final class HistogramTests: XCTestCase {
     func testHistogramWithoutDimensions() {
         let client = PrometheusCollectorRegistry()
-        let histogram = client.makeDurationHistogram(name: "foo", labels: [], buckets: [
-            .milliseconds(100),
-            .milliseconds(250),
-            .milliseconds(500),
-            .seconds(1),
-        ])
+        let histogram = client.makeDurationHistogram(
+            name: "foo",
+            labels: [],
+            buckets: [
+                .milliseconds(100),
+                .milliseconds(250),
+                .milliseconds(500),
+                .seconds(1),
+            ]
+        )
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
 
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{le="0.1"} 0
             foo_bucket{le="0.25"} 0
@@ -43,9 +49,14 @@ final class HistogramTests: XCTestCase {
 
         // Record 400ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(400_000_000) // 400ms
+        histogram.recordNanoseconds(400_000_000)  // 400ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(
+                decoding: buffer,
+                as: Unicode.UTF8.self
+            ),
+            """
             # TYPE foo histogram
             foo_bucket{le="0.1"} 0
             foo_bucket{le="0.25"} 0
@@ -60,9 +71,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 600ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(600_000_000) // 600ms
+        histogram.recordNanoseconds(600_000_000)  // 600ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{le="0.1"} 0
             foo_bucket{le="0.25"} 0
@@ -77,9 +90,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 1200ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(1_200_000_000) // 1200ms
+        histogram.recordNanoseconds(1_200_000_000)  // 1200ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{le="0.1"} 0
             foo_bucket{le="0.25"} 0
@@ -94,9 +109,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 80ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(80_000_000) // 80ms
+        histogram.recordNanoseconds(80_000_000)  // 80ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{le="0.1"} 1
             foo_bucket{le="0.25"} 1
@@ -112,16 +129,22 @@ final class HistogramTests: XCTestCase {
 
     func testHistogramWithOneDimension() {
         let client = PrometheusCollectorRegistry()
-        let histogram = client.makeDurationHistogram(name: "foo", labels: [("bar", "baz")], buckets: [
-            .milliseconds(100),
-            .milliseconds(250),
-            .milliseconds(500),
-            .seconds(1),
-        ])
+        let histogram = client.makeDurationHistogram(
+            name: "foo",
+            labels: [("bar", "baz")],
+            buckets: [
+                .milliseconds(100),
+                .milliseconds(250),
+                .milliseconds(500),
+                .seconds(1),
+            ]
+        )
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",le="0.1"} 0
             foo_bucket{bar="baz",le="0.25"} 0
@@ -136,9 +159,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 400ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(400_000_000) // 400ms
+        histogram.recordNanoseconds(400_000_000)  // 400ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",le="0.1"} 0
             foo_bucket{bar="baz",le="0.25"} 0
@@ -153,9 +178,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 600ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(600_000_000) // 600ms
+        histogram.recordNanoseconds(600_000_000)  // 600ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",le="0.1"} 0
             foo_bucket{bar="baz",le="0.25"} 0
@@ -170,9 +197,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 1200ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(1_200_000_000) // 1200ms
+        histogram.recordNanoseconds(1_200_000_000)  // 1200ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",le="0.1"} 0
             foo_bucket{bar="baz",le="0.25"} 0
@@ -187,9 +216,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 80ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(80_000_000) // 80ms
+        histogram.recordNanoseconds(80_000_000)  // 80ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",le="0.1"} 1
             foo_bucket{bar="baz",le="0.25"} 1
@@ -205,16 +236,22 @@ final class HistogramTests: XCTestCase {
 
     func testHistogramWithTwoDimension() {
         let client = PrometheusCollectorRegistry()
-        let histogram = client.makeDurationHistogram(name: "foo", labels: [("bar", "baz"), ("abc", "xyz")], buckets: [
-            .milliseconds(100),
-            .milliseconds(250),
-            .milliseconds(500),
-            .seconds(1),
-        ])
+        let histogram = client.makeDurationHistogram(
+            name: "foo",
+            labels: [("bar", "baz"), ("abc", "xyz")],
+            buckets: [
+                .milliseconds(100),
+                .milliseconds(250),
+                .milliseconds(500),
+                .seconds(1),
+            ]
+        )
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",abc="xyz",le="0.1"} 0
             foo_bucket{bar="baz",abc="xyz",le="0.25"} 0
@@ -229,9 +266,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 400ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(400_000_000) // 400ms
+        histogram.recordNanoseconds(400_000_000)  // 400ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",abc="xyz",le="0.1"} 0
             foo_bucket{bar="baz",abc="xyz",le="0.25"} 0
@@ -246,9 +285,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 600ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(600_000_000) // 600ms
+        histogram.recordNanoseconds(600_000_000)  // 600ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",abc="xyz",le="0.1"} 0
             foo_bucket{bar="baz",abc="xyz",le="0.25"} 0
@@ -263,9 +304,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 1200ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(1_200_000_000) // 1200ms
+        histogram.recordNanoseconds(1_200_000_000)  // 1200ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",abc="xyz",le="0.1"} 0
             foo_bucket{bar="baz",abc="xyz",le="0.25"} 0
@@ -280,9 +323,11 @@ final class HistogramTests: XCTestCase {
 
         // Record 80ms
         buffer.removeAll(keepingCapacity: true)
-        histogram.recordNanoseconds(80_000_000) // 80ms
+        histogram.recordNanoseconds(80_000_000)  // 80ms
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",abc="xyz",le="0.1"} 1
             foo_bucket{bar="baz",abc="xyz",le="0.25"} 1

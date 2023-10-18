@@ -15,8 +15,8 @@
 import Atomics
 import CoreMetrics
 
-/// A counter is a cumulative metric that represents a single monotonically increasing counter whose value 
-/// can only increase or be ``reset()`` to zero on restart. 
+/// A counter is a cumulative metric that represents a single monotonically increasing
+/// counter whose value can only increase or be ``reset()`` to zero on restart.
 ///
 /// For example, you can use a counter to represent the number of requests served, tasks completed, or errors.
 ///
@@ -68,7 +68,11 @@ public final class Counter: Sendable {
         while true {
             let bits = self.floatAtomic.load(ordering: .relaxed)
             let value = Double(bitPattern: bits) + amount
-            let (exchanged, _) = self.floatAtomic.compareExchange(expected: bits, desired: value.bitPattern, ordering: .relaxed)
+            let (exchanged, _) = self.floatAtomic.compareExchange(
+                expected: bits,
+                desired: value.bitPattern,
+                ordering: .relaxed
+            )
             if exchanged {
                 break
             }

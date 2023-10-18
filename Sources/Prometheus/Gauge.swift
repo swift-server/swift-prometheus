@@ -58,7 +58,11 @@ public final class Gauge: Sendable {
         while true {
             let bits = self.atomic.load(ordering: .relaxed)
             let value = Double(bitPattern: bits) + amount
-            let (exchanged, _) = self.atomic.compareExchange(expected: bits, desired: value.bitPattern, ordering: .relaxed)
+            let (exchanged, _) = self.atomic.compareExchange(
+                expected: bits,
+                desired: value.bitPattern,
+                ordering: .relaxed
+            )
             if exchanged {
                 break
             }
@@ -84,7 +88,7 @@ extension Gauge: CoreMetrics.MeterHandler {
     public func set(_ value: Double) {
         self.set(to: value)
     }
-    
+
     public func set(_ value: Int64) {
         self.set(to: Double(value))
     }

@@ -37,17 +37,14 @@ if git grep --color=never -i "${unacceptable_terms[@]}" > /dev/null; then
 fi
 printf "\033[0;32mokay.\033[0m\n"
 
-#printf "=> Checking format... "
-#FIRST_OUT="$(git status --porcelain)"
-#swiftformat . > /dev/null 2>&1
-#SECOND_OUT="$(git status --porcelain)"
-#if [[ "$FIRST_OUT" != "$SECOND_OUT" ]]; then
-#  printf "\033[0;31mformatting issues!\033[0m\n"
-#  git --no-pager diff
-#  exit 1
-#else
-#  printf "\033[0;32mokay.\033[0m\n"
-#fi
+printf "=> Checking format... "
+output=$(swift-format lint --configuration .swift-format --recursive Sources Tests 2>&1)  # Capture the command's output
+if [ -n "$output" ]; then
+    printf "\033[0;31mformatting issues!\033[0m\n"
+    exit 1
+else
+    printf "\033[0;32mokay.\033[0m\n"
+fi
 
 printf "=> Checking license headers\n"
 tmp=$(mktemp /tmp/.prometheus-soundness_XXXXXX)

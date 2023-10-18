@@ -1,4 +1,4 @@
-ARG swift_version=5.7
+ARG swift_version=5.8
 ARG ubuntu_version=jammy
 ARG base_image=swift:$swift_version-$ubuntu_version
 FROM $base_image
@@ -26,9 +26,8 @@ RUN if [ "${ubuntu_version}" = "focal" ] ; then gem install jazzy; fi
 RUN mkdir -p $HOME/.tools
 RUN echo 'export PATH="$HOME/.tools:$PATH"' >> $HOME/.profile
 
-# swiftformat (until part of the toolchain)
-
-ARG swiftformat_version=0.48.8
-RUN git clone --branch $swiftformat_version --depth 1 https://github.com/nicklockwood/SwiftFormat $HOME/.tools/swift-format
-RUN cd $HOME/.tools/swift-format && swift build -c release
-RUN ln -s $HOME/.tools/swift-format/.build/release/swiftformat $HOME/.tools/swiftformat
+# swift-format (until part of the toolchain)
+RUN mkdir -p $HOME/.deps
+RUN git clone --branch release/$swift_version --depth 1 https://github.com/apple/swift-format $HOME/.deps/swift-format
+RUN cd $HOME/.deps/swift-format && swift build -c release
+RUN ln -s $HOME/.deps/swift-format/.build/release/swift-format $HOME/.tools

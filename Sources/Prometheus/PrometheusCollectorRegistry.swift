@@ -74,21 +74,21 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeCounter(name: String) -> Counter {
         self.box.withLockedValue { store -> Counter in
-            if let value = store[name] {
-                guard case .counter(let counter) = value else {
-                    fatalError("""
-                        Could not make Counter with name: \(name), since another metric type
-                        already exists for the same name.
-                        """
-                    )
-                }
-
-                return counter
-            } else {
+            guard let value = store[name] else {
                 let counter = Counter(name: name, labels: [])
                 store[name] = .counter(counter)
                 return counter
             }
+            guard case .counter(let counter) = value else {
+                fatalError(
+                    """
+                    Could not make Counter with name: \(name), since another metric type
+                    already exists for the same name.
+                    """
+                )
+            }
+
+            return counter
         }
     }
 
@@ -107,41 +107,42 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
 
         return self.box.withLockedValue { store -> Counter in
-            if let value = store[name] {
-                guard case .counterWithLabels(let labelNames, var dimensionLookup) = value else {
-                    fatalError("""
-                        Could not make Counter with name: \(name) and labels: \(labels), since another
-                        metric type already exists for the same name.
-                        """
-                    )
-                }
-
-                let key = LabelsKey(labels)
-                if let counter = dimensionLookup[key] {
-                    return counter
-                }
-
-                // check if all labels match the already existing ones.
-                if labelNames != labels.allLabelNames {
-                    fatalError("""
-                        Could not make Counter with name: \(name) and labels: \(labels), since the
-                        label names don't match the label names of previously registered Counters with
-                        the same name.
-                        """
-                    )
-                }
-
-                let counter = Counter(name: name, labels: labels)
-                dimensionLookup[key] = counter
-                store[name] = .counterWithLabels(labelNames, dimensionLookup)
-                return counter
-            } else {
+            guard let value = store[name] else {
                 let labelNames = labels.allLabelNames
                 let counter = Counter(name: name, labels: labels)
 
                 store[name] = .counterWithLabels(labelNames, [LabelsKey(labels): counter])
                 return counter
             }
+            guard case .counterWithLabels(let labelNames, var dimensionLookup) = value else {
+                fatalError(
+                    """
+                    Could not make Counter with name: \(name) and labels: \(labels), since another
+                    metric type already exists for the same name.
+                    """
+                )
+            }
+
+            let key = LabelsKey(labels)
+            if let counter = dimensionLookup[key] {
+                return counter
+            }
+
+            // check if all labels match the already existing ones.
+            if labelNames != labels.allLabelNames {
+                fatalError(
+                    """
+                    Could not make Counter with name: \(name) and labels: \(labels), since the
+                    label names don't match the label names of previously registered Counters with
+                    the same name.
+                    """
+                )
+            }
+
+            let counter = Counter(name: name, labels: labels)
+            dimensionLookup[key] = counter
+            store[name] = .counterWithLabels(labelNames, dimensionLookup)
+            return counter
         }
     }
 
@@ -154,21 +155,21 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeGauge(name: String) -> Gauge {
         self.box.withLockedValue { store -> Gauge in
-            if let value = store[name] {
-                guard case .gauge(let gauge) = value else {
-                    fatalError("""
-                        Could not make Gauge with name: \(name), since another metric type already
-                        exists for the same name.
-                        """
-                    )
-                }
-
-                return gauge
-            } else {
+            guard let value = store[name] else {
                 let gauge = Gauge(name: name, labels: [])
                 store[name] = .gauge(gauge)
                 return gauge
             }
+            guard case .gauge(let gauge) = value else {
+                fatalError(
+                    """
+                    Could not make Gauge with name: \(name), since another metric type already
+                    exists for the same name.
+                    """
+                )
+            }
+
+            return gauge
         }
     }
 
@@ -187,41 +188,42 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
 
         return self.box.withLockedValue { store -> Gauge in
-            if let value = store[name] {
-                guard case .gaugeWithLabels(let labelNames, var dimensionLookup) = value else {
-                    fatalError("""
-                        Could not make Gauge with name: \(name) and labels: \(labels), since another
-                        metric type already exists for the same name.
-                        """
-                    )
-                }
-
-                let key = LabelsKey(labels)
-                if let gauge = dimensionLookup[key] {
-                    return gauge
-                }
-
-                // check if all labels match the already existing ones.
-                if labelNames != labels.allLabelNames {
-                    fatalError("""
-                        Could not make Gauge with name: \(name) and labels: \(labels), since the
-                        label names don't match the label names of previously registered Gauges with
-                        the same name.
-                        """
-                    )
-                }
-
-                let gauge = Gauge(name: name, labels: labels)
-                dimensionLookup[key] = gauge
-                store[name] = .gaugeWithLabels(labelNames, dimensionLookup)
-                return gauge
-            } else {
+            guard let value = store[name] else {
                 let labelNames = labels.allLabelNames
                 let gauge = Gauge(name: name, labels: labels)
 
                 store[name] = .gaugeWithLabels(labelNames, [LabelsKey(labels): gauge])
                 return gauge
             }
+            guard case .gaugeWithLabels(let labelNames, var dimensionLookup) = value else {
+                fatalError(
+                    """
+                    Could not make Gauge with name: \(name) and labels: \(labels), since another
+                    metric type already exists for the same name.
+                    """
+                )
+            }
+
+            let key = LabelsKey(labels)
+            if let gauge = dimensionLookup[key] {
+                return gauge
+            }
+
+            // check if all labels match the already existing ones.
+            if labelNames != labels.allLabelNames {
+                fatalError(
+                    """
+                    Could not make Gauge with name: \(name) and labels: \(labels), since the
+                    label names don't match the label names of previously registered Gauges with
+                    the same name.
+                    """
+                )
+            }
+
+            let gauge = Gauge(name: name, labels: labels)
+            dimensionLookup[key] = gauge
+            store[name] = .gaugeWithLabels(labelNames, dimensionLookup)
+            return gauge
         }
     }
 
@@ -235,21 +237,21 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Returns: A ``DurationHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeDurationHistogram(name: String, buckets: [Duration]) -> DurationHistogram {
         self.box.withLockedValue { store -> DurationHistogram in
-            if let value = store[name] {
-                guard case .durationHistogram(let histogram) = value else {
-                    fatalError("""
-                        Could not make DurationHistogram with name: \(name), since another
-                        metric type already exists for the same name.
-                        """
-                    )
-                }
-
-                return histogram
-            } else {
+            guard let value = store[name] else {
                 let gauge = DurationHistogram(name: name, labels: [], buckets: buckets)
                 store[name] = .durationHistogram(gauge)
                 return gauge
             }
+            guard case .durationHistogram(let histogram) = value else {
+                fatalError(
+                    """
+                    Could not make DurationHistogram with name: \(name), since another
+                    metric type already exists for the same name.
+                    """
+                )
+            }
+
+            return histogram
         }
     }
 
@@ -263,57 +265,64 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///                     what’s actually being measured in a Prometheus metric.
     /// - Parameter buckets: Define the buckets that shall be used within the ``DurationHistogram``
     /// - Returns: A ``DurationHistogram`` that is registered with this ``PrometheusCollectorRegistry``
-    public func makeDurationHistogram(name: String, labels: [(String, String)], buckets: [Duration]) -> DurationHistogram {
+    public func makeDurationHistogram(
+        name: String,
+        labels: [(String, String)],
+        buckets: [Duration]
+    ) -> DurationHistogram {
         guard !labels.isEmpty else {
             return self.makeDurationHistogram(name: name, buckets: buckets)
         }
 
         return self.box.withLockedValue { store -> DurationHistogram in
-            if let value = store[name] {
-                guard case .durationHistogramWithLabels(let labelNames, var dimensionLookup, let storedBuckets) = value else {
-                    fatalError("""
-                        Could not make DurationHistogram with name: \(name) and labels: \(labels), since another
-                        metric type already exists for the same name.
-                        """
-                    )
-                }
-
-                let key = LabelsKey(labels)
-                if let histogram = dimensionLookup[key] {
-                    return histogram
-                }
-
-                // check if all labels match the already existing ones.
-                if labelNames != labels.allLabelNames {
-                    fatalError("""
-                        Could not make DurationHistogram with name: \(name) and labels: \(labels), since the
-                        label names don't match the label names of previously registered Gauges with
-                        the same name.
-                        """
-                    )
-                }
-                if storedBuckets != buckets {
-                    fatalError("""
-                        Could not make DurationHistogram with name: \(name) and labels: \(labels), since the
-                        buckets don't match the buckets of previously registered TimeHistograms with
-                        the same name.
-                        """
-                    )
-                }
-
-                precondition(storedBuckets == buckets)
-
-                let histogram = DurationHistogram(name: name, labels: labels, buckets: storedBuckets)
-                dimensionLookup[key] = histogram
-                store[name] = .durationHistogramWithLabels(labelNames, dimensionLookup, storedBuckets)
-                return histogram
-            } else {
+            guard let value = store[name] else {
                 let labelNames = labels.allLabelNames
                 let histogram = DurationHistogram(name: name, labels: labels, buckets: buckets)
 
                 store[name] = .durationHistogramWithLabels(labelNames, [LabelsKey(labels): histogram], buckets)
                 return histogram
             }
+            guard case .durationHistogramWithLabels(let labelNames, var dimensionLookup, let storedBuckets) = value
+            else {
+                fatalError(
+                    """
+                    Could not make DurationHistogram with name: \(name) and labels: \(labels), since another
+                    metric type already exists for the same name.
+                    """
+                )
+            }
+
+            let key = LabelsKey(labels)
+            if let histogram = dimensionLookup[key] {
+                return histogram
+            }
+
+            // check if all labels match the already existing ones.
+            if labelNames != labels.allLabelNames {
+                fatalError(
+                    """
+                    Could not make DurationHistogram with name: \(name) and labels: \(labels), since the
+                    label names don't match the label names of previously registered Gauges with
+                    the same name.
+                    """
+                )
+            }
+            if storedBuckets != buckets {
+                fatalError(
+                    """
+                    Could not make DurationHistogram with name: \(name) and labels: \(labels), since the
+                    buckets don't match the buckets of previously registered TimeHistograms with
+                    the same name.
+                    """
+                )
+            }
+
+            precondition(storedBuckets == buckets)
+
+            let histogram = DurationHistogram(name: name, labels: labels, buckets: storedBuckets)
+            dimensionLookup[key] = histogram
+            store[name] = .durationHistogramWithLabels(labelNames, dimensionLookup, storedBuckets)
+            return histogram
         }
     }
 
@@ -327,17 +336,16 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Returns: A ``ValueHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeValueHistogram(name: String, buckets: [Double]) -> ValueHistogram {
         self.box.withLockedValue { store -> ValueHistogram in
-            if let value = store[name] {
-                guard case .valueHistogram(let histogram) = value else {
-                    fatalError()
-                }
-
-                return histogram
-            } else {
+            guard let value = store[name] else {
                 let gauge = ValueHistogram(name: name, labels: [], buckets: buckets)
                 store[name] = .valueHistogram(gauge)
                 return gauge
             }
+            guard case .valueHistogram(let histogram) = value else {
+                fatalError()
+            }
+
+            return histogram
         }
     }
 
@@ -357,36 +365,35 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
 
         return self.box.withLockedValue { store -> ValueHistogram in
-            if let value = store[name] {
-                guard case .valueHistogramWithLabels(let labelNames, var dimensionLookup, let storedBuckets) = value else {
-                    fatalError()
-                }
-
-                let key = LabelsKey(labels)
-                if let histogram = dimensionLookup[key] {
-                    return histogram
-                }
-
-                // check if all labels match the already existing ones.
-                precondition(labelNames == labels.allLabelNames)
-                precondition(storedBuckets == buckets)
-
-                let histogram = ValueHistogram(name: name, labels: labels, buckets: storedBuckets)
-                dimensionLookup[key] = histogram
-                store[name] = .valueHistogramWithLabels(labelNames, dimensionLookup, storedBuckets)
-                return histogram
-            } else {
+            guard let value = store[name] else {
                 let labelNames = labels.allLabelNames
                 let histogram = ValueHistogram(name: name, labels: labels, buckets: buckets)
 
                 store[name] = .valueHistogramWithLabels(labelNames, [LabelsKey(labels): histogram], buckets)
                 return histogram
             }
+            guard case .valueHistogramWithLabels(let labelNames, var dimensionLookup, let storedBuckets) = value else {
+                fatalError()
+            }
+
+            let key = LabelsKey(labels)
+            if let histogram = dimensionLookup[key] {
+                return histogram
+            }
+
+            // check if all labels match the already existing ones.
+            precondition(labelNames == labels.allLabelNames)
+            precondition(storedBuckets == buckets)
+
+            let histogram = ValueHistogram(name: name, labels: labels, buckets: storedBuckets)
+            dimensionLookup[key] = histogram
+            store[name] = .valueHistogramWithLabels(labelNames, dimensionLookup, storedBuckets)
+            return histogram
         }
     }
 
     // MARK: Destroying Metrics
-    
+
     /// Unregisters a ``Counter`` from the ``PrometheusCollectorRegistry``. This means that the provided ``Counter``
     /// will not be included in future ``emit(into:)`` calls.
     ///
@@ -526,7 +533,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     }
 }
 
-extension Array<(String, String)> {
+extension [(String, String)] {
     fileprivate var allLabelNames: [String] {
         var result = [String]()
         result.reserveCapacity(self.count)
@@ -539,7 +546,7 @@ extension Array<(String, String)> {
     }
 }
 
-extension Array<UInt8> {
+extension [UInt8] {
     fileprivate mutating func addTypeLine(label: String, type: String) {
         self.append(contentsOf: #"# TYPE "#.utf8)
         self.append(contentsOf: label.utf8)
