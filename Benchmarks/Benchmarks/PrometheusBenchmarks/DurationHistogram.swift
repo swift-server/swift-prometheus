@@ -17,13 +17,16 @@ import Benchmark
 import Prometheus
 
 public func runDurationHistogramBench(_ iterations: Range<Int>) {
-    let histogram = registry.makeDurationHistogram(name: "histogram_1", labels: makeLabels(3),
-                                                   buckets: [
-                                                       .milliseconds(100),
-                                                       .milliseconds(250),
-                                                       .milliseconds(500),
-                                                       .seconds(1),
-                                                   ])
+    let histogram = registry.makeDurationHistogram(
+        name: "histogram_1",
+        labels: makeLabels(3),
+        buckets: [
+            .milliseconds(100),
+            .milliseconds(250),
+            .milliseconds(500),
+            .seconds(1),
+        ]
+    )
     for _ in iterations {
         blackHole(histogram.record(Duration.milliseconds(400)))
     }
