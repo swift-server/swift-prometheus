@@ -30,14 +30,13 @@ public func makeLabels(_ idx: Int) -> [(String, String)] {
 let benchmarks = {
     Benchmark.defaultConfiguration.maxDuration = .seconds(5)
     Benchmark.defaultConfiguration.scalingFactor = .kilo
-    // Benchmark.defaultConfiguration.metrics = [.wallClock, .throughput, .mallocCountTotal]
     Benchmark.defaultConfiguration.metrics = [.mallocCountTotal]
 
-    Benchmark("Counter #1") { benchmark in
+    Benchmark("Counter - setup and increment") { benchmark in
         runCounterBench(benchmark.scaledIterations)
     }
 
-    Benchmark("Counter #2") { benchmark, run in
+    Benchmark("Counter - increment only") { benchmark, run in
         for _ in benchmark.scaledIterations {
             run()
         }
