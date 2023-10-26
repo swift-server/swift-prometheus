@@ -1,4 +1,3 @@
-// swift-tools-version:5.7
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftPrometheus open source project
