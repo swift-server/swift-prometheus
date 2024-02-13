@@ -67,8 +67,6 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         XCTAssertEqual(
             String(decoding: buffer, as: Unicode.UTF8.self),
             """
-            # TYPE foo counter
-
             """
         )
     }
@@ -126,8 +124,6 @@ final class PrometheusMetricsFactoryTests: XCTestCase {
         XCTAssertEqual(
             String(decoding: buffer, as: Unicode.UTF8.self),
             """
-            # TYPE foo gauge
-
             """
         )
     }
