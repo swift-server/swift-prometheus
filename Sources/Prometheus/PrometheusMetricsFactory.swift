@@ -155,6 +155,6 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
         guard let histogram = handler as? Histogram<Duration> else {
             return
         }
-        self.registry.unregisterTimeHistogram(histogram)
+        self.registry.unregisterDurationHistogram(histogram)
     }
 }

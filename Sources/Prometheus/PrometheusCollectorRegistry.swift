@@ -443,7 +443,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///
     /// - Note: If the provided ``DurationHistogram`` is unknown to the registry this function call will be ignored
     /// - Parameter histogram: The ``DurationHistogram`` that shall be removed from the registry
-    public func unregisterTimeHistogram(_ histogram: DurationHistogram) {
+    public func unregisterDurationHistogram(_ histogram: DurationHistogram) {
         self.box.withLockedValue { store in
             switch store[histogram.name] {
             case .durationHistogram(let storedHistogram):
