@@ -231,4 +231,34 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
         )
     }
 
+    func testUnregisterReregisterWithoutLabels() {
+        let registry = PrometheusCollectorRegistry()
+        registry.unregisterCounter(registry.makeCounter(name: "name"))
+        registry.unregisterGauge(registry.makeGauge(name: "name"))
+        registry.unregisterDurationHistogram(registry.makeDurationHistogram(name: "name", buckets: []))
+        registry.unregisterValueHistogram(registry.makeValueHistogram(name: "name", buckets: []))
+        _ = registry.makeCounter(name: "name")
+    }
+
+    func testUnregisterReregisterWithLabels() {
+        let registry = PrometheusCollectorRegistry()
+
+        registry.unregisterCounter(registry.makeCounter(name: "name", labels: [("a", "1")]))
+        registry.unregisterCounter(registry.makeCounter(name: "name", labels: [("b", "1")]))
+
+        registry.unregisterGauge(registry.makeGauge(name: "name", labels: [("a", "1")]))
+        registry.unregisterGauge(registry.makeGauge(name: "name", labels: [("b", "1")]))
+
+        registry.unregisterDurationHistogram(
+            registry.makeDurationHistogram(name: "name", labels: [("a", "1")], buckets: [])
+        )
+        registry.unregisterDurationHistogram(
+            registry.makeDurationHistogram(name: "name", labels: [("b", "1")], buckets: [])
+        )
+
+        registry.unregisterValueHistogram(registry.makeValueHistogram(name: "name", labels: [("a", "1")], buckets: []))
+        registry.unregisterValueHistogram(registry.makeValueHistogram(name: "name", labels: [("b", "1")], buckets: []))
+
+        _ = registry.makeCounter(name: "name", labels: [("a", "1")])
+    }
 }
