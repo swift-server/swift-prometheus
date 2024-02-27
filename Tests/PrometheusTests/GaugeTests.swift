@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-import XCTest
 import Prometheus
+import XCTest
 
 final class GaugeTests: XCTestCase {
     func testGaugeWithoutLabels() {
@@ -22,51 +22,66 @@ final class GaugeTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
-        # TYPE foo gauge
-        foo 0.0
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
+            # TYPE foo gauge
+            foo 0.0
 
-        """)
+            """
+        )
 
         // Set to 1
         buffer.removeAll(keepingCapacity: true)
         gauge.record(Int64(1))
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
-        # TYPE foo gauge
-        foo 1.0
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
+            # TYPE foo gauge
+            foo 1.0
 
-        """)
+            """
+        )
 
         // Set to 2
         buffer.removeAll(keepingCapacity: true)
         gauge.record(Int64(2))
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
-        # TYPE foo gauge
-        foo 2.0
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
+            # TYPE foo gauge
+            foo 2.0
 
-        """)
+            """
+        )
 
         // Set to 4
         buffer.removeAll(keepingCapacity: true)
         gauge.record(Int64(4))
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
-        # TYPE foo gauge
-        foo 4.0
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
+            # TYPE foo gauge
+            foo 4.0
 
-        """)
+            """
+        )
 
         // Reset
         buffer.removeAll(keepingCapacity: true)
         gauge.record(Int64(0))
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
-        # TYPE foo gauge
-        foo 0.0
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
+            # TYPE foo gauge
+            foo 0.0
 
-        """)
+            """
+        )
     }
 
     func testGaugeWithLabels() {
@@ -75,57 +90,72 @@ final class GaugeTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
-        # TYPE foo gauge
-        foo{bar="baz"} 0.0
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
+            # TYPE foo gauge
+            foo{bar="baz"} 0.0
 
-        """)
+            """
+        )
 
         // Set to 1
         buffer.removeAll(keepingCapacity: true)
         gauge.record(Int64(1))
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
-        # TYPE foo gauge
-        foo{bar="baz"} 1.0
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
+            # TYPE foo gauge
+            foo{bar="baz"} 1.0
 
-        """)
+            """
+        )
 
         // Set to 2
         buffer.removeAll(keepingCapacity: true)
         gauge.record(Int64(2))
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
-        # TYPE foo gauge
-        foo{bar="baz"} 2.0
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
+            # TYPE foo gauge
+            foo{bar="baz"} 2.0
 
-        """)
+            """
+        )
 
         // Set to 4
         buffer.removeAll(keepingCapacity: true)
         gauge.record(Int64(4))
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
-        # TYPE foo gauge
-        foo{bar="baz"} 4.0
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
+            # TYPE foo gauge
+            foo{bar="baz"} 4.0
 
-        """)
+            """
+        )
 
         // Reset
         buffer.removeAll(keepingCapacity: true)
         gauge.record(Int64(0))
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
-        # TYPE foo gauge
-        foo{bar="baz"} 0.0
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
+            # TYPE foo gauge
+            foo{bar="baz"} 0.0
 
-        """)
+            """
+        )
     }
 
     func testGaugeSetToFromMultipleTasks() async {
         let client = PrometheusCollectorRegistry()
         let gauge = client.makeGauge(name: "foo", labels: [("bar", "baz")])
-        await withTaskGroup(of: Void.self){ group in
+        await withTaskGroup(of: Void.self) { group in
             for _ in 0..<100_000 {
                 group.addTask {
                     gauge.set(to: Double.random(in: 0..<20))
@@ -137,7 +167,7 @@ final class GaugeTests: XCTestCase {
     func testIncByFromMultipleTasks() async {
         let client = PrometheusCollectorRegistry()
         let gauge = client.makeGauge(name: "foo", labels: [("bar", "baz")])
-        await withTaskGroup(of: Void.self){ group in
+        await withTaskGroup(of: Void.self) { group in
             for _ in 0..<100_000 {
                 group.addTask {
                     gauge.increment(by: Double.random(in: 0..<1))
@@ -146,4 +176,3 @@ final class GaugeTests: XCTestCase {
         }
     }
 }
-
