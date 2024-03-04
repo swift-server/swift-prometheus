@@ -110,6 +110,7 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
     }
 
     public func makeMeter(label: String, dimensions: [(String, String)]) -> CoreMetrics.MeterHandler {
+        let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         return self.registry.makeGauge(name: label, labels: dimensions)
     }
 
