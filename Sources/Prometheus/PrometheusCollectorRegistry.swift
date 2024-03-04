@@ -409,7 +409,11 @@ public final class PrometheusCollectorRegistry: Sendable {
                 let labelsKey = LabelsKey(counter.labels)
                 guard dimensions[labelsKey] === counter else { return }
                 dimensions.removeValue(forKey: labelsKey)
-                store[counter.name] = .counterWithLabels(labelNames, dimensions)
+                if dimensions.isEmpty {
+                    store.removeValue(forKey: counter.name)
+                } else {
+                    store[counter.name] = .counterWithLabels(labelNames, dimensions)
+                }
             default:
                 return
             }
@@ -431,7 +435,11 @@ public final class PrometheusCollectorRegistry: Sendable {
                 let dimensionsKey = LabelsKey(gauge.labels)
                 guard dimensions[dimensionsKey] === gauge else { return }
                 dimensions.removeValue(forKey: dimensionsKey)
-                store[gauge.name] = .gaugeWithLabels(labelNames, dimensions)
+                if dimensions.isEmpty {
+                    store.removeValue(forKey: gauge.name)
+                } else {
+                    store[gauge.name] = .gaugeWithLabels(labelNames, dimensions)
+                }
             default:
                 return
             }
@@ -453,7 +461,11 @@ public final class PrometheusCollectorRegistry: Sendable {
                 let dimensionsKey = LabelsKey(histogram.labels)
                 guard dimensions[dimensionsKey] === histogram else { return }
                 dimensions.removeValue(forKey: dimensionsKey)
-                store[histogram.name] = .durationHistogramWithLabels(labelNames, dimensions, buckets)
+                if dimensions.isEmpty {
+                    store.removeValue(forKey: histogram.name)
+                } else {
+                    store[histogram.name] = .durationHistogramWithLabels(labelNames, dimensions, buckets)
+                }
             default:
                 return
             }
@@ -475,7 +487,11 @@ public final class PrometheusCollectorRegistry: Sendable {
                 let dimensionsKey = LabelsKey(histogram.labels)
                 guard dimensions[dimensionsKey] === histogram else { return }
                 dimensions.removeValue(forKey: dimensionsKey)
-                store[histogram.name] = .valueHistogramWithLabels(labelNames, dimensions, buckets)
+                if dimensions.isEmpty {
+                    store.removeValue(forKey: histogram.name)
+                } else {
+                    store[histogram.name] = .valueHistogramWithLabels(labelNames, dimensions, buckets)
+                }
             default:
                 return
             }
