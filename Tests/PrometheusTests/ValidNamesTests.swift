@@ -42,7 +42,7 @@ final class ValidNamesTests: XCTestCase {
             """
             name{bad="haha"} 121212121
             bad_bad 12321323
-            """
+            """,
         ]
 
         for test in tests {
