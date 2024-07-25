@@ -578,11 +578,10 @@ extension [(String, String)] {
     }
 
     fileprivate func ensureValidLabelNames() -> [(String, String)] {
-        if self.allSatisfy({ $0.0.isValidLabelName() }) {
-            return self
-        } else {
+        guard self.allSatisfy({ $0.0.isValidLabelName() }) else {
             return self.map { ($0.ensureValidLabelName(), $1) }
         }
+        return self
     }
 }
 
@@ -627,8 +626,8 @@ extension String {
             defer { isFirstCharacter = false }
             switch ascii {
             case UInt8(ascii: "A")...UInt8(ascii: "Z"),
-                 UInt8(ascii: "a")...UInt8(ascii: "z"),
-                 UInt8(ascii: "_"), UInt8(ascii: ":"):
+                UInt8(ascii: "a")...UInt8(ascii: "z"),
+                UInt8(ascii: "_"), UInt8(ascii: ":"):
                 continue
             case UInt8(ascii: "0"), UInt8(ascii: "9"):
                 if isFirstCharacter {
@@ -648,8 +647,8 @@ extension String {
             defer { isFirstCharacter = false }
             switch ascii {
             case UInt8(ascii: "A")...UInt8(ascii: "Z"),
-                 UInt8(ascii: "a")...UInt8(ascii: "z"),
-                 UInt8(ascii: "_"):
+                UInt8(ascii: "a")...UInt8(ascii: "z"),
+                UInt8(ascii: "_"):
                 continue
             case UInt8(ascii: "0"), UInt8(ascii: "9"):
                 if isFirstCharacter {
@@ -664,23 +663,21 @@ extension String {
     }
 
     fileprivate func ensureValidMetricName() -> String {
-        if self.isValidMetricName() {
-            return self
-        } else {
+        guard self.isValidMetricName() else {
             var new = self
             new.fixPrometheusName(allowColon: true)
             return new
         }
+        return self
     }
 
     fileprivate func ensureValidLabelName() -> String {
-        if self.isValidLabelName() {
-            return self
-        } else {
+        guard self.isValidLabelName() else {
             var new = self
             new.fixPrometheusName(allowColon: false)
             return new
         }
+        return self
     }
 
     fileprivate mutating func fixPrometheusName(allowColon: Bool) {
