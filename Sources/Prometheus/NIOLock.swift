@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftPrometheus open source project
 //
-// Copyright (c) 2023 SwiftPrometheus project authors
+// Copyright (c) 2023 Apple Inc. and the SwiftPrometheus project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information

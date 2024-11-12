@@ -3,7 +3,7 @@
 //
 // This source file is part of the SwiftPrometheus open source project
 //
-// Copyright (c) 2018-2023 SwiftPrometheus project authors
+// Copyright (c) 2018-$§ Apple Inc. and the SwiftPrometheus project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -22,14 +22,11 @@ let package = Package(
         .library(
             name: "Prometheus",
             targets: ["Prometheus"]
-        ),
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-atomics.git", from: "1.0.2"),
         .package(url: "https://github.com/apple/swift-metrics.git", from: "2.4.1"),
-
-        // ~~~ SwiftPM Plugins ~~~
-        .package(url: "https://github.com/apple/swift-docc-plugin.git", from: "1.3.0"),
     ],
     targets: [
         .target(
@@ -42,7 +39,7 @@ let package = Package(
         .testTarget(
             name: "PrometheusTests",
             dependencies: [
-                "Prometheus",
+                "Prometheus"
             ]
         ),
     ]
