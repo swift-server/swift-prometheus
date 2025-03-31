@@ -8,9 +8,6 @@ jobs:
   soundness:
     name: Soundness
     uses: swiftlang/github-workflows/.github/workflows/soundness.yml@main
-    with:
-      license_header_check_project_name: "SwiftPrometheus"
-      license_header_check_enabled: false
 
   unit-tests:
     name: Unit tests
