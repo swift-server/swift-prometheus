@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-import XCTest
 import Prometheus
+import XCTest
 
 final class PrometheusCollectorRegistryTests: XCTestCase {
     func testAskingForTheSameCounterReturnsTheSameCounter() {
@@ -27,7 +27,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo counter
             foo 3
 
@@ -46,7 +48,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo counter
             foo{bar="baz"} 3
 
@@ -71,7 +75,6 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
         XCTAssert(output.contains(#"foo{bar="xyz"} 2\#n"#))
     }
 
-
     func testAskingForTheSameGaugeReturnsTheSameGauge() {
         let client = PrometheusCollectorRegistry()
         let gauge1 = client.makeGauge(name: "foo")
@@ -84,7 +87,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo gauge
             foo 3.0
 
@@ -104,14 +109,15 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo gauge
             foo{bar="baz"} 3.0
 
             """
         )
     }
-
 
     func testAskingForTheSameTimeHistogramReturnsTheSameTimeHistogram() {
         let client = PrometheusCollectorRegistry()
@@ -124,7 +130,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{le="1.0"} 0
             foo_bucket{le="2.0"} 1
@@ -139,8 +147,16 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
     func testAskingForTheSameTimeHistogramWithLabelsReturnsTheSameTimeHistogram() {
         let client = PrometheusCollectorRegistry()
-        let histogram1 = client.makeDurationHistogram(name: "foo", labels: [("bar", "baz")], buckets: [.seconds(1), .seconds(2), .seconds(3)])
-        let histogram2 = client.makeDurationHistogram(name: "foo", labels: [("bar", "baz")], buckets: [.seconds(1), .seconds(2), .seconds(3)])
+        let histogram1 = client.makeDurationHistogram(
+            name: "foo",
+            labels: [("bar", "baz")],
+            buckets: [.seconds(1), .seconds(2), .seconds(3)]
+        )
+        let histogram2 = client.makeDurationHistogram(
+            name: "foo",
+            labels: [("bar", "baz")],
+            buckets: [.seconds(1), .seconds(2), .seconds(3)]
+        )
 
         XCTAssert(histogram1 === histogram2)
         histogram1.record(.milliseconds(2500))
@@ -148,7 +164,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",le="1.0"} 0
             foo_bucket{bar="baz",le="2.0"} 1
@@ -161,7 +179,6 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
         )
     }
 
-
     func testAskingForTheSameValueHistogramReturnsTheSameTimeHistogram() {
         let client = PrometheusCollectorRegistry()
         let histogram1 = client.makeValueHistogram(name: "foo", buckets: [1, 2, 3])
@@ -173,7 +190,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{le="1.0"} 0
             foo_bucket{le="2.0"} 1
@@ -197,7 +216,9 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         var buffer = [UInt8]()
         client.emit(into: &buffer)
-        XCTAssertEqual(String(decoding: buffer, as: Unicode.UTF8.self), """
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            """
             # TYPE foo histogram
             foo_bucket{bar="baz",le="1.0"} 0
             foo_bucket{bar="baz",le="2.0"} 1
@@ -210,4 +231,34 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
         )
     }
 
+    func testUnregisterReregisterWithoutLabels() {
+        let registry = PrometheusCollectorRegistry()
+        registry.unregisterCounter(registry.makeCounter(name: "name"))
+        registry.unregisterGauge(registry.makeGauge(name: "name"))
+        registry.unregisterDurationHistogram(registry.makeDurationHistogram(name: "name", buckets: []))
+        registry.unregisterValueHistogram(registry.makeValueHistogram(name: "name", buckets: []))
+        _ = registry.makeCounter(name: "name")
+    }
+
+    func testUnregisterReregisterWithLabels() {
+        let registry = PrometheusCollectorRegistry()
+
+        registry.unregisterCounter(registry.makeCounter(name: "name", labels: [("a", "1")]))
+        registry.unregisterCounter(registry.makeCounter(name: "name", labels: [("b", "1")]))
+
+        registry.unregisterGauge(registry.makeGauge(name: "name", labels: [("a", "1")]))
+        registry.unregisterGauge(registry.makeGauge(name: "name", labels: [("b", "1")]))
+
+        registry.unregisterDurationHistogram(
+            registry.makeDurationHistogram(name: "name", labels: [("a", "1")], buckets: [])
+        )
+        registry.unregisterDurationHistogram(
+            registry.makeDurationHistogram(name: "name", labels: [("b", "1")], buckets: [])
+        )
+
+        registry.unregisterValueHistogram(registry.makeValueHistogram(name: "name", labels: [("a", "1")], buckets: []))
+        registry.unregisterValueHistogram(registry.makeValueHistogram(name: "name", labels: [("b", "1")], buckets: []))
+
+        _ = registry.makeCounter(name: "name", labels: [("a", "1")])
+    }
 }

@@ -45,7 +45,7 @@ import Prometheus
 
 func main() {
   let factory = PrometheusMetricsFactory()
-  MetricSystem.bootstrap(factory)
+  MetricsSystem.bootstrap(factory)
 
   // the rest of your application code
 }
@@ -66,7 +66,7 @@ To use a different collector registry pass your ``PrometheusCollectorRegistry`` 
 ```swift
 let registry = PrometheusCollectorRegistry()
 let factory = PrometheusMetricsFactory(registry: registry)
-MetricSystem.bootstrap(factory)
+MetricsSystem.bootstrap(factory)
 ```
 
 You can also overwrite the ``PrometheusMetricsFactory/registry`` by setting it explicitly:
@@ -75,7 +75,7 @@ You can also overwrite the ``PrometheusMetricsFactory/registry`` by setting it e
 let registry = PrometheusCollectorRegistry()
 var factory = PrometheusMetricsFactory()
 factory.registry = registry
-MetricSystem.bootstrap(factory)
+MetricsSystem.bootstrap(factory)
 ```
 
 ### Modifying Swift metrics names and labels
@@ -93,7 +93,7 @@ factory.nameAndLabelSanitizer = { (name, labels)
     return (name, labels)
   }
 }
-MetricSystem.bootstrap(factory)
+MetricsSystem.bootstrap(factory)
 
 // somewhere else
 Metrics.Counter(label: "my_counter") // will show up in Prometheus exports as `counter`
@@ -111,8 +111,8 @@ generated in a third party library.
 
 #### Default buckets
 
-Swift Metric ``Timer``s are backed by a Prometheus ``DurationHistogram`` and Swift Metric 
-``Recorder``s that aggregate are backed by a Prometheus ``ValueHistogram``. As a user, you can 
+Swift Metric `Timer`s are backed by a Prometheus ``DurationHistogram`` and Swift Metric 
+`Recorder`s that aggregate are backed by a Prometheus ``ValueHistogram``. As a user, you can 
 specify which buckets shall be used within the backing ``Histogram``s.
 
 ```swift
@@ -134,7 +134,7 @@ factory.defaultValueHistogramBuckets = [
   100,
   250,
 ]
-MetricSystem.bootstrap(factory)
+MetricsSystem.bootstrap(factory)
 
 // somewhere else
 Timer(label: "my_timer") // will use the buckets specified in `defaultDurationHistogramBuckets`
