@@ -85,9 +85,10 @@ public final class Histogram<Value: Bucketable>: Sendable {
                     count -= half + 1
                 }
             }
-            assert(state.buckets.indices.contains(left), "Unexpectedly no suitable bucket found")
 
-            state.buckets[left].count += 1
+            if state.buckets.indices.contains(left) {
+                state.buckets[left].count += 1
+            }
 
             state.sum += value
             state.count += 1
