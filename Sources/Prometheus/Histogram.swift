@@ -32,7 +32,20 @@ public final class Histogram<Value: Bucketable>: Sendable {
 
     @usableFromInline
     struct State: Sendable {
-        @usableFromInline var buckets: [(Value, Int)]
+        @usableFromInline
+        struct ValueCount: Sendable {
+            @usableFromInline
+            let value: Value
+            @usableFromInline
+            var count: Int
+
+            @usableFromInline
+            init(value: Value, count: Int) {
+                self.value = value
+                self.count = count
+            }
+        }
+        @usableFromInline var buckets: [ValueCount]
         @usableFromInline var sum: Value
         @usableFromInline var count: Int
 
@@ -40,7 +53,7 @@ public final class Histogram<Value: Bucketable>: Sendable {
         init(buckets: [Value]) {
             self.sum = .zero
             self.count = 0
-            self.buckets = buckets.map { ($0, 0) }
+            self.buckets = buckets.map { .init(value: $0, count: 0) }
         }
     }
 
@@ -58,11 +71,24 @@ public final class Histogram<Value: Bucketable>: Sendable {
 
     public func record(_ value: Value) {
         self.box.withLockedValue { state in
-            for i in state.buckets.startIndex..<state.buckets.endIndex {
-                if state.buckets[i].0 >= value {
-                    state.buckets[i].1 += 1
+
+            var count = state.buckets.count
+            var left = state.buckets.startIndex
+
+            while count > 0 {
+                let half = count / 2
+                let mid = state.buckets.index(left, offsetBy: half)
+                if state.buckets[mid].value >= value {
+                    count = half
+                } else {
+                    left = state.buckets.index(after: mid)
+                    count -= half + 1
                 }
             }
+            assert(state.buckets.indices.contains(left), "Unexpectedly no suitable bucket found")
+
+            state.buckets[left].count += 1
+
             state.sum += value
             state.count += 1
         }
@@ -96,10 +122,10 @@ extension Histogram: PrometheusMetric {
                 buffer.append(UInt8(ascii: #","#))
             }
             buffer.append(contentsOf: #"le=""#.utf8)
-            buffer.append(contentsOf: "\(bucket.0.bucketRepresentation)".utf8)
+            buffer.append(contentsOf: "\(bucket.value.bucketRepresentation)".utf8)
             buffer.append(UInt8(ascii: #"""#))
             buffer.append(contentsOf: #"} "#.utf8)
-            buffer.append(contentsOf: "\(bucket.1)".utf8)
+            buffer.append(contentsOf: "\(bucket.count)".utf8)
             buffer.append(contentsOf: #"\#n"#.utf8)
         }
 
