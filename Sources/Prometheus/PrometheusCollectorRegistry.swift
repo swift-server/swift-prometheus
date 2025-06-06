@@ -73,7 +73,8 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter name: A name to identify ``Counter``'s value.
     /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeCounter(name: String) -> Counter {
-        self.box.withLockedValue { store -> Counter in
+        let name = name.ensureValidMetricName()
+        return self.box.withLockedValue { store -> Counter in
             guard let value = store[name] else {
                 let counter = Counter(name: name, labels: [])
                 store[name] = .counter(counter)
@@ -105,6 +106,9 @@ public final class PrometheusCollectorRegistry: Sendable {
         guard !labels.isEmpty else {
             return self.makeCounter(name: name)
         }
+
+        let name = name.ensureValidMetricName()
+        let labels = labels.ensureValidLabelNames()
 
         return self.box.withLockedValue { store -> Counter in
             guard let value = store[name] else {
@@ -154,7 +158,8 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter name: A name to identify ``Gauge``'s value.
     /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeGauge(name: String) -> Gauge {
-        self.box.withLockedValue { store -> Gauge in
+        let name = name.ensureValidMetricName()
+        return self.box.withLockedValue { store -> Gauge in
             guard let value = store[name] else {
                 let gauge = Gauge(name: name, labels: [])
                 store[name] = .gauge(gauge)
@@ -186,6 +191,9 @@ public final class PrometheusCollectorRegistry: Sendable {
         guard !labels.isEmpty else {
             return self.makeGauge(name: name)
         }
+
+        let name = name.ensureValidMetricName()
+        let labels = labels.ensureValidLabelNames()
 
         return self.box.withLockedValue { store -> Gauge in
             guard let value = store[name] else {
@@ -236,7 +244,8 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter buckets: Define the buckets that shall be used within the ``DurationHistogram``
     /// - Returns: A ``DurationHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeDurationHistogram(name: String, buckets: [Duration]) -> DurationHistogram {
-        self.box.withLockedValue { store -> DurationHistogram in
+        let name = name.ensureValidMetricName()
+        return self.box.withLockedValue { store -> DurationHistogram in
             guard let value = store[name] else {
                 let gauge = DurationHistogram(name: name, labels: [], buckets: buckets)
                 store[name] = .durationHistogram(gauge)
@@ -273,6 +282,9 @@ public final class PrometheusCollectorRegistry: Sendable {
         guard !labels.isEmpty else {
             return self.makeDurationHistogram(name: name, buckets: buckets)
         }
+
+        let name = name.ensureValidMetricName()
+        let labels = labels.ensureValidLabelNames()
 
         return self.box.withLockedValue { store -> DurationHistogram in
             guard let value = store[name] else {
@@ -335,7 +347,8 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter buckets: Define the buckets that shall be used within the ``ValueHistogram``
     /// - Returns: A ``ValueHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeValueHistogram(name: String, buckets: [Double]) -> ValueHistogram {
-        self.box.withLockedValue { store -> ValueHistogram in
+        let name = name.ensureValidMetricName()
+        return self.box.withLockedValue { store -> ValueHistogram in
             guard let value = store[name] else {
                 let gauge = ValueHistogram(name: name, labels: [], buckets: buckets)
                 store[name] = .valueHistogram(gauge)
@@ -363,6 +376,9 @@ public final class PrometheusCollectorRegistry: Sendable {
         guard !labels.isEmpty else {
             return self.makeValueHistogram(name: name, buckets: buckets)
         }
+
+        let name = name.ensureValidMetricName()
+        let labels = labels.ensureValidLabelNames()
 
         return self.box.withLockedValue { store -> ValueHistogram in
             guard let value = store[name] else {
@@ -560,6 +576,13 @@ extension [(String, String)] {
         result = result.sorted()
         return result
     }
+
+    fileprivate func ensureValidLabelNames() -> [(String, String)] {
+        guard self.allSatisfy({ $0.0.isValidLabelName() }) else {
+            return self.map { ($0.ensureValidLabelName(), $1) }
+        }
+        return self
+    }
 }
 
 extension [UInt8] {
@@ -593,5 +616,91 @@ extension PrometheusMetric {
             }
         }
         return prerendered
+    }
+}
+
+extension String {
+    fileprivate func isValidMetricName() -> Bool {
+        var isFirstCharacter = true
+        for ascii in self.utf8 {
+            defer { isFirstCharacter = false }
+            switch ascii {
+            case UInt8(ascii: "A")...UInt8(ascii: "Z"),
+                UInt8(ascii: "a")...UInt8(ascii: "z"),
+                UInt8(ascii: "_"), UInt8(ascii: ":"):
+                continue
+            case UInt8(ascii: "0"), UInt8(ascii: "9"):
+                if isFirstCharacter {
+                    return false
+                }
+                continue
+            default:
+                return false
+            }
+        }
+        return true
+    }
+
+    fileprivate func isValidLabelName() -> Bool {
+        var isFirstCharacter = true
+        for ascii in self.utf8 {
+            defer { isFirstCharacter = false }
+            switch ascii {
+            case UInt8(ascii: "A")...UInt8(ascii: "Z"),
+                UInt8(ascii: "a")...UInt8(ascii: "z"),
+                UInt8(ascii: "_"):
+                continue
+            case UInt8(ascii: "0"), UInt8(ascii: "9"):
+                if isFirstCharacter {
+                    return false
+                }
+                continue
+            default:
+                return false
+            }
+        }
+        return true
+    }
+
+    fileprivate func ensureValidMetricName() -> String {
+        guard self.isValidMetricName() else {
+            var new = self
+            new.fixPrometheusName(allowColon: true)
+            return new
+        }
+        return self
+    }
+
+    fileprivate func ensureValidLabelName() -> String {
+        guard self.isValidLabelName() else {
+            var new = self
+            new.fixPrometheusName(allowColon: false)
+            return new
+        }
+        return self
+    }
+
+    fileprivate mutating func fixPrometheusName(allowColon: Bool) {
+        var startIndex = self.startIndex
+        var isFirstCharacter = true
+        while let fixIndex = self[startIndex...].firstIndex(where: { character in
+            defer { isFirstCharacter = false }
+            switch character {
+            case "A"..."Z", "a"..."z", "_":
+                return false
+            case ":":
+                return !allowColon
+            case "0"..."9":
+                return isFirstCharacter
+            default:
+                return true
+            }
+        }) {
+            self.replaceSubrange(fixIndex...fixIndex, with: CollectionOfOne("_"))
+            startIndex = fixIndex
+            if startIndex == self.endIndex {
+                break
+            }
+        }
     }
 }

@@ -8,8 +8,9 @@ This document specifies the security process for the SwiftPrometheus project.
 
 The SwiftPrometheus maintainers ask that known and suspected vulnerabilities be
 privately and responsibly disclosed by emailing
-[j.koopman@jarict.nl](mailto:j.koopman@jarict.nl)
+[sswg-security-reports@forums.swift.org](mailto:sswg-security-reports@forums.swift.org)
 with the all the required detail.
+
 **Do not file a public issue.**
 
 #### When to report a vulnerability

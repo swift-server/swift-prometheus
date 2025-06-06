@@ -19,7 +19,7 @@ public struct PrometheusMetricsFactory: Sendable {
     private static let _defaultRegistry = PrometheusCollectorRegistry()
 
     /// The default ``PrometheusCollectorRegistry``, which is used inside the ``PrometheusMetricsFactory``
-    /// if no other is provided in ``init(client:)`` or set via ``PrometheusMetricsFactory/client``
+    /// if no other is provided in ``init(registry:)`` or set via ``PrometheusMetricsFactory/registry``
     public static var defaultRegistry: PrometheusCollectorRegistry {
         self._defaultRegistry
     }
@@ -27,12 +27,12 @@ public struct PrometheusMetricsFactory: Sendable {
     /// The underlying ``PrometheusCollectorRegistry`` that is used to generate the swift-metrics handlers
     public var registry: PrometheusCollectorRegistry
 
-    /// The default histogram buckets for a ``TimeHistogram``. If there is no explicit overwrite
+    /// The default histogram buckets for a ``DurationHistogram``. If there is no explicit overwrite
     /// via ``durationHistogramBuckets``, the buckets provided here will be used for any new
     /// Swift Metrics `Timer` type.
     public var defaultDurationHistogramBuckets: [Duration]
 
-    /// The histogram buckets for a ``TimeHistogram`` per Timer label
+    /// The histogram buckets for a ``DurationHistogram`` per Timer label
     public var durationHistogramBuckets: [String: [Duration]]
 
     /// The default histogram buckets for a ``ValueHistogram``. If there is no explicit overwrite
@@ -110,6 +110,7 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
     }
 
     public func makeMeter(label: String, dimensions: [(String, String)]) -> CoreMetrics.MeterHandler {
+        let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         return self.registry.makeGauge(name: label, labels: dimensions)
     }
 

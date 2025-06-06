@@ -111,8 +111,8 @@ generated in a third party library.
 
 #### Default buckets
 
-Swift Metric ``Timer``s are backed by a Prometheus ``DurationHistogram`` and Swift Metric 
-``Recorder``s that aggregate are backed by a Prometheus ``ValueHistogram``. As a user, you can 
+Swift Metric `Timer`s are backed by a Prometheus ``DurationHistogram`` and Swift Metric 
+`Recorder`s that aggregate are backed by a Prometheus ``ValueHistogram``. As a user, you can 
 specify which buckets shall be used within the backing ``Histogram``s.
 
 ```swift
