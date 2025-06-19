@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import Benchmark
+import Foundation
 import Prometheus
 
 let registry = PrometheusCollectorRegistry()
@@ -27,9 +28,17 @@ public func makeLabels(_ idx: Int) -> [(String, String)] {
 }
 
 let benchmarks = {
-    Benchmark.defaultConfiguration.maxDuration = .seconds(5)
-    Benchmark.defaultConfiguration.scalingFactor = .kilo
-    Benchmark.defaultConfiguration.metrics = [.mallocCountTotal]
+    let ciMetrics: [BenchmarkMetric] = [
+        .mallocCountTotal,
+    ]
+    let localMetrics = BenchmarkMetric.default
+
+    Benchmark.defaultConfiguration = .init(
+        metrics: ProcessInfo.processInfo.environment["CI"] != nil ? ciMetrics : localMetrics,
+        warmupIterations: 10,
+        scalingFactor: .kilo,
+        maxDuration: .seconds(5),
+    )
 
     Benchmark("Counter - setup and increment") { benchmark in
         runCounterBench(benchmark.scaledIterations)
@@ -52,7 +61,8 @@ let benchmarks = {
     }
 
     Benchmark("RegistryEmit - 5000 metrics",
-              configuration: .init(scalingFactor: .one)) { benchmark, run in
+              configuration: .init(scalingFactor: .one))
+    { benchmark, run in
         for _ in benchmark.scaledIterations {
             run()
         }
