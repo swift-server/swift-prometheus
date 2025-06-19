@@ -27,7 +27,7 @@ public func setupRegistryExport(numberOfMetrics: Int) -> () -> Void {
     gaugeArray.reserveCapacity(numberOfMetrics)
     buffer.reserveCapacity(counterExportSize)
 
-    for i in 0..<(numberOfMetrics / 2) {
+    for i in 0 ..< (numberOfMetrics / 2) {
         let counter = registryExport.makeCounter(name: "http_requests_total", labels: makeLabels(i))
         counter.increment()
         counterArray.append(counter)
