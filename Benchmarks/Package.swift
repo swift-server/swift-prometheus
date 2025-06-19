@@ -1,4 +1,4 @@
-// swift-tools-version:5.7
+// swift-tools-version:5.9
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftPrometheus open source project
@@ -22,7 +22,7 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../"),
-        .package(url: "https://github.com/ordo-one/package-benchmark.git", from: "1.11.2"),
+        .package(url: "https://github.com/ordo-one/package-benchmark.git", from: "1.29.0"),
     ],
     targets: [
         .executableTarget(
