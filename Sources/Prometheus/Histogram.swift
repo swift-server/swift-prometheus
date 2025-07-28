@@ -56,6 +56,7 @@ public final class Histogram<Value: Bucketable>: Sendable {
         self.box = .init(.init(buckets: buckets))
     }
 
+    @inlinable
     public func record(_ value: Value) {
         self.box.withLockedValue { state in
             for i in state.buckets.startIndex..<state.buckets.endIndex {
