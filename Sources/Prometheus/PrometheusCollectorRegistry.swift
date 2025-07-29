@@ -93,6 +93,18 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
+    /// Creates a new ``Counter`` collector or returns the already existing one with the same name,
+    /// based on the provided descriptor.
+    ///
+    /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
+    /// created ``Counter`` will be part of the export.
+    ///
+    /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
+    /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
+    public func makeCounter(descriptor: MetricNameDescriptor) -> Counter {
+        return self.makeCounter(name: descriptor.name)
+    }
+
     /// Creates a new ``Counter`` collector or returns the already existing one with the same name.
     ///
     /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
@@ -150,6 +162,20 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
+    /// Creates a new ``Counter`` collector or returns the already existing one with the same name,
+    /// based on the provided descriptor.
+    ///
+    /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
+    /// created ``Counter`` will be part of the export.
+    ///
+    /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
+    /// - Parameter labels: Labels are sets of key-value pairs that allow us to characterize and organize
+    ///                     what’s actually being measured in a Prometheus metric.
+    /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
+    public func makeCounter(descriptor: MetricNameDescriptor, labels: [(String, String)]) -> Counter {
+        return self.makeCounter(name: descriptor.name, labels: labels)
+    }
+
     /// Creates a new ``Gauge`` collector or returns the already existing one with the same name.
     ///
     /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
@@ -176,6 +202,18 @@ public final class PrometheusCollectorRegistry: Sendable {
 
             return gauge
         }
+    }
+
+    /// Creates a new ``Gauge`` collector or returns the already existing one with the same name,
+    /// based on the provided descriptor.
+    ///
+    /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
+    /// created ``Gauge`` will be part of the export.
+    ///
+    /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
+    /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
+    public func makeGauge(descriptor: MetricNameDescriptor) -> Gauge {
+        return self.makeGauge(name: descriptor.name)
     }
 
     /// Creates a new ``Gauge`` collector or returns the already existing one with the same name.
@@ -235,6 +273,20 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
+    /// Creates a new ``Gauge`` collector or returns the already existing one with the same name and labels,
+    /// based on the provided descriptor.
+    ///
+    /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
+    /// created ``Gauge`` will be part of the export.
+    ///
+    /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
+    /// - Parameter labels: Labels are sets of key-value pairs that allow us to characterize and organize
+    ///                     what’s actually being measured in a Prometheus metric.
+    /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
+    public func makeGauge(descriptor: MetricNameDescriptor, labels: [(String, String)]) -> Gauge {
+        return self.makeGauge(name: descriptor.name, labels: labels)
+    }
+
     /// Creates a new ``DurationHistogram`` collector or returns the already existing one with the same name.
     ///
     /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
@@ -262,6 +314,19 @@ public final class PrometheusCollectorRegistry: Sendable {
 
             return histogram
         }
+    }
+
+    /// Creates a new ``DurationHistogram`` collector or returns the already existing one with the same name,
+    /// based on the provided descriptor.
+    ///
+    /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
+    /// created ``DurationHistogram`` will be part of the export.
+    ///
+    /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
+    /// - Parameter buckets: Define the buckets that shall be used within the ``DurationHistogram``
+    /// - Returns: A ``DurationHistogram`` that is registered with this ``PrometheusCollectorRegistry``
+    public func makeDurationHistogram(descriptor: MetricNameDescriptor, buckets: [Duration]) -> DurationHistogram {
+        return self.makeDurationHistogram(name: descriptor.name, buckets: buckets)
     }
 
     /// Creates a new ``DurationHistogram`` collector or returns the already existing one with the same name.
@@ -338,6 +403,25 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
+    /// Creates a new ``DurationHistogram`` collector or returns the already existing one with the same name and labels,
+    /// based on the provided descriptor.
+    ///
+    /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
+    /// created ``DurationHistogram`` will be part of the export.
+    ///
+    /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
+    /// - Parameter labels: Labels are sets of key-value pairs that allow us to characterize and organize
+    ///                     what’s actually being measured in a Prometheus metric.
+    /// - Parameter buckets: Define the buckets that shall be used within the ``DurationHistogram``
+    /// - Returns: A ``DurationHistogram`` that is registered with this ``PrometheusCollectorRegistry``
+    public func makeDurationHistogram(
+        descriptor: MetricNameDescriptor,
+        labels: [(String, String)],
+        buckets: [Duration]
+    ) -> DurationHistogram {
+        return self.makeDurationHistogram(name: descriptor.name, labels: labels, buckets: buckets)
+    }
+
     /// Creates a new ``ValueHistogram`` collector or returns the already existing one with the same name.
     ///
     /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
@@ -360,6 +444,19 @@ public final class PrometheusCollectorRegistry: Sendable {
 
             return histogram
         }
+    }
+
+    /// Creates a new ``ValueHistogram`` collector or returns the already existing one with the same name,
+    /// based on the provided descriptor.
+    ///
+    /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
+    /// created ``ValueHistogram`` will be part of the export.
+    ///
+    /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
+    /// - Parameter buckets: Define the buckets that shall be used within the ``ValueHistogram``
+    /// - Returns: A ``ValueHistogram`` that is registered with this ``PrometheusCollectorRegistry``
+    public func makeValueHistogram(descriptor: MetricNameDescriptor, buckets: [Double]) -> ValueHistogram {
+        return self.makeValueHistogram(name: descriptor.name, buckets: buckets)
     }
 
     /// Creates a new ``ValueHistogram`` collector or returns the already existing one with the same name.
@@ -407,6 +504,27 @@ public final class PrometheusCollectorRegistry: Sendable {
             return histogram
         }
     }
+
+    /// Creates a new ``ValueHistogram`` collector or returns the already existing one with the same name and labels,
+    /// based on the provided descriptor.
+    ///
+    /// When the ``PrometheusCollectorRegistry/emit(into:)`` is called, metrics from the
+    /// created ``ValueHistogram`` will be part of the export.
+    ///
+    /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
+    /// - Parameter labels: Labels are sets of key-value pairs that allow us to characterize and organize
+    ///                     what’s actually being measured in a Prometheus metric.
+    /// - Parameter buckets: Define the buckets that shall be used within the ``ValueHistogram``
+    /// - Returns: A ``ValueHistogram`` that is registered with this ``PrometheusCollectorRegistry``
+    public func makeValueHistogram(
+        descriptor: MetricNameDescriptor,
+        labels: [(String, String)],
+        buckets: [Double]
+    ) -> ValueHistogram {
+        return self.makeValueHistogram(name: descriptor.name, labels: labels, buckets: buckets)
+    }
+
+    // MARK: - Histogram
 
     // MARK: Destroying Metrics
 
