@@ -92,4 +92,25 @@ final class ValidNamesTests: XCTestCase {
             """
         )
     }
+
+    func testIllegalHelpText() async throws {
+        let registry = PrometheusCollectorRegistry()
+
+        registry.makeCounter(
+            name: "metric",
+            labels: [("key", "value")],
+            help: "T\0his# is an_ \u{001B}example\u{001B} (help-\r\nt\u{2028}ext), link: https://help.url/sub"
+        ).increment()
+
+        var buffer = [UInt8]()
+        registry.emit(into: &buffer)
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self).split(separator: "\n").sorted().joined(separator: "\n"),
+            """
+            # HELP metric This# is an_ example (help-text), link: https://help.url/sub
+            # TYPE metric counter
+            metric{key="value"} 1
+            """
+        )
+    }
 }

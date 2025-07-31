@@ -30,7 +30,7 @@ public struct MetricNameDescriptor {
     /// An optional suffix describing the metric's unit (e.g., `total`).
     public let unitName: String?
 
-    /// Optional descriptive text for the metric.
+    /// Optional help text for the metric. If a non-empty string is provided, it will be emitted as a `# HELP` line in the exposition format. If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
     public let helpText: String?
 
     /// Creates a new ``MetricNameDescriptor`` that defines the components of a fully qualified Prometheus metric name.
@@ -39,7 +39,7 @@ public struct MetricNameDescriptor {
     /// - Parameter subsystem: An optional subsystem to group related metrics within a namespace.
     /// - Parameter metricName: The required, descriptive base name of the metric.
     /// - Parameter unitName: An optional suffix describing the metric's unit (e.g., `total`).
-    /// - Parameter helpText: Optional descriptive text for the metric.
+    /// - Parameter helpText: Optional help text for the metric. If a non-empty string is provided, it will be emitted as a `# HELP` line in the exposition format. If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
     public init(
         namespace: String? = nil,
         subsystem: String? = nil,
@@ -55,7 +55,7 @@ public struct MetricNameDescriptor {
         self.helpText = helpText
     }
 
-    /// The fully qualified metric name, joining non-empty components with underscores.
+    /// The fully qualified metric name, joining non-empty components with underscores (e.g. `namespace_subsytem_metricName_unitName`).
     public var name: String {
         [namespace, subsystem, metricName, unitName]
             .compactMap { $0?.isEmpty == false ? $0 : nil }
