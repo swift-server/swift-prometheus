@@ -99,7 +99,8 @@ final class ValidNamesTests: XCTestCase {
         registry.makeCounter(
             name: "metric",
             labels: [("key", "value")],
-            help: "T\0his# is an_ \u{001B}example\u{001B} (help-\r\nt\u{2028}ext), link: https://help.url/sub"
+            help:
+                "\u{007F}T\0his# is\u{200B} an_ \u{001B}ex\u{00AD}ample\u{001B} \u{202A}(help-\r\nt\u{2028}ext),\u{2029} \u{2066}link: https://help.url/sub"
         ).increment()
 
         var buffer = [UInt8]()
