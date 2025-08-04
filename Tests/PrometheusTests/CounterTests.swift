@@ -167,76 +167,100 @@ final class CounterTests: XCTestCase {
 
     func testWithMetricNameDescriptorWithFullComponentMatrix() {
         // --- Test Constants ---
-        // let helpTextValue = "https://help.url/sub"
-        let metricName = "foo2"
+        let helpTextValue = "https://help.url/sub"
+        let metricNameWithHelp = "metric_with_help"
+        let metricNameWithoutHelp = "metric_without_help"
         let incrementValue: Int64 = 2
         let client = PrometheusCollectorRegistry()
 
         // 1. Define the base naming combinations first.
         let baseNameCases:
             [(
-                namespace: String?, subsystem: String?, unitName: String?, expectedMetricName: String,
-                description: String
+                namespace: String?, subsystem: String?, metricName: String, unitName: String?,
+                expectedMetricName: String, help: String?, description: String
             )] = [
+                // --- Test 1: Cases with help text (using metricNameWithHelp)
                 (
-                    namespace: "myapp", subsystem: "subsystem", unitName: "total",
-                    expectedMetricName: "myapp_subsystem_foo2_total", description: "All components present"
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "myapp_subsystem_metric_with_help_total", help: helpTextValue,
+                    description: "All components present, with help text"
                 ),
                 (
-                    namespace: "myapp", subsystem: "subsystem", unitName: nil,
-                    expectedMetricName: "myapp_subsystem_foo2", description: "Unit is nil"
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithHelp, unitName: nil,
+                    expectedMetricName: "myapp_subsystem_metric_with_help", help: helpTextValue,
+                    description: "Unit is nil, with help text"
                 ),
                 (
-                    namespace: "myapp", subsystem: nil, unitName: "total", expectedMetricName: "myapp_foo2_total",
-                    description: "Subsystem is nil"
+                    namespace: "myapp", subsystem: "", metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "myapp_metric_with_help_total", help: helpTextValue,
+                    description: "Subsystem is empty string, with help text"
                 ),
                 (
-                    namespace: "myapp", subsystem: nil, unitName: nil, expectedMetricName: "myapp_foo2",
-                    description: "Subsystem and Unit are nil"
+                    namespace: "myapp", subsystem: nil, metricName: metricNameWithHelp, unitName: nil,
+                    expectedMetricName: "myapp_metric_with_help", help: helpTextValue,
+                    description: "Subsystem and Unit are nil, with help text"
                 ),
                 (
-                    namespace: nil, subsystem: "subsystem", unitName: "total",
-                    expectedMetricName: "subsystem_foo2_total", description: "Namespace is nil"
+                    namespace: "", subsystem: "subsystem", metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "subsystem_metric_with_help_total", help: helpTextValue,
+                    description: "Namespace is empty string, with help text"
                 ),
                 (
-                    namespace: nil, subsystem: "subsystem", unitName: nil, expectedMetricName: "subsystem_foo2",
-                    description: "Namespace and Unit are nil"
+                    namespace: nil, subsystem: "subsystem", metricName: metricNameWithHelp, unitName: "",
+                    expectedMetricName: "subsystem_metric_with_help", help: helpTextValue,
+                    description: "Namespace is nil, Unit is empty string, with help text"
                 ),
                 (
-                    namespace: nil, subsystem: nil, unitName: "total", expectedMetricName: "foo2_total",
-                    description: "Namespace and Subsystem are nil"
+                    namespace: "", subsystem: nil, metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "metric_with_help_total", help: helpTextValue,
+                    description: "Namespace is empty string, Subsystem is nil, with help text"
                 ),
                 (
-                    namespace: nil, subsystem: nil, unitName: nil, expectedMetricName: "foo2",
-                    description: "Only metric name is present"
+                    namespace: nil, subsystem: nil, metricName: metricNameWithHelp, unitName: nil,
+                    expectedMetricName: "metric_with_help", help: helpTextValue,
+                    description: "Only metric name is present (all nil), with help text"
+                ),
+
+                // --- Test 2: Cases without help text (using metricNameWithoutHelp)
+                (
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "myapp_subsystem_metric_without_help_total", help: nil,
+                    description: "All components present, no help text"
                 ),
                 (
-                    namespace: "", subsystem: "subsystem", unitName: "total",
-                    expectedMetricName: "subsystem_foo2_total", description: "Namespace is empty string"
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: "",
+                    expectedMetricName: "myapp_subsystem_metric_without_help", help: nil,
+                    description: "Unit is empty string, no help text"
                 ),
                 (
-                    namespace: "myapp", subsystem: "", unitName: "total", expectedMetricName: "myapp_foo2_total",
-                    description: "Subsystem is empty string"
+                    namespace: "myapp", subsystem: nil, metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "myapp_metric_without_help_total", help: nil,
+                    description: "Subsystem is nil, no help text"
                 ),
                 (
-                    namespace: "myapp", subsystem: "subsystem", unitName: "",
-                    expectedMetricName: "myapp_subsystem_foo2", description: "Unit is empty string"
+                    namespace: "myapp", subsystem: "", metricName: metricNameWithoutHelp, unitName: nil,
+                    expectedMetricName: "myapp_metric_without_help", help: nil,
+                    description: "Subsystem is empty string, Unit is nil, no help text"
                 ),
                 (
-                    namespace: "", subsystem: "", unitName: "total", expectedMetricName: "foo2_total",
-                    description: "Namespace and Subsystem are empty strings"
+                    namespace: nil, subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "subsystem_metric_without_help_total", help: nil,
+                    description: "Namespace is nil, no help text"
                 ),
                 (
-                    namespace: "myapp", subsystem: "", unitName: "", expectedMetricName: "myapp_foo2",
-                    description: "Subsystem and Unit are empty strings"
+                    namespace: "", subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: nil,
+                    expectedMetricName: "subsystem_metric_without_help", help: nil,
+                    description: "Namespace is empty string, Unit is nil, no help text"
                 ),
                 (
-                    namespace: "", subsystem: "subsystem", unitName: "", expectedMetricName: "subsystem_foo2",
-                    description: "Namespace and Unit are empty strings"
+                    namespace: nil, subsystem: "", metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "metric_without_help_total", help: nil,
+                    description: "Namespace is nil, Subsystem is empty string, no help text"
                 ),
                 (
-                    namespace: "", subsystem: "", unitName: "", expectedMetricName: "foo2",
-                    description: "All optional components are empty strings"
+                    namespace: "", subsystem: "", metricName: metricNameWithoutHelp, unitName: "",
+                    expectedMetricName: "metric_without_help", help: nil,
+                    description: "Only metric name is present (all empty strings), no help text"
                 ),
             ]
 
@@ -262,22 +286,35 @@ final class CounterTests: XCTestCase {
                 let expectedMetricLine =
                     "\(nameCase.expectedMetricName)\(labelCase.expectedLabelString) \(incrementValue)"
 
-                // Case: Without help text (helpText is nil)
+                var expectedOutput: String
+                if let helpText = nameCase.help, !helpText.isEmpty {
+                    // If help text exists and is not empty, include the # HELP line.
+                    expectedOutput = """
+                        # HELP \(nameCase.expectedMetricName) \(helpText)
+                        # TYPE \(nameCase.expectedMetricName) counter
+                        \(expectedMetricLine)
+
+                        """
+                } else {
+                    // Otherwise, use the original format without the # HELP line.
+                    expectedOutput = """
+                        # TYPE \(nameCase.expectedMetricName) counter
+                        \(expectedMetricLine)
+
+                        """
+                }
+
                 allTestCases.append(
                     (
                         descriptor: MetricNameDescriptor(
                             namespace: nameCase.namespace,
                             subsystem: nameCase.subsystem,
-                            metricName: metricName,
+                            metricName: nameCase.metricName,
                             unitName: nameCase.unitName,
-                            helpText: nil
+                            helpText: nameCase.help
                         ),
                         labels: labelCase.labels,
-                        expectedOutput: """
-                        # TYPE \(nameCase.expectedMetricName) counter
-                        \(expectedMetricLine)
-
-                        """,
+                        expectedOutput: expectedOutput,  // Use the pre-calculated string
                         failureDescription: "\(nameCase.description), \(labelCase.description)"
                     )
                 )
