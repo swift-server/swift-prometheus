@@ -340,4 +340,495 @@ final class HistogramTests: XCTestCase {
             """
         )
     }
+
+    // MARK: - MetricNameDescriptor Histogram Tests
+
+    func testValueHistogramWithMetricNameDescriptorWithFullComponentMatrix() {
+        // --- Test Constants ---
+        let helpTextValue = "https://help.url/sub"
+        let metricNameWithHelp = "metric_with_help"
+        let metricNameWithoutHelp = "metric_without_help"
+        let observeValue: Double = 0.8
+        let buckets: [Double] = [0.5, 1.0, 2.5]
+        let client = PrometheusCollectorRegistry()
+
+        // 1. Define the base naming combinations first.
+        let baseNameCases:
+            [(
+                namespace: String?, subsystem: String?, metricName: String, unitName: String?,
+                expectedMetricName: String, help: String?, description: String
+            )] = [
+                // --- Test 1: Cases with help text (using metricNameWithHelp)
+                (
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "myapp_subsystem_metric_with_help_total", help: helpTextValue,
+                    description: "All components present, with help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithHelp, unitName: nil,
+                    expectedMetricName: "myapp_subsystem_metric_with_help", help: helpTextValue,
+                    description: "Unit is nil, with help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: "", metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "myapp_metric_with_help_total", help: helpTextValue,
+                    description: "Subsystem is empty string, with help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: nil, metricName: metricNameWithHelp, unitName: nil,
+                    expectedMetricName: "myapp_metric_with_help", help: helpTextValue,
+                    description: "Subsystem and Unit are nil, with help text"
+                ),
+                (
+                    namespace: "", subsystem: "subsystem", metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "subsystem_metric_with_help_total", help: helpTextValue,
+                    description: "Namespace is empty string, with help text"
+                ),
+                (
+                    namespace: nil, subsystem: "subsystem", metricName: metricNameWithHelp, unitName: "",
+                    expectedMetricName: "subsystem_metric_with_help", help: helpTextValue,
+                    description: "Namespace is nil, Unit is empty string, with help text"
+                ),
+                (
+                    namespace: "", subsystem: nil, metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "metric_with_help_total", help: helpTextValue,
+                    description: "Namespace is empty string, Subsystem is nil, with help text"
+                ),
+                (
+                    namespace: nil, subsystem: nil, metricName: metricNameWithHelp, unitName: nil,
+                    expectedMetricName: "metric_with_help", help: helpTextValue,
+                    description: "Only metric name is present (all nil), with help text"
+                ),
+
+                // --- Test 2: Cases without help text (using metricNameWithoutHelp)
+                (
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "myapp_subsystem_metric_without_help_total", help: nil,
+                    description: "All components present, no help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: "",
+                    expectedMetricName: "myapp_subsystem_metric_without_help", help: nil,
+                    description: "Unit is empty string, no help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: nil, metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "myapp_metric_without_help_total", help: nil,
+                    description: "Subsystem is nil, no help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: "", metricName: metricNameWithoutHelp, unitName: nil,
+                    expectedMetricName: "myapp_metric_without_help", help: nil,
+                    description: "Subsystem is empty string, Unit is nil, no help text"
+                ),
+                (
+                    namespace: nil, subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "subsystem_metric_without_help_total", help: nil,
+                    description: "Namespace is nil, no help text"
+                ),
+                (
+                    namespace: "", subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: nil,
+                    expectedMetricName: "subsystem_metric_without_help", help: nil,
+                    description: "Namespace is empty string, Unit is nil, no help text"
+                ),
+                (
+                    namespace: nil, subsystem: "", metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "metric_without_help_total", help: nil,
+                    description: "Namespace is nil, Subsystem is empty string, no help text"
+                ),
+                (
+                    namespace: "", subsystem: "", metricName: metricNameWithoutHelp, unitName: "",
+                    expectedMetricName: "metric_without_help", help: nil,
+                    description: "Only metric name is present (all empty strings), no help text"
+                ),
+            ]
+
+        // 2. Define the label combinations to test.
+        let labelCases: [(labels: [(String, String)], expectedLabelString: String, description: String)] = [
+            (labels: [], expectedLabelString: "", description: "without labels"),
+            (labels: [("method", "get")], expectedLabelString: "{method=\"get\"}", description: "with one label"),
+            (
+                labels: [("status", "200"), ("path", "/api/v1")],
+                expectedLabelString: "{status=\"200\",path=\"/api/v1\"}", description: "with two labels"
+            ),
+        ]
+
+        // 3. Programmatically generate the final, full matrix by crossing name cases with label cases.
+        var allTestCases:
+            [(
+                descriptor: MetricNameDescriptor, labels: [(String, String)], expectedOutput: String,
+                failureDescription: String
+            )] = []
+
+        for nameCase in baseNameCases {
+            for labelCase in labelCases {
+                let descriptor = MetricNameDescriptor(
+                    namespace: nameCase.namespace,
+                    subsystem: nameCase.subsystem,
+                    metricName: nameCase.metricName,
+                    unitName: nameCase.unitName,
+                    helpText: nameCase.help
+                )
+
+                let expectedOutput = self.generateHistogramOutput(
+                    metricName: nameCase.expectedMetricName,
+                    labelString: labelCase.expectedLabelString,
+                    buckets: buckets,
+                    observedValue: observeValue,
+                    helpText: nameCase.help ?? ""
+                )
+
+                let failureDescription = "ValueHistogram: \(nameCase.description), \(labelCase.description)"
+
+                allTestCases.append(
+                    (
+                        descriptor: descriptor,
+                        labels: labelCase.labels,
+                        expectedOutput: expectedOutput,
+                        failureDescription: failureDescription
+                    )
+                )
+            }
+        }
+
+        let expectedTestCaseCount = baseNameCases.count * labelCases.count
+        XCTAssertEqual(
+            allTestCases.count,
+            expectedTestCaseCount,
+            "Test setup failed: Did not generate the correct number of test cases."
+        )
+
+        // 4. Loop through the complete, generated test matrix.
+        for testCase in allTestCases {
+            // --- Test 1: The `makeValueHistogram` overload with a `labels` parameter ---
+            let histogramWithLabels = client.makeValueHistogram(
+                descriptor: testCase.descriptor,
+                labels: testCase.labels,
+                buckets: buckets
+            )
+            histogramWithLabels.record(observeValue)
+
+            var buffer = [UInt8]()
+            client.emit(into: &buffer)
+            let actualOutput = String(decoding: buffer, as: Unicode.UTF8.self)
+
+            var failureMessage = """
+                Failed on test case: '\(testCase.failureDescription)'
+                Overload: makeValueHistogram(descriptor:labels:buckets:)
+                - Descriptor: \(testCase.descriptor)
+                - Labels: \(testCase.labels)
+                - Expected Output:
+                ---
+                \(testCase.expectedOutput)
+                ---
+                - Actual Output:
+                ---
+                \(actualOutput)
+                ---
+                """
+            XCTAssertEqual(actualOutput, testCase.expectedOutput, failureMessage)
+            client.unregisterValueHistogram(histogramWithLabels)
+
+            // --- Test 2: The `makeValueHistogram` overload without a `labels` parameter ---
+            if testCase.labels.isEmpty {
+                let histogramWithoutLabels = client.makeValueHistogram(
+                    descriptor: testCase.descriptor,
+                    buckets: buckets
+                )
+                histogramWithoutLabels.record(observeValue)
+
+                var buffer2 = [UInt8]()
+                client.emit(into: &buffer2)
+                let actualOutput2 = String(decoding: buffer2, as: Unicode.UTF8.self)
+
+                failureMessage = """
+                    Failed on test case: '\(testCase.failureDescription)'
+                    Overload: makeValueHistogram(descriptor:buckets:)
+                    - Descriptor: \(testCase.descriptor)
+                    - Expected Output:
+                    ---
+                    \(testCase.expectedOutput)
+                    ---
+                    - Actual Output:
+                    ---
+                    \(actualOutput2)
+                    ---
+                    """
+                XCTAssertEqual(actualOutput2, testCase.expectedOutput, failureMessage)
+                client.unregisterValueHistogram(histogramWithoutLabels)
+            }
+        }
+    }
+
+    func testDurationHistogramWithMetricNameDescriptorWithFullComponentMatrix() {
+        // --- Test Constants ---
+        let helpTextValue = "https://help.url/sub"
+        let metricNameWithHelp = "metric_with_help"
+        let metricNameWithoutHelp = "metric_without_help"
+        let observeValue = Duration.milliseconds(400)
+        let buckets: [Duration] = [
+            .milliseconds(100),
+            .milliseconds(250),
+            .milliseconds(500),
+            .seconds(1),
+        ]
+        let client = PrometheusCollectorRegistry()
+
+        // 1. Define the base naming combinations first.
+        let baseNameCases:
+            [(
+                namespace: String?, subsystem: String?, metricName: String, unitName: String?,
+                expectedMetricName: String, help: String?, description: String
+            )] = [
+                // --- Test 1: Cases with help text (using metricNameWithHelp)
+                (
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "myapp_subsystem_metric_with_help_total", help: helpTextValue,
+                    description: "All components present, with help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithHelp, unitName: nil,
+                    expectedMetricName: "myapp_subsystem_metric_with_help", help: helpTextValue,
+                    description: "Unit is nil, with help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: "", metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "myapp_metric_with_help_total", help: helpTextValue,
+                    description: "Subsystem is empty string, with help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: nil, metricName: metricNameWithHelp, unitName: nil,
+                    expectedMetricName: "myapp_metric_with_help", help: helpTextValue,
+                    description: "Subsystem and Unit are nil, with help text"
+                ),
+                (
+                    namespace: "", subsystem: "subsystem", metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "subsystem_metric_with_help_total", help: helpTextValue,
+                    description: "Namespace is empty string, with help text"
+                ),
+                (
+                    namespace: nil, subsystem: "subsystem", metricName: metricNameWithHelp, unitName: "",
+                    expectedMetricName: "subsystem_metric_with_help", help: helpTextValue,
+                    description: "Namespace is nil, Unit is empty string, with help text"
+                ),
+                (
+                    namespace: "", subsystem: nil, metricName: metricNameWithHelp, unitName: "total",
+                    expectedMetricName: "metric_with_help_total", help: helpTextValue,
+                    description: "Namespace is empty string, Subsystem is nil, with help text"
+                ),
+                (
+                    namespace: nil, subsystem: nil, metricName: metricNameWithHelp, unitName: nil,
+                    expectedMetricName: "metric_with_help", help: helpTextValue,
+                    description: "Only metric name is present (all nil), with help text"
+                ),
+
+                // --- Test 2: Cases without help text (using metricNameWithoutHelp)
+                (
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "myapp_subsystem_metric_without_help_total", help: nil,
+                    description: "All components present, no help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: "",
+                    expectedMetricName: "myapp_subsystem_metric_without_help", help: nil,
+                    description: "Unit is empty string, no help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: nil, metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "myapp_metric_without_help_total", help: nil,
+                    description: "Subsystem is nil, no help text"
+                ),
+                (
+                    namespace: "myapp", subsystem: "", metricName: metricNameWithoutHelp, unitName: nil,
+                    expectedMetricName: "myapp_metric_without_help", help: nil,
+                    description: "Subsystem is empty string, Unit is nil, no help text"
+                ),
+                (
+                    namespace: nil, subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "subsystem_metric_without_help_total", help: nil,
+                    description: "Namespace is nil, no help text"
+                ),
+                (
+                    namespace: "", subsystem: "subsystem", metricName: metricNameWithoutHelp, unitName: nil,
+                    expectedMetricName: "subsystem_metric_without_help", help: nil,
+                    description: "Namespace is empty string, Unit is nil, no help text"
+                ),
+                (
+                    namespace: nil, subsystem: "", metricName: metricNameWithoutHelp, unitName: "total",
+                    expectedMetricName: "metric_without_help_total", help: nil,
+                    description: "Namespace is nil, Subsystem is empty string, no help text"
+                ),
+                (
+                    namespace: "", subsystem: "", metricName: metricNameWithoutHelp, unitName: "",
+                    expectedMetricName: "metric_without_help", help: nil,
+                    description: "Only metric name is present (all empty strings), no help text"
+                ),
+            ]
+
+        // 2. Define the label combinations to test.
+        let labelCases: [(labels: [(String, String)], expectedLabelString: String, description: String)] = [
+            (labels: [], expectedLabelString: "", description: "without labels"),
+            (labels: [("method", "get")], expectedLabelString: "{method=\"get\"}", description: "with one label"),
+            (
+                labels: [("status", "200"), ("path", "/api/v1")],
+                expectedLabelString: "{status=\"200\",path=\"/api/v1\"}", description: "with two labels"
+            ),
+        ]
+
+        // 3. Programmatically generate the final, full matrix by crossing name cases with label cases.
+        var allTestCases:
+            [(
+                descriptor: MetricNameDescriptor, labels: [(String, String)], expectedOutput: String,
+                failureDescription: String
+            )] = []
+
+        for nameCase in baseNameCases {
+            for labelCase in labelCases {
+                let descriptor = MetricNameDescriptor(
+                    namespace: nameCase.namespace,
+                    subsystem: nameCase.subsystem,
+                    metricName: nameCase.metricName,
+                    unitName: nameCase.unitName,
+                    helpText: nameCase.help
+                )
+
+                // Convert Durations to Doubles (seconds) for expected output generation
+                let bucketsInSeconds = buckets.map {
+                    Double($0.components.seconds) + Double($0.components.attoseconds) / 1_000_000_000_000_000_000.0
+                }
+                let observedValueInSeconds =
+                    Double(observeValue.components.seconds) + Double(observeValue.components.attoseconds)
+                    / 1_000_000_000_000_000_000.0
+
+                let expectedOutput = self.generateHistogramOutput(
+                    metricName: nameCase.expectedMetricName,
+                    labelString: labelCase.expectedLabelString,
+                    buckets: bucketsInSeconds,
+                    observedValue: observedValueInSeconds,
+                    helpText: nameCase.help ?? ""
+                )
+
+                let failureDescription = "DurationHistogram: \(nameCase.description), \(labelCase.description)"
+
+                allTestCases.append(
+                    (
+                        descriptor: descriptor,
+                        labels: labelCase.labels,
+                        expectedOutput: expectedOutput,
+                        failureDescription: failureDescription
+                    )
+                )
+            }
+        }
+
+        let expectedTestCaseCount = baseNameCases.count * labelCases.count
+        XCTAssertEqual(
+            allTestCases.count,
+            expectedTestCaseCount,
+            "Test setup failed: Did not generate the correct number of test cases."
+        )
+
+        // 4. Loop through the complete, generated test matrix.
+        for testCase in allTestCases {
+            // --- Test 1: The `makeDurationHistogram` overload with a `labels` parameter ---
+            let histogramWithLabels = client.makeDurationHistogram(
+                descriptor: testCase.descriptor,
+                labels: testCase.labels,
+                buckets: buckets
+            )
+            histogramWithLabels.record(observeValue)
+
+            var buffer = [UInt8]()
+            client.emit(into: &buffer)
+            let actualOutput = String(decoding: buffer, as: Unicode.UTF8.self)
+
+            var failureMessage = """
+                Failed on test case: '\(testCase.failureDescription)'
+                Overload: makeDurationHistogram(descriptor:labels:buckets:)
+                - Descriptor: \(testCase.descriptor)
+                - Labels: \(testCase.labels)
+                - Expected Output:
+                ---
+                \(testCase.expectedOutput)
+                ---
+                - Actual Output:
+                ---
+                \(actualOutput)
+                ---
+                """
+            XCTAssertEqual(actualOutput, testCase.expectedOutput, failureMessage)
+            client.unregisterDurationHistogram(histogramWithLabels)
+
+            // --- Test 2: The `makeDurationHistogram` overload without a `labels` parameter ---
+            if testCase.labels.isEmpty {
+                let histogramWithoutLabels = client.makeDurationHistogram(
+                    descriptor: testCase.descriptor,
+                    buckets: buckets
+                )
+                histogramWithoutLabels.record(observeValue)
+
+                var buffer2 = [UInt8]()
+                client.emit(into: &buffer2)
+                let actualOutput2 = String(decoding: buffer2, as: Unicode.UTF8.self)
+
+                failureMessage = """
+                    Failed on test case: '\(testCase.failureDescription)'
+                    Overload: makeDurationHistogram(descriptor:buckets:)
+                    - Descriptor: \(testCase.descriptor)
+                    - Expected Output:
+                    ---
+                    \(testCase.expectedOutput)
+                    ---
+                    - Actual Output:
+                    ---
+                    \(actualOutput2)
+                    ---
+                    """
+                XCTAssertEqual(actualOutput2, testCase.expectedOutput, failureMessage)
+                client.unregisterDurationHistogram(histogramWithoutLabels)
+            }
+        }
+    }
+
+    // MARK: - Helpers
+
+    /// Generates the expected Prometheus exposition format string for a histogram with a single observation.
+    private func generateHistogramOutput(
+        metricName: String,
+        labelString: String,
+        buckets: [Double],
+        observedValue: Double,
+        helpText: String = ""
+    ) -> String {
+
+        var output: String = ""
+        if !helpText.isEmpty {
+            // If help text is not empty, include the # HELP line.
+            output += "# HELP \(metricName) \(helpText)\n"
+        }
+        output += "# TYPE \(metricName) histogram\n"
+        let labelsWithLe = { (le: String) -> String in
+            guard labelString.isEmpty else {
+                // Insert 'le' at the end of the existing labels
+                return "{\(labelString.dropFirst().dropLast()),le=\"\(le)\"}"
+            }
+            return "{le=\"\(le)\"}"
+        }
+
+        var cumulativeCount = 0
+        for bucket in buckets {
+            if observedValue <= bucket {
+                cumulativeCount = 1
+            }
+            output += "\(metricName)_bucket\(labelsWithLe("\(bucket)")) \(cumulativeCount)\n"
+        }
+
+        let totalObservations = 1
+        output += "\(metricName)_bucket\(labelsWithLe("+Inf")) \(totalObservations)\n"
+        output += "\(metricName)_sum\(labelString) \(observedValue)\n"
+
+        output += "\(metricName)_count\(labelString) \(totalObservations)\n"
+
+        return output
+    }
 }
