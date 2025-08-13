@@ -17,7 +17,7 @@ For general advice on how to use `Prometheus` make sure to also read the [Promet
 following dependency to your `Package.swift`:
 
 ```swift
-  .package(url: "https://github.com/swift-server/swift-prometheus.git", from: "2.0.0-alpha")
+  .package(url: "https://github.com/swift-server/swift-prometheus.git", from: "2.0.0")
 ```
 
 Next, add the dependency to your target:
