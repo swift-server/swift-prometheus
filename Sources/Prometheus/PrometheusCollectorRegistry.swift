@@ -47,9 +47,22 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
+    private struct CounterWithHelp {
+        var counter: Counter
+        let help: String
+    }
+
+    private struct CounterGroup {
+        // A collection of Counter metrics, each with a unique label set, that share the same metric name.
+        // Distinct help strings for the same metric name are permitted, but Prometheus retains only the
+        // most recent one. For an unlabelled Counter, the empty label set is used as the key, and the
+        // collection contains only one entry. Finally, for clarification, the same Counter metric name can
+        // simultaneously be labeled and unlabeled.
+        var countersByLabelSets: [LabelsKey: CounterWithHelp]
+    }
+
     private enum Metric {
-        case counter(Counter, help: String)
-        case counterWithLabels([String], [LabelsKey: Counter], help: String)
+        case counter(CounterGroup)
         case gauge(Gauge, help: String)
         case gaugeWithLabels([String], [LabelsKey: Gauge], help: String)
         case durationHistogram(DurationHistogram, help: String)
@@ -75,25 +88,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///                   If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
     /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeCounter(name: String, help: String) -> Counter {
-        let name = name.ensureValidMetricName()
-        let help = help.ensureValidHelpText()
-        return self.box.withLockedValue { store -> Counter in
-            guard let value = store[name] else {
-                let counter = Counter(name: name, labels: [])
-                store[name] = .counter(counter, help: help)
-                return counter
-            }
-            guard case .counter(let counter, _) = value else {
-                fatalError(
-                    """
-                    Could not make Counter with name: \(name), since another metric type
-                    already exists for the same name.
-                    """
-                )
-            }
-
-            return counter
-        }
+        return self.makeCounter(name: name, labels: [], help: help)
     }
 
     /// Creates a new ``Counter`` collector or returns the already existing one with the same name.
@@ -104,7 +99,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter name: A name to identify ``Counter``'s value.
     /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeCounter(name: String) -> Counter {
-        return self.makeCounter(name: name, help: "")
+        return self.makeCounter(name: name, labels: [], help: "")
     }
 
     /// Creates a new ``Counter`` collector or returns the already existing one with the same name,
@@ -116,7 +111,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
     /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeCounter(descriptor: MetricNameDescriptor) -> Counter {
-        return self.makeCounter(name: descriptor.name, help: descriptor.helpText ?? "")
+        return self.makeCounter(name: descriptor.name, labels: [], help: descriptor.helpText ?? "")
     }
 
     /// Creates a new ``Counter`` collector or returns the already existing one with the same name.
@@ -131,51 +126,49 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///                   If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
     /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeCounter(name: String, labels: [(String, String)], help: String) -> Counter {
-        guard !labels.isEmpty else {
-            return self.makeCounter(name: name, help: help)
-        }
-
         let name = name.ensureValidMetricName()
         let labels = labels.ensureValidLabelNames()
         let help = help.ensureValidHelpText()
+        let key = LabelsKey(labels)
 
         return self.box.withLockedValue { store -> Counter in
-            guard let value = store[name] else {
-                let labelNames = labels.allLabelNames
+            guard let entry = store[name] else {
+                // First time a Counter is registered with this name.
                 let counter = Counter(name: name, labels: labels)
-
-                store[name] = .counterWithLabels(labelNames, [LabelsKey(labels): counter], help: help)
+                let counterWithHelp = CounterWithHelp(counter: counter, help: help)
+                let counterGroup = CounterGroup(
+                    countersByLabelSets: [key: counterWithHelp]
+                )
+                store[name] = .counter(counterGroup)
                 return counter
             }
-            guard case .counterWithLabels(let labelNames, var dimensionLookup, let help) = value else {
+            switch entry {
+            case .counter(var existingCounterGroup):
+                if let existingCounterWithHelp = existingCounterGroup.countersByLabelSets[key] {
+                    return existingCounterWithHelp.counter
+                }
+
+                // Even if the metric name is identical, each label set defines a unique time series.
+                let counter = Counter(name: name, labels: labels)
+                let counterWithHelp = CounterWithHelp(counter: counter, help: help)
+                existingCounterGroup.countersByLabelSets[key] = counterWithHelp
+
+                // Write the modified entry back to the store.
+                store[name] = .counter(existingCounterGroup)
+
+                return counter
+
+            default:
+                // A metric with this name exists, but it's not a Counter. This is a programming error.
+                // While Prometheus wouldn't stop you, it may result in unpredictable behavior with tools like Grafana or PromQL.
                 fatalError(
                     """
-                    Could not make Counter with name: \(name) and labels: \(labels), since another
-                    metric type already exists for the same name.
+                    Metric type mismatch:
+                    Could not register a Counter with name '\(name)',
+                    since a different metric type (\(entry.self)) was already registered with this name.
                     """
                 )
             }
-
-            let key = LabelsKey(labels)
-            if let counter = dimensionLookup[key] {
-                return counter
-            }
-
-            // check if all labels match the already existing ones.
-            if labelNames != labels.allLabelNames {
-                fatalError(
-                    """
-                    Could not make Counter with name: \(name) and labels: \(labels), since the
-                    label names don't match the label names of previously registered Counters with
-                    the same name.
-                    """
-                )
-            }
-
-            let counter = Counter(name: name, labels: labels)
-            dimensionLookup[key] = counter
-            store[name] = .counterWithLabels(labelNames, dimensionLookup, help: help)
-            return counter
         }
     }
 
@@ -703,17 +696,19 @@ public final class PrometheusCollectorRegistry: Sendable {
     public func unregisterCounter(_ counter: Counter) {
         self.box.withLockedValue { store in
             switch store[counter.name] {
-            case .counter(let storedCounter, _):
-                guard storedCounter === counter else { return }
-                store.removeValue(forKey: counter.name)
-            case .counterWithLabels(let labelNames, var dimensions, let help):
-                let labelsKey = LabelsKey(counter.labels)
-                guard dimensions[labelsKey] === counter else { return }
-                dimensions.removeValue(forKey: labelsKey)
-                if dimensions.isEmpty {
+            case .counter(var counterGroup):
+                let key = LabelsKey(counter.labels)
+                guard let existingCounterGroup = counterGroup.countersByLabelSets[key],
+                    existingCounterGroup.counter === counter
+                else {
+                    return
+                }
+                counterGroup.countersByLabelSets.removeValue(forKey: key)
+
+                if counterGroup.countersByLabelSets.isEmpty {
                     store.removeValue(forKey: counter.name)
                 } else {
-                    store[counter.name] = .counterWithLabels(labelNames, dimensions, help: help)
+                    store[counter.name] = .counter(counterGroup)
                 }
             default:
                 return
@@ -806,52 +801,52 @@ public final class PrometheusCollectorRegistry: Sendable {
         let prefixHelp = "HELP"
         let prefixType = "TYPE"
 
-        for (label, metric) in metrics {
+        for (name, metric) in metrics {
             switch metric {
-            case .counter(let counter, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: label, value: help)
-                buffer.addLine(prefix: prefixType, name: label, value: "counter")
-                counter.emit(into: &buffer)
-
-            case .counterWithLabels(_, let counters, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: label, value: help)
-                buffer.addLine(prefix: prefixType, name: label, value: "counter")
-                for counter in counters.values {
-                    counter.emit(into: &buffer)
+            case .counter(let counterGroup):
+                // Should not be empty, as a safeguard skip if it is.
+                guard let _ = counterGroup.countersByLabelSets.first?.value else {
+                    continue
+                }
+                for counterWithHelp in counterGroup.countersByLabelSets.values {
+                    let help = counterWithHelp.help
+                    help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addLine(prefix: prefixType, name: name, value: "counter")
+                    counterWithHelp.counter.emit(into: &buffer)
                 }
 
             case .gauge(let gauge, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: label, value: help)
-                buffer.addLine(prefix: prefixType, name: label, value: "gauge")
+                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                buffer.addLine(prefix: prefixType, name: name, value: "gauge")
                 gauge.emit(into: &buffer)
 
             case .gaugeWithLabels(_, let gauges, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: label, value: help)
-                buffer.addLine(prefix: prefixType, name: label, value: "gauge")
+                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                buffer.addLine(prefix: prefixType, name: name, value: "gauge")
                 for gauge in gauges.values {
                     gauge.emit(into: &buffer)
                 }
 
             case .durationHistogram(let histogram, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: label, value: help)
-                buffer.addLine(prefix: prefixType, name: label, value: "histogram")
+                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
                 histogram.emit(into: &buffer)
 
             case .durationHistogramWithLabels(_, let histograms, _, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: label, value: help)
-                buffer.addLine(prefix: prefixType, name: label, value: "histogram")
+                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
                 for histogram in histograms.values {
                     histogram.emit(into: &buffer)
                 }
 
             case .valueHistogram(let histogram, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: label, value: help)
-                buffer.addLine(prefix: prefixType, name: label, value: "histogram")
+                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
                 histogram.emit(into: &buffer)
 
             case .valueHistogramWithLabels(_, let histograms, _, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: label, value: help)
-                buffer.addLine(prefix: prefixType, name: label, value: "histogram")
+                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
                 for histogram in histograms.values {
                     histogram.emit(into: &buffer)
                 }
