@@ -47,8 +47,14 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
+    // Note: In order to support Sendable, need to explicitely define the types.
     private struct CounterWithHelp {
         var counter: Counter
+        let help: String
+    }
+
+    private struct GaugeWithHelp {
+        var gauge: Gauge
         let help: String
     }
 
@@ -61,10 +67,13 @@ public final class PrometheusCollectorRegistry: Sendable {
         var countersByLabelSets: [LabelsKey: CounterWithHelp]
     }
 
+    private struct GaugeGroup {
+        var gaugesByLabelSets: [LabelsKey: GaugeWithHelp]
+    }
+
     private enum Metric {
         case counter(CounterGroup)
-        case gauge(Gauge, help: String)
-        case gaugeWithLabels([String], [LabelsKey: Gauge], help: String)
+        case gauge(GaugeGroup)
         case durationHistogram(DurationHistogram, help: String)
         case durationHistogramWithLabels([String], [LabelsKey: DurationHistogram], [Duration], help: String)
         case valueHistogram(ValueHistogram, help: String)
@@ -209,25 +218,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///                   If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
     /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeGauge(name: String, help: String) -> Gauge {
-        let name = name.ensureValidMetricName()
-        let help = help.ensureValidHelpText()
-        return self.box.withLockedValue { store -> Gauge in
-            guard let value = store[name] else {
-                let gauge = Gauge(name: name, labels: [])
-                store[name] = .gauge(gauge, help: help)
-                return gauge
-            }
-            guard case .gauge(let gauge, _) = value else {
-                fatalError(
-                    """
-                    Could not make Gauge with name: \(name), since another metric type already
-                    exists for the same name.
-                    """
-                )
-            }
-
-            return gauge
-        }
+        return self.makeGauge(name: name, labels: [], help: help)
     }
 
     /// Creates a new ``Gauge`` collector or returns the already existing one with the same name.
@@ -238,7 +229,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter name: A name to identify ``Gauge``'s value.
     /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeGauge(name: String) -> Gauge {
-        return self.makeGauge(name: name, help: "")
+        return self.makeGauge(name: name, labels: [], help: "")
     }
 
     /// Creates a new ``Gauge`` collector or returns the already existing one with the same name,
@@ -250,7 +241,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
     /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeGauge(descriptor: MetricNameDescriptor) -> Gauge {
-        return self.makeGauge(name: descriptor.name, help: descriptor.helpText ?? "")
+        return self.makeGauge(name: descriptor.name, labels: [], help: descriptor.helpText ?? "")
     }
 
     /// Creates a new ``Gauge`` collector or returns the already existing one with the same name.
@@ -265,51 +256,49 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///                   If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
     /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeGauge(name: String, labels: [(String, String)], help: String) -> Gauge {
-        guard !labels.isEmpty else {
-            return self.makeGauge(name: name, help: help)
-        }
-
         let name = name.ensureValidMetricName()
         let labels = labels.ensureValidLabelNames()
         let help = help.ensureValidHelpText()
+        let key = LabelsKey(labels)
 
         return self.box.withLockedValue { store -> Gauge in
-            guard let value = store[name] else {
-                let labelNames = labels.allLabelNames
+            guard let entry = store[name] else {
+                // First time a Gauge is registered with this name.
                 let gauge = Gauge(name: name, labels: labels)
-
-                store[name] = .gaugeWithLabels(labelNames, [LabelsKey(labels): gauge], help: help)
+                let gaugeWithHelp = GaugeWithHelp(gauge: gauge, help: help)
+                let gaugeGroup = GaugeGroup(
+                    gaugesByLabelSets: [key: gaugeWithHelp]
+                )
+                store[name] = .gauge(gaugeGroup)
                 return gauge
             }
-            guard case .gaugeWithLabels(let labelNames, var dimensionLookup, let help) = value else {
+            switch entry {
+            case .gauge(var existingGaugeGroup):
+                if let existingGaugeWithHelp = existingGaugeGroup.gaugesByLabelSets[key] {
+                    return existingGaugeWithHelp.gauge
+                }
+
+                // Even if the metric name is identical, each label set defines a unique time series.
+                let gauge = Gauge(name: name, labels: labels)
+                let gaugeWithHelp = GaugeWithHelp(gauge: gauge, help: help)
+                existingGaugeGroup.gaugesByLabelSets[key] = gaugeWithHelp
+
+                // Write the modified entry back to the store.
+                store[name] = .gauge(existingGaugeGroup)
+
+                return gauge
+
+            default:
+                // A metric with this name exists, but it's not a Gauge. This is a programming error.
+                // While Prometheus wouldn't stop you, it may result in unpredictable behavior with tools like Grafana or PromQL.
                 fatalError(
                     """
-                    Could not make Gauge with name: \(name) and labels: \(labels), since another
-                    metric type already exists for the same name.
+                    Metric type mismatch:
+                    Could not register a Gauge with name '\(name)',
+                    since a different metric type (\(entry.self)) was already registered with this name.
                     """
                 )
             }
-
-            let key = LabelsKey(labels)
-            if let gauge = dimensionLookup[key] {
-                return gauge
-            }
-
-            // check if all labels match the already existing ones.
-            if labelNames != labels.allLabelNames {
-                fatalError(
-                    """
-                    Could not make Gauge with name: \(name) and labels: \(labels), since the
-                    label names don't match the label names of previously registered Gauges with
-                    the same name.
-                    """
-                )
-            }
-
-            let gauge = Gauge(name: name, labels: labels)
-            dimensionLookup[key] = gauge
-            store[name] = .gaugeWithLabels(labelNames, dimensionLookup, help: help)
-            return gauge
         }
     }
 
@@ -724,17 +713,19 @@ public final class PrometheusCollectorRegistry: Sendable {
     public func unregisterGauge(_ gauge: Gauge) {
         self.box.withLockedValue { store in
             switch store[gauge.name] {
-            case .gauge(let storedGauge, _):
-                guard storedGauge === gauge else { return }
-                store.removeValue(forKey: gauge.name)
-            case .gaugeWithLabels(let labelNames, var dimensions, let help):
-                let dimensionsKey = LabelsKey(gauge.labels)
-                guard dimensions[dimensionsKey] === gauge else { return }
-                dimensions.removeValue(forKey: dimensionsKey)
-                if dimensions.isEmpty {
+            case .gauge(var gaugeGroup):
+                let key = LabelsKey(gauge.labels)
+                guard let existingGaugeGroup = gaugeGroup.gaugesByLabelSets[key],
+                    existingGaugeGroup.gauge === gauge
+                else {
+                    return
+                }
+                gaugeGroup.gaugesByLabelSets.removeValue(forKey: key)
+
+                if gaugeGroup.gaugesByLabelSets.isEmpty {
                     store.removeValue(forKey: gauge.name)
                 } else {
-                    store[gauge.name] = .gaugeWithLabels(labelNames, dimensions, help: help)
+                    store[gauge.name] = .gauge(gaugeGroup)
                 }
             default:
                 return
@@ -815,16 +806,16 @@ public final class PrometheusCollectorRegistry: Sendable {
                     counterWithHelp.counter.emit(into: &buffer)
                 }
 
-            case .gauge(let gauge, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                buffer.addLine(prefix: prefixType, name: name, value: "gauge")
-                gauge.emit(into: &buffer)
-
-            case .gaugeWithLabels(_, let gauges, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                buffer.addLine(prefix: prefixType, name: name, value: "gauge")
-                for gauge in gauges.values {
-                    gauge.emit(into: &buffer)
+            case .gauge(let gaugeGroup):
+                // Should not be empty, as a safeguard skip if it is.
+                guard let _ = gaugeGroup.gaugesByLabelSets.first?.value else {
+                    continue
+                }
+                for gaugeWithHelp in gaugeGroup.gaugesByLabelSets.values {
+                    let help = gaugeWithHelp.help
+                    help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addLine(prefix: prefixType, name: name, value: "gauge")
+                    gaugeWithHelp.gauge.emit(into: &buffer)
                 }
 
             case .durationHistogram(let histogram, let help):
