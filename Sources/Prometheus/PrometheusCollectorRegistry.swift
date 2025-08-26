@@ -52,7 +52,7 @@ public final class PrometheusCollectorRegistry: Sendable {
         let help: String
     }
 
-    private enum BucketType: Sendable, Hashable {
+    private enum HistogramBuckets: Sendable, Hashable {
         case duration([Duration])
         case value([Double])
     }
@@ -66,16 +66,11 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// metric. See also https://github.com/prometheus/OpenMetrics/issues/197.
     private struct MetricGroup<Metric: Sendable & AnyObject>: Sendable {
         var metricsByLabelSets: [LabelsKey: MetricWithHelp<Metric>]
-        let buckets: BucketType?  // Store buckets for histogram types
+        let buckets: HistogramBuckets?
 
-        init(metricsByLabelSets: [LabelsKey: MetricWithHelp<Metric>] = [:], buckets: BucketType) {
+        init(metricsByLabelSets: [LabelsKey: MetricWithHelp<Metric>] = [:], buckets: HistogramBuckets? = nil) {
             self.metricsByLabelSets = metricsByLabelSets
             self.buckets = buckets
-        }
-
-        init(metricsByLabelSets: [LabelsKey: MetricWithHelp<Metric>] = [:]) {
-            self.metricsByLabelSets = metricsByLabelSets
-            self.buckets = nil
         }
     }
 
