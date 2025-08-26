@@ -29,7 +29,7 @@ public func makeLabels(_ idx: Int) -> [(String, String)] {
 
 let benchmarks = {
     let ciMetrics: [BenchmarkMetric] = [
-        .mallocCountTotal,
+        .mallocCountTotal
     ]
     let localMetrics = BenchmarkMetric.default
 
@@ -60,8 +60,9 @@ let benchmarks = {
         runDurationHistogramBench(benchmark.scaledIterations)
     }
 
-    Benchmark("RegistryEmit - 5000 metrics",
-              configuration: .init(scalingFactor: .one))
+    Benchmark(
+        "RegistryEmit - 5000 metrics",
+        configuration: .init(scalingFactor: .one))
     { benchmark, run in
         for _ in benchmark.scaledIterations {
             run()

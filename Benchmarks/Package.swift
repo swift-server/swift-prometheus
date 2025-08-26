@@ -29,11 +29,11 @@ let package = Package(
             name: "PrometheusBenchmarks",
             dependencies: [
                 .product(name: "Benchmark", package: "package-benchmark"),
-                .product(name: "Prometheus", package: "swift-prometheus"),
+                .product(name: "Prometheus", package: "swift-prometheus")
             ],
             path: "Benchmarks/PrometheusBenchmarks",
             plugins: [
-                .plugin(name: "BenchmarkPlugin", package: "package-benchmark"),
+                .plugin(name: "BenchmarkPlugin", package: "package-benchmark")
             ]
         ),
     ]
