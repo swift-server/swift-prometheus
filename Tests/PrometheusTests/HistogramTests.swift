@@ -16,6 +16,36 @@ import Prometheus
 import XCTest
 
 final class HistogramTests: XCTestCase {
+
+    func testFactoryDefaultValueHistogramBuckets() {
+        var factory = PrometheusMetricsFactory()
+        factory.defaultValueHistogramBuckets = [
+            1, 10, 25, 50, 75, 100,
+        ]
+        let recorder = factory.makeRecorder(label: "label", dimensions: [("a", "b")], aggregate: true)
+        recorder.record(Int64(12))
+
+        var buffer = [UInt8]()
+        factory.registry.emit(into: &buffer)
+
+        XCTAssertEqual(
+            """
+            # TYPE label histogram
+            label_bucket{a="b",le="1.0"} 0
+            label_bucket{a="b",le="10.0"} 0
+            label_bucket{a="b",le="25.0"} 1
+            label_bucket{a="b",le="50.0"} 1
+            label_bucket{a="b",le="75.0"} 1
+            label_bucket{a="b",le="100.0"} 1
+            label_bucket{a="b",le="+Inf"} 1
+            label_sum{a="b"} 12.0
+            label_count{a="b"} 1
+
+            """,
+            String(decoding: buffer, as: Unicode.UTF8.self)
+        )
+    }
+
     func testHistogramWithoutDimensions() {
         let client = PrometheusCollectorRegistry()
         let histogram = client.makeDurationHistogram(
