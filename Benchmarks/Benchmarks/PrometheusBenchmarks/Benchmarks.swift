@@ -16,82 +16,49 @@
 import Benchmark
 import Prometheus
 
+let registry = PrometheusCollectorRegistry()
+
+public func makeLabels(_ idx: Int) -> [(String, String)] {
+    [
+        ("job", "api_server_\(idx)"),
+        ("handler", "/api/handler_\(idx)"),
+        ("status_code", "200"),
+        ("version", "\(idx).0.0"),
+    ]
+}
+
 let benchmarks = {
     Benchmark.defaultConfiguration.maxDuration = .seconds(5)
     Benchmark.defaultConfiguration.scalingFactor = .kilo
+    // Benchmark.defaultConfiguration.metrics = [.wallClock, .throughput, .mallocCountTotal]
+    Benchmark.defaultConfiguration.metrics = [.mallocCountTotal]
 
-    let registry = PrometheusCollectorRegistry()
-
-    func metricsDimensions(_ idx: Int) -> [(String, String)] {
-        [
-            ("job", "api_server_\(idx)"),
-            ("handler", "/api/handler_\(idx)"),
-            ("status_code", "200"),
-            ("version", "\(idx).0.0"),
-        ]
+    Benchmark("Counter #1") { benchmark in
+        runCounterBench(benchmark.scaledIterations)
     }
 
-    Benchmark("1 - Metrics: Counter benchmark") { benchmark in
-        let ctr = registry.makeCounter(name: "counter_1", labels: metricsDimensions(1))
-        benchmark.startMeasurement()
+    Benchmark("Counter #2") { benchmark, run in
         for _ in benchmark.scaledIterations {
-            blackHole(ctr.increment())
+            run()
         }
+    } setup: {
+        setupCounterBench()
     }
 
-    Benchmark("2 - Metrics: Gauge benchmark") { benchmark in
-        let gauge = registry.makeGauge(name: "gauge_1", labels: metricsDimensions(2))
-        benchmark.startMeasurement()
-        for _ in benchmark.scaledIterations {
-            blackHole(gauge.increment())
-        }
+    Benchmark("Gauge") { benchmark in
+        runGaugeBench(benchmark.scaledIterations)
     }
 
-    Benchmark("3 - Metrics: Histogram benchmark") { benchmark in
-        let histogram = registry.makeDurationHistogram(name: "histogram_1", labels: metricsDimensions(3),
-                                                       buckets: [
-                                                           .milliseconds(100),
-                                                           .milliseconds(250),
-                                                           .milliseconds(500),
-                                                           .seconds(1),
-                                                       ])
-        benchmark.startMeasurement()
-        for _ in benchmark.scaledIterations {
-            histogram.record(Duration.milliseconds(400))
-        }
+    Benchmark("DurationHistogram") { benchmark in
+        runDurationHistogramBench(benchmark.scaledIterations)
     }
 
-    Benchmark("4 - Metrics: export 5000 metrics", 
-              configuration: .init(scalingFactor: .one)) { benchmark in
-        let metricsCount = 5000
-
-        let registryExport = PrometheusCollectorRegistry()
-
-        var counterArray = [Counter]()
-        var gaugeArray = [Gauge]()
-        var buffer = [UInt8]()
-
-        let counterExportSize = 620_000
-        counterArray.reserveCapacity(metricsCount)
-        gaugeArray.reserveCapacity(metricsCount)
-        buffer.reserveCapacity(counterExportSize)
-
-        for i in 0..<(metricsCount / 2) {
-            let counter = registryExport.makeCounter(name: "http_requests_total", labels: metricsDimensions(i))
-            counter.increment()
-            counterArray.append(counter)
-
-            let gauge = registryExport.makeGauge(name: "export_gauge_\(i)", labels: metricsDimensions(i))
-            gauge.increment()
-            gaugeArray.append(gauge)
-        }
-
-        benchmark.startMeasurement()
+    Benchmark("RegistryEmit - 5000 metrics",
+              configuration: .init(scalingFactor: .one)) { benchmark, run in
         for _ in benchmark.scaledIterations {
-            blackHole(registryExport.emit(into: &buffer))
-
+            run()
         }
-        benchmark.stopMeasurement()
-        buffer.removeAll(keepingCapacity: true)
+    } setup: {
+        setupRegistryExport(numberOfMetrics: 5000)
     }
 }
