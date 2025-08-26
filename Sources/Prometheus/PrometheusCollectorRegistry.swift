@@ -52,22 +52,38 @@ public final class PrometheusCollectorRegistry: Sendable {
         let help: String
     }
 
+    private enum BucketType: Sendable, Hashable {
+        case duration([Duration])
+        case value([Double])
+    }
+
+    /// A collection of metrics, each with a unique label set, that share the same metric name.
+    /// Distinct help strings for the same metric name are permitted, but Prometheus retains only the
+    /// first one. For an unlabelled metric, the empty label set is used as the key, and the
+    /// collection contains only one entry. Finally, for clarification, the same metric name can
+    /// simultaneously be labeled and unlabeled.
+    /// For histograms, the buckets are immutable for a MetricGroup once initialized with the first
+    /// metric. See also https://github.com/prometheus/OpenMetrics/issues/197.
     private struct MetricGroup<Metric: Sendable & AnyObject>: Sendable {
-        /// A collection of metrics, each with a unique label set, that share the same metric name.
-        /// Distinct help strings for the same metric name are permitted, but Prometheus retains only the
-        /// most recent one. For an unlabelled metric, the empty label set is used as the key, and the
-        /// collection contains only one entry. Finally, for clarification, the same metric name can
-        /// simultaneously be labeled and unlabeled.
         var metricsByLabelSets: [LabelsKey: MetricWithHelp<Metric>]
+        let buckets: BucketType?  // Store buckets for histogram types
+
+        init(metricsByLabelSets: [LabelsKey: MetricWithHelp<Metric>] = [:], buckets: BucketType) {
+            self.metricsByLabelSets = metricsByLabelSets
+            self.buckets = buckets
+        }
+
+        init(metricsByLabelSets: [LabelsKey: MetricWithHelp<Metric>] = [:]) {
+            self.metricsByLabelSets = metricsByLabelSets
+            self.buckets = nil
+        }
     }
 
     private enum Metric {
         case counter(MetricGroup<Counter>)
         case gauge(MetricGroup<Gauge>)
-        case durationHistogram(DurationHistogram, help: String)
-        case durationHistogramWithLabels([String], [LabelsKey: DurationHistogram], [Duration], help: String)
-        case valueHistogram(ValueHistogram, help: String)
-        case valueHistogramWithLabels([String], [LabelsKey: ValueHistogram], [Double], help: String)
+        case durationHistogram(MetricGroup<DurationHistogram>)
+        case valueHistogram(MetricGroup<ValueHistogram>)
     }
 
     private let box = NIOLockedValueBox([String: Metric]())
@@ -330,25 +346,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///                   If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
     /// - Returns: A ``DurationHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeDurationHistogram(name: String, buckets: [Duration], help: String) -> DurationHistogram {
-        let name = name.ensureValidMetricName()
-        let help = help.ensureValidHelpText()
-        return self.box.withLockedValue { store -> DurationHistogram in
-            guard let value = store[name] else {
-                let gauge = DurationHistogram(name: name, labels: [], buckets: buckets)
-                store[name] = .durationHistogram(gauge, help: help)
-                return gauge
-            }
-            guard case .durationHistogram(let histogram, _) = value else {
-                fatalError(
-                    """
-                    Could not make DurationHistogram with name: \(name), since another
-                    metric type already exists for the same name.
-                    """
-                )
-            }
-
-            return histogram
-        }
+        return self.makeDurationHistogram(name: name, labels: [], buckets: buckets, help: help)
     }
 
     /// Creates a new ``DurationHistogram`` collector or returns the already existing one with the same name.
@@ -360,7 +358,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter buckets: Define the buckets that shall be used within the ``DurationHistogram``
     /// - Returns: A ``DurationHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeDurationHistogram(name: String, buckets: [Duration]) -> DurationHistogram {
-        return self.makeDurationHistogram(name: name, buckets: buckets, help: "")
+        return self.makeDurationHistogram(name: name, labels: [], buckets: buckets, help: "")
     }
 
     /// Creates a new ``DurationHistogram`` collector or returns the already existing one with the same name,
@@ -373,7 +371,12 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter buckets: Define the buckets that shall be used within the ``DurationHistogram``
     /// - Returns: A ``DurationHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeDurationHistogram(descriptor: MetricNameDescriptor, buckets: [Duration]) -> DurationHistogram {
-        return self.makeDurationHistogram(name: descriptor.name, buckets: buckets, help: descriptor.helpText ?? "")
+        return self.makeDurationHistogram(
+            name: descriptor.name,
+            labels: [],
+            buckets: buckets,
+            help: descriptor.helpText ?? ""
+        )
     }
 
     /// Creates a new ``DurationHistogram`` collector or returns the already existing one with the same name.
@@ -394,70 +397,65 @@ public final class PrometheusCollectorRegistry: Sendable {
         buckets: [Duration],
         help: String
     ) -> DurationHistogram {
-        guard !labels.isEmpty else {
-            return self.makeDurationHistogram(name: name, buckets: buckets, help: help)
-        }
-
         let name = name.ensureValidMetricName()
         let labels = labels.ensureValidLabelNames()
         let help = help.ensureValidHelpText()
+        let key = LabelsKey(labels)
 
         return self.box.withLockedValue { store -> DurationHistogram in
-            guard let value = store[name] else {
-                let labelNames = labels.allLabelNames
+            guard let entry = store[name] else {
+                // First time a DurationHistogram is registered with this name. This defines the buckets.
                 let histogram = DurationHistogram(name: name, labels: labels, buckets: buckets)
-
-                store[name] = .durationHistogramWithLabels(
-                    labelNames,
-                    [LabelsKey(labels): histogram],
-                    buckets,
-                    help: help
+                let histogramWithHelp = MetricWithHelp(metric: histogram, help: help)
+                let histogramGroup = MetricGroup(
+                    metricsByLabelSets: [key: histogramWithHelp],
+                    buckets: .duration(buckets)
                 )
-                return histogram
-            }
-            guard
-                case .durationHistogramWithLabels(let labelNames, var dimensionLookup, let storedBuckets, let help) =
-                    value
-            else {
-                fatalError(
-                    """
-                    Could not make DurationHistogram with name: \(name) and labels: \(labels), since another
-                    metric type already exists for the same name.
-                    """
-                )
-            }
-
-            let key = LabelsKey(labels)
-            if let histogram = dimensionLookup[key] {
+                store[name] = .durationHistogram(histogramGroup)
                 return histogram
             }
 
-            // check if all labels match the already existing ones.
-            if labelNames != labels.allLabelNames {
+            switch entry {
+            case .durationHistogram(var existingHistogramGroup):
+                // Validate buckets match the stored ones.
+                if case .duration(let storedBuckets) = existingHistogramGroup.buckets {
+                    guard storedBuckets == buckets else {
+                        fatalError(
+                            """
+                            Bucket mismatch for DurationHistogram '\(name)':
+                            Expected buckets: \(storedBuckets)
+                            Provided buckets: \(buckets)
+                            All metrics with the same name must use identical buckets.
+                            """
+                        )
+                    }
+                }
+
+                if let existingHistogramWithHelp = existingHistogramGroup.metricsByLabelSets[key] {
+                    return existingHistogramWithHelp.metric
+                }
+
+                // Even if the metric name is identical, each label set defines a unique time series.
+                let histogram = DurationHistogram(name: name, labels: labels, buckets: buckets)
+                let histogramWithHelp = MetricWithHelp(metric: histogram, help: help)
+                existingHistogramGroup.metricsByLabelSets[key] = histogramWithHelp
+
+                // Write the modified entry back to the store.
+                store[name] = .durationHistogram(existingHistogramGroup)
+
+                return histogram
+
+            default:
+                // A metric with this name exists, but it's not a DurationHistogram. This is a programming error.
+                // While Prometheus wouldn't stop you, it may result in unpredictable behavior with tools like Grafana or PromQL.
                 fatalError(
                     """
-                    Could not make DurationHistogram with name: \(name) and labels: \(labels), since the
-                    label names don't match the label names of previously registered Gauges with
-                    the same name.
+                    Metric type mismatch:
+                    Could not register a DurationHistogram with name '\(name)',
+                    since a different metric type (\(entry.self)) was already registered with this name.
                     """
                 )
             }
-            if storedBuckets != buckets {
-                fatalError(
-                    """
-                    Could not make DurationHistogram with name: \(name) and labels: \(labels), since the
-                    buckets don't match the buckets of previously registered TimeHistograms with
-                    the same name.
-                    """
-                )
-            }
-
-            precondition(storedBuckets == buckets)
-
-            let histogram = DurationHistogram(name: name, labels: labels, buckets: storedBuckets)
-            dimensionLookup[key] = histogram
-            store[name] = .durationHistogramWithLabels(labelNames, dimensionLookup, storedBuckets, help: help)
-            return histogram
         }
     }
 
@@ -519,20 +517,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///                   If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
     /// - Returns: A ``ValueHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeValueHistogram(name: String, buckets: [Double], help: String) -> ValueHistogram {
-        let name = name.ensureValidMetricName()
-        let help = help.ensureValidHelpText()
-        return self.box.withLockedValue { store -> ValueHistogram in
-            guard let value = store[name] else {
-                let gauge = ValueHistogram(name: name, labels: [], buckets: buckets)
-                store[name] = .valueHistogram(gauge, help: help)
-                return gauge
-            }
-            guard case .valueHistogram(let histogram, _) = value else {
-                fatalError()
-            }
-
-            return histogram
-        }
+        return self.makeValueHistogram(name: name, labels: [], buckets: buckets, help: help)
     }
 
     /// Creates a new ``ValueHistogram`` collector or returns the already existing one with the same name.
@@ -544,7 +529,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter buckets: Define the buckets that shall be used within the ``ValueHistogram``
     /// - Returns: A ``ValueHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeValueHistogram(name: String, buckets: [Double]) -> ValueHistogram {
-        return self.makeValueHistogram(name: name, buckets: buckets, help: "")
+        return self.makeValueHistogram(name: name, labels: [], buckets: buckets, help: "")
     }
 
     /// Creates a new ``ValueHistogram`` collector or returns the already existing one with the same name,
@@ -557,7 +542,12 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter buckets: Define the buckets that shall be used within the ``ValueHistogram``
     /// - Returns: A ``ValueHistogram`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeValueHistogram(descriptor: MetricNameDescriptor, buckets: [Double]) -> ValueHistogram {
-        return self.makeValueHistogram(name: descriptor.name, buckets: buckets, help: descriptor.helpText ?? "")
+        return self.makeValueHistogram(
+            name: descriptor.name,
+            labels: [],
+            buckets: buckets,
+            help: descriptor.helpText ?? ""
+        )
     }
 
     /// Creates a new ``ValueHistogram`` collector or returns the already existing one with the same name.
@@ -578,41 +568,65 @@ public final class PrometheusCollectorRegistry: Sendable {
         buckets: [Double],
         help: String
     ) -> ValueHistogram {
-        guard !labels.isEmpty else {
-            return self.makeValueHistogram(name: name, buckets: buckets, help: help)
-        }
-
         let name = name.ensureValidMetricName()
         let labels = labels.ensureValidLabelNames()
         let help = help.ensureValidHelpText()
+        let key = LabelsKey(labels)
 
         return self.box.withLockedValue { store -> ValueHistogram in
-            guard let value = store[name] else {
-                let labelNames = labels.allLabelNames
+            guard let entry = store[name] else {
+                // First time a ValueHistogram is registered with this name. This defines the buckets.
                 let histogram = ValueHistogram(name: name, labels: labels, buckets: buckets)
-
-                store[name] = .valueHistogramWithLabels(labelNames, [LabelsKey(labels): histogram], buckets, help: help)
-                return histogram
-            }
-            guard
-                case .valueHistogramWithLabels(let labelNames, var dimensionLookup, let storedBuckets, let help) = value
-            else {
-                fatalError()
-            }
-
-            let key = LabelsKey(labels)
-            if let histogram = dimensionLookup[key] {
+                let histogramWithHelp = MetricWithHelp(metric: histogram, help: help)
+                let histogramGroup = MetricGroup(
+                    metricsByLabelSets: [key: histogramWithHelp],
+                    buckets: .value(buckets)
+                )
+                store[name] = .valueHistogram(histogramGroup)
                 return histogram
             }
 
-            // check if all labels match the already existing ones.
-            precondition(labelNames == labels.allLabelNames)
-            precondition(storedBuckets == buckets)
+            switch entry {
+            case .valueHistogram(var existingHistogramGroup):
+                // Validate buckets match the stored ones.
+                if case .value(let storedBuckets) = existingHistogramGroup.buckets {
+                    guard storedBuckets == buckets else {
+                        fatalError(
+                            """
+                            Bucket mismatch for ValueHistogram '\(name)':
+                            Expected buckets: \(storedBuckets)
+                            Provided buckets: \(buckets)
+                            All metrics with the same name must use identical buckets.
+                            """
+                        )
+                    }
+                }
 
-            let histogram = ValueHistogram(name: name, labels: labels, buckets: storedBuckets)
-            dimensionLookup[key] = histogram
-            store[name] = .valueHistogramWithLabels(labelNames, dimensionLookup, storedBuckets, help: help)
-            return histogram
+                if let existingHistogramWithHelp = existingHistogramGroup.metricsByLabelSets[key] {
+                    return existingHistogramWithHelp.metric
+                }
+
+                // Even if the metric name is identical, each label set defines a unique time series.
+                let histogram = ValueHistogram(name: name, labels: labels, buckets: buckets)
+                let histogramWithHelp = MetricWithHelp(metric: histogram, help: help)
+                existingHistogramGroup.metricsByLabelSets[key] = histogramWithHelp
+
+                // Write the modified entry back to the store.
+                store[name] = .valueHistogram(existingHistogramGroup)
+
+                return histogram
+
+            default:
+                // A metric with this name exists, but it's not a ValueHistogram. This is a programming error.
+                // While Prometheus wouldn't stop you, it may result in unpredictable behavior with tools like Grafana or PromQL.
+                fatalError(
+                    """
+                    Metric type mismatch:
+                    Could not register a ValueHistogram with name '\(name)',
+                    since a different metric type (\(entry.self)) was already registered with this name.
+                    """
+                )
+            }
         }
     }
 
@@ -731,17 +745,19 @@ public final class PrometheusCollectorRegistry: Sendable {
     public func unregisterDurationHistogram(_ histogram: DurationHistogram) {
         self.box.withLockedValue { store in
             switch store[histogram.name] {
-            case .durationHistogram(let storedHistogram, _):
-                guard storedHistogram === histogram else { return }
-                store.removeValue(forKey: histogram.name)
-            case .durationHistogramWithLabels(let labelNames, var dimensions, let buckets, let help):
-                let dimensionsKey = LabelsKey(histogram.labels)
-                guard dimensions[dimensionsKey] === histogram else { return }
-                dimensions.removeValue(forKey: dimensionsKey)
-                if dimensions.isEmpty {
+            case .durationHistogram(var histogramGroup):
+                let key = LabelsKey(histogram.labels)
+                guard let existingHistogramGroup = histogramGroup.metricsByLabelSets[key],
+                    existingHistogramGroup.metric === histogram
+                else {
+                    return
+                }
+                histogramGroup.metricsByLabelSets.removeValue(forKey: key)
+
+                if histogramGroup.metricsByLabelSets.isEmpty {
                     store.removeValue(forKey: histogram.name)
                 } else {
-                    store[histogram.name] = .durationHistogramWithLabels(labelNames, dimensions, buckets, help: help)
+                    store[histogram.name] = .durationHistogram(histogramGroup)
                 }
             default:
                 return
@@ -757,17 +773,19 @@ public final class PrometheusCollectorRegistry: Sendable {
     public func unregisterValueHistogram(_ histogram: ValueHistogram) {
         self.box.withLockedValue { store in
             switch store[histogram.name] {
-            case .valueHistogram(let storedHistogram, _):
-                guard storedHistogram === histogram else { return }
-                store.removeValue(forKey: histogram.name)
-            case .valueHistogramWithLabels(let labelNames, var dimensions, let buckets, let help):
-                let dimensionsKey = LabelsKey(histogram.labels)
-                guard dimensions[dimensionsKey] === histogram else { return }
-                dimensions.removeValue(forKey: dimensionsKey)
-                if dimensions.isEmpty {
+            case .valueHistogram(var histogramGroup):
+                let key = LabelsKey(histogram.labels)
+                guard let existingHistogramGroup = histogramGroup.metricsByLabelSets[key],
+                    existingHistogramGroup.metric === histogram
+                else {
+                    return
+                }
+                histogramGroup.metricsByLabelSets.removeValue(forKey: key)
+
+                if histogramGroup.metricsByLabelSets.isEmpty {
                     store.removeValue(forKey: histogram.name)
                 } else {
-                    store[histogram.name] = .valueHistogramWithLabels(labelNames, dimensions, buckets, help: help)
+                    store[histogram.name] = .valueHistogram(histogramGroup)
                 }
             default:
                 return
@@ -808,28 +826,28 @@ public final class PrometheusCollectorRegistry: Sendable {
                     gaugeWithHelp.metric.emit(into: &buffer)
                 }
 
-            case .durationHistogram(let histogram, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
-                histogram.emit(into: &buffer)
-
-            case .durationHistogramWithLabels(_, let histograms, _, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
-                for histogram in histograms.values {
-                    histogram.emit(into: &buffer)
+            case .durationHistogram(let histogramGroup):
+                // Should not be empty, as a safeguard skip if it is.
+                guard let _ = histogramGroup.metricsByLabelSets.first?.value else {
+                    continue
+                }
+                for histogramWithHelp in histogramGroup.metricsByLabelSets.values {
+                    let help = histogramWithHelp.help
+                    help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addLine(prefix: prefixType, name: name, value: "histogram")
+                    histogramWithHelp.metric.emit(into: &buffer)
                 }
 
-            case .valueHistogram(let histogram, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
-                histogram.emit(into: &buffer)
-
-            case .valueHistogramWithLabels(_, let histograms, _, let help):
-                help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
-                for histogram in histograms.values {
-                    histogram.emit(into: &buffer)
+            case .valueHistogram(let histogramGroup):
+                // Should not be empty, as a safeguard skip if it is.
+                guard let _ = histogramGroup.metricsByLabelSets.first?.value else {
+                    continue
+                }
+                for histogramWithHelp in histogramGroup.metricsByLabelSets.values {
+                    let help = histogramWithHelp.help
+                    help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addLine(prefix: prefixType, name: name, value: "histogram")
+                    histogramWithHelp.metric.emit(into: &buffer)
                 }
             }
         }
