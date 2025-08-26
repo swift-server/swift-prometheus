@@ -37,7 +37,7 @@ let benchmarks = {
         metrics: ProcessInfo.processInfo.environment["CI"] != nil ? ciMetrics : localMetrics,
         warmupIterations: 10,
         scalingFactor: .kilo,
-        maxDuration: .seconds(5),
+        maxDuration: .seconds(5)
     )
 
     Benchmark("Counter - setup and increment") { benchmark in
@@ -62,8 +62,8 @@ let benchmarks = {
 
     Benchmark(
         "RegistryEmit - 5000 metrics",
-        configuration: .init(scalingFactor: .one))
-    { benchmark, run in
+        configuration: .init(scalingFactor: .one)
+    ) { benchmark, run in
         for _ in benchmark.scaledIterations {
             run()
         }
