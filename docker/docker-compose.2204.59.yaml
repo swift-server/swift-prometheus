@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+
+  runtime-setup:
+    image: prometheus:22.04-5.9
+    build:
+      args:
+        ubuntu_version: "jammy"
+        swift_version: "5.9"
+
+  documentation-check:
+    image: prometheus:22.04-5.9
+
+  test:
+    image: prometheus:22.04-5.9
+    environment:
+      - SWIFT_VERSION=5.9
+      - IMPORT_CHECK_ARG=--explicit-target-dependency-import-check error
+      # - SANITIZER_ARG=--sanitize=thread
+
+  update-benchmark-baseline:
+    image: prometheus:22.04-5.9
+    environment:
+      - SWIFT_VERSION=5.9
+
+  shell:
+    image: prometheus:22.04-5.9
