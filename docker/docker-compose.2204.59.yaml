@@ -17,7 +17,7 @@ services:
     environment:
       - SWIFT_VERSION=5.9
       - IMPORT_CHECK_ARG=--explicit-target-dependency-import-check error
-      #- SANITIZER_ARG=--sanitize=thread
+      # - SANITIZER_ARG=--sanitize=thread
 
   update-benchmark-baseline:
     image: prometheus:22.04-5.9
