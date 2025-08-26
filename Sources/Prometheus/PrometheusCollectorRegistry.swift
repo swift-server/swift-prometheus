@@ -47,33 +47,23 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
-    // Note: In order to support Sendable, need to explicitely define the types.
-    private struct CounterWithHelp {
-        var counter: Counter
+    private struct MetricWithHelp<Metric: AnyObject & Sendable>: Sendable {
+        var metric: Metric
         let help: String
     }
 
-    private struct GaugeWithHelp {
-        var gauge: Gauge
-        let help: String
-    }
-
-    private struct CounterGroup {
-        // A collection of Counter metrics, each with a unique label set, that share the same metric name.
-        // Distinct help strings for the same metric name are permitted, but Prometheus retains only the
-        // most recent one. For an unlabelled Counter, the empty label set is used as the key, and the
-        // collection contains only one entry. Finally, for clarification, the same Counter metric name can
-        // simultaneously be labeled and unlabeled.
-        var countersByLabelSets: [LabelsKey: CounterWithHelp]
-    }
-
-    private struct GaugeGroup {
-        var gaugesByLabelSets: [LabelsKey: GaugeWithHelp]
+    private struct MetricGroup<Metric: Sendable & AnyObject>: Sendable {
+        /// A collection of metrics, each with a unique label set, that share the same metric name.
+        /// Distinct help strings for the same metric name are permitted, but Prometheus retains only the
+        /// most recent one. For an unlabelled metric, the empty label set is used as the key, and the
+        /// collection contains only one entry. Finally, for clarification, the same metric name can
+        /// simultaneously be labeled and unlabeled.
+        var metricsByLabelSets: [LabelsKey: MetricWithHelp<Metric>]
     }
 
     private enum Metric {
-        case counter(CounterGroup)
-        case gauge(GaugeGroup)
+        case counter(MetricGroup<Counter>)
+        case gauge(MetricGroup<Gauge>)
         case durationHistogram(DurationHistogram, help: String)
         case durationHistogramWithLabels([String], [LabelsKey: DurationHistogram], [Duration], help: String)
         case valueHistogram(ValueHistogram, help: String)
@@ -144,23 +134,23 @@ public final class PrometheusCollectorRegistry: Sendable {
             guard let entry = store[name] else {
                 // First time a Counter is registered with this name.
                 let counter = Counter(name: name, labels: labels)
-                let counterWithHelp = CounterWithHelp(counter: counter, help: help)
-                let counterGroup = CounterGroup(
-                    countersByLabelSets: [key: counterWithHelp]
+                let counterWithHelp = MetricWithHelp(metric: counter, help: help)
+                let counterGroup = MetricGroup(
+                    metricsByLabelSets: [key: counterWithHelp]
                 )
                 store[name] = .counter(counterGroup)
                 return counter
             }
             switch entry {
             case .counter(var existingCounterGroup):
-                if let existingCounterWithHelp = existingCounterGroup.countersByLabelSets[key] {
-                    return existingCounterWithHelp.counter
+                if let existingCounterWithHelp = existingCounterGroup.metricsByLabelSets[key] {
+                    return existingCounterWithHelp.metric
                 }
 
                 // Even if the metric name is identical, each label set defines a unique time series.
                 let counter = Counter(name: name, labels: labels)
-                let counterWithHelp = CounterWithHelp(counter: counter, help: help)
-                existingCounterGroup.countersByLabelSets[key] = counterWithHelp
+                let counterWithHelp = MetricWithHelp(metric: counter, help: help)
+                existingCounterGroup.metricsByLabelSets[key] = counterWithHelp
 
                 // Write the modified entry back to the store.
                 store[name] = .counter(existingCounterGroup)
@@ -265,23 +255,23 @@ public final class PrometheusCollectorRegistry: Sendable {
             guard let entry = store[name] else {
                 // First time a Gauge is registered with this name.
                 let gauge = Gauge(name: name, labels: labels)
-                let gaugeWithHelp = GaugeWithHelp(gauge: gauge, help: help)
-                let gaugeGroup = GaugeGroup(
-                    gaugesByLabelSets: [key: gaugeWithHelp]
+                let gaugeWithHelp = MetricWithHelp(metric: gauge, help: help)
+                let gaugeGroup = MetricGroup(
+                    metricsByLabelSets: [key: gaugeWithHelp]
                 )
                 store[name] = .gauge(gaugeGroup)
                 return gauge
             }
             switch entry {
             case .gauge(var existingGaugeGroup):
-                if let existingGaugeWithHelp = existingGaugeGroup.gaugesByLabelSets[key] {
-                    return existingGaugeWithHelp.gauge
+                if let existingGaugeWithHelp = existingGaugeGroup.metricsByLabelSets[key] {
+                    return existingGaugeWithHelp.metric
                 }
 
                 // Even if the metric name is identical, each label set defines a unique time series.
                 let gauge = Gauge(name: name, labels: labels)
-                let gaugeWithHelp = GaugeWithHelp(gauge: gauge, help: help)
-                existingGaugeGroup.gaugesByLabelSets[key] = gaugeWithHelp
+                let gaugeWithHelp = MetricWithHelp(metric: gauge, help: help)
+                existingGaugeGroup.metricsByLabelSets[key] = gaugeWithHelp
 
                 // Write the modified entry back to the store.
                 store[name] = .gauge(existingGaugeGroup)
@@ -687,14 +677,14 @@ public final class PrometheusCollectorRegistry: Sendable {
             switch store[counter.name] {
             case .counter(var counterGroup):
                 let key = LabelsKey(counter.labels)
-                guard let existingCounterGroup = counterGroup.countersByLabelSets[key],
-                    existingCounterGroup.counter === counter
+                guard let existingCounterGroup = counterGroup.metricsByLabelSets[key],
+                    existingCounterGroup.metric === counter
                 else {
                     return
                 }
-                counterGroup.countersByLabelSets.removeValue(forKey: key)
+                counterGroup.metricsByLabelSets.removeValue(forKey: key)
 
-                if counterGroup.countersByLabelSets.isEmpty {
+                if counterGroup.metricsByLabelSets.isEmpty {
                     store.removeValue(forKey: counter.name)
                 } else {
                     store[counter.name] = .counter(counterGroup)
@@ -715,14 +705,14 @@ public final class PrometheusCollectorRegistry: Sendable {
             switch store[gauge.name] {
             case .gauge(var gaugeGroup):
                 let key = LabelsKey(gauge.labels)
-                guard let existingGaugeGroup = gaugeGroup.gaugesByLabelSets[key],
-                    existingGaugeGroup.gauge === gauge
+                guard let existingGaugeGroup = gaugeGroup.metricsByLabelSets[key],
+                    existingGaugeGroup.metric === gauge
                 else {
                     return
                 }
-                gaugeGroup.gaugesByLabelSets.removeValue(forKey: key)
+                gaugeGroup.metricsByLabelSets.removeValue(forKey: key)
 
-                if gaugeGroup.gaugesByLabelSets.isEmpty {
+                if gaugeGroup.metricsByLabelSets.isEmpty {
                     store.removeValue(forKey: gauge.name)
                 } else {
                     store[gauge.name] = .gauge(gaugeGroup)
@@ -796,26 +786,26 @@ public final class PrometheusCollectorRegistry: Sendable {
             switch metric {
             case .counter(let counterGroup):
                 // Should not be empty, as a safeguard skip if it is.
-                guard let _ = counterGroup.countersByLabelSets.first?.value else {
+                guard let _ = counterGroup.metricsByLabelSets.first?.value else {
                     continue
                 }
-                for counterWithHelp in counterGroup.countersByLabelSets.values {
+                for counterWithHelp in counterGroup.metricsByLabelSets.values {
                     let help = counterWithHelp.help
                     help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
                     buffer.addLine(prefix: prefixType, name: name, value: "counter")
-                    counterWithHelp.counter.emit(into: &buffer)
+                    counterWithHelp.metric.emit(into: &buffer)
                 }
 
             case .gauge(let gaugeGroup):
                 // Should not be empty, as a safeguard skip if it is.
-                guard let _ = gaugeGroup.gaugesByLabelSets.first?.value else {
+                guard let _ = gaugeGroup.metricsByLabelSets.first?.value else {
                     continue
                 }
-                for gaugeWithHelp in gaugeGroup.gaugesByLabelSets.values {
+                for gaugeWithHelp in gaugeGroup.metricsByLabelSets.values {
                     let help = gaugeWithHelp.help
                     help.isEmpty ? () : buffer.addLine(prefix: prefixHelp, name: name, value: help)
                     buffer.addLine(prefix: prefixType, name: name, value: "gauge")
-                    gaugeWithHelp.gauge.emit(into: &buffer)
+                    gaugeWithHelp.metric.emit(into: &buffer)
                 }
 
             case .durationHistogram(let histogram, let help):
