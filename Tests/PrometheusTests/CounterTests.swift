@@ -171,19 +171,19 @@ final class CounterTests: XCTestCase {
         let counter0 = client.makeCounter(
             name: "foo",
             labels: [],
-            help: "Base metric name with no labels"
+            help: "Shared help text"
         )
 
         let counter1 = client.makeCounter(
             name: "foo",
             labels: [("bar", "baz")],
-            help: "Base metric name with one label set variant"
+            help: "Shared help text"
         )
 
         let counter2 = client.makeCounter(
             name: "foo",
             labels: [("bar", "newBaz"), ("newKey1", "newValue1")],
-            help: "Base metric name with a different label set variant"
+            help: "Shared help text"
         )
 
         var buffer = [UInt8]()
@@ -197,16 +197,12 @@ final class CounterTests: XCTestCase {
         var outputString = String(decoding: buffer, as: Unicode.UTF8.self)
         var actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
         var expectedLines = Set([
-            "# HELP foo Base metric name with no labels",
+            "# HELP foo Shared help text",
             "# TYPE foo counter",
             "foo 2",
 
-            "# HELP foo Base metric name with one label set variant",
-            "# TYPE foo counter",
             #"foo{bar="baz"} 12"#,
 
-            "# HELP foo Base metric name with a different label set variant",
-            "# TYPE foo counter",
             #"foo{bar="newBaz",newKey1="newValue1"} 24"#,
         ])
         XCTAssertEqual(actualLines, expectedLines)
@@ -218,12 +214,10 @@ final class CounterTests: XCTestCase {
         outputString = String(decoding: buffer, as: Unicode.UTF8.self)
         actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
         expectedLines = Set([
-            "# HELP foo Base metric name with one label set variant",
+            "# HELP foo Shared help text",
             "# TYPE foo counter",
             #"foo{bar="baz"} 12"#,
 
-            "# HELP foo Base metric name with a different label set variant",
-            "# TYPE foo counter",
             #"foo{bar="newBaz",newKey1="newValue1"} 24"#,
         ])
         XCTAssertEqual(actualLines, expectedLines)
@@ -234,7 +228,7 @@ final class CounterTests: XCTestCase {
         outputString = String(decoding: buffer, as: Unicode.UTF8.self)
         actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
         expectedLines = Set([
-            "# HELP foo Base metric name with a different label set variant",
+            "# HELP foo Shared help text",
             "# TYPE foo counter",
             #"foo{bar="newBaz",newKey1="newValue1"} 24"#,
         ])
@@ -251,14 +245,14 @@ final class CounterTests: XCTestCase {
         let _ = client.makeGauge(
             name: "foo",
             labels: [],
-            help: "Base metric name used for new metric of type gauge"
+            help: "Shared help text"
         )
         buffer.removeAll(keepingCapacity: true)
         client.emit(into: &buffer)
         XCTAssertEqual(
             String(decoding: buffer, as: Unicode.UTF8.self),
             """
-            # HELP foo Base metric name used for new metric of type gauge
+            # HELP foo Shared help text
             # TYPE foo gauge
             foo 0.0
 
