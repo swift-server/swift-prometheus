@@ -439,14 +439,8 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
         XCTAssertEqual(emptyCapacity, 0)
     }
 
-    func testDefaultRegistryDedupTypeHelpPerMetricNameOnEmitWhenMetricNameSharedInMetricGroup() {
+    func testDefaultRegistryDedupTypeHelpPerMetricNameOnEmitWhenMetricNameSharedInMetricFamily() {
         let client = PrometheusCollectorRegistry()
-
-        let gauge0 = client.makeGauge(
-            name: "foo",
-            labels: [],
-            help: "Shared help text for all variants"
-        )
 
         let gauge1 = client.makeGauge(
             name: "foo",
@@ -460,7 +454,6 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
             help: "Shared help text for all variants"
         )
 
-        gauge0.set(to: 1.0)
         gauge1.set(to: 9.0)
         gauge2.set(to: 4.0)
 
@@ -476,7 +469,7 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
 
         XCTAssertEqual(helpLines.count, 1, "Should have exactly one HELP line")
         XCTAssertEqual(typeLines.count, 1, "Should have exactly one TYPE line")
-        XCTAssertEqual(metricLines.count, 3, "Should have three metric value lines")
+        XCTAssertEqual(metricLines.count, 2, "Should have three metric value lines")
 
         XCTAssertEqual(helpLines.first, "# HELP foo Shared help text for all variants")
         XCTAssertEqual(typeLines.first, "# TYPE foo gauge")
@@ -490,7 +483,6 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
         XCTAssertLessThan(typeIndex, firstMetricIndex, "TYPE should appear before metric values")
 
         // Verify all three metric values are present (order doesn't matter).
-        XCTAssertTrue(metricLines.contains("foo 1.0"))
         XCTAssertTrue(metricLines.contains(#"foo{bar="baz"} 9.0"#))
         XCTAssertTrue(metricLines.contains(#"foo{bar="newBaz",newKey1="newValue1"} 4.0"#))
     }

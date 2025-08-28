@@ -168,12 +168,6 @@ final class CounterTests: XCTestCase {
     func testCounterWithSharedMetricNamDistinctLabelSets() {
         let client = PrometheusCollectorRegistry()
 
-        let counter0 = client.makeCounter(
-            name: "foo",
-            labels: [],
-            help: "Shared help text"
-        )
-
         let counter1 = client.makeCounter(
             name: "foo",
             labels: [("bar", "baz")],
@@ -187,11 +181,9 @@ final class CounterTests: XCTestCase {
         )
 
         var buffer = [UInt8]()
-        counter0.increment()
         counter1.increment(by: Int64(9))
         counter2.increment(by: Int64(4))
         counter1.increment(by: Int64(3))
-        counter0.increment()
         counter2.increment(by: Int64(20))
         client.emit(into: &buffer)
         var outputString = String(decoding: buffer, as: Unicode.UTF8.self)
@@ -199,7 +191,6 @@ final class CounterTests: XCTestCase {
         var expectedLines = Set([
             "# HELP foo Shared help text",
             "# TYPE foo counter",
-            "foo 2",
 
             #"foo{bar="baz"} 12"#,
 
@@ -208,19 +199,6 @@ final class CounterTests: XCTestCase {
         XCTAssertEqual(actualLines, expectedLines)
 
         // Counters are unregistered in a cascade.
-        client.unregisterCounter(counter0)
-        buffer.removeAll(keepingCapacity: true)
-        client.emit(into: &buffer)
-        outputString = String(decoding: buffer, as: Unicode.UTF8.self)
-        actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
-        expectedLines = Set([
-            "# HELP foo Shared help text",
-            "# TYPE foo counter",
-            #"foo{bar="baz"} 12"#,
-
-            #"foo{bar="newBaz",newKey1="newValue1"} 24"#,
-        ])
-        XCTAssertEqual(actualLines, expectedLines)
 
         client.unregisterCounter(counter1)
         buffer.removeAll(keepingCapacity: true)
@@ -361,7 +339,6 @@ final class CounterTests: XCTestCase {
 
         // 2. Define the label combinations to test.
         let labelCases: [(labels: [(String, String)], expectedLabelString: String, description: String)] = [
-            (labels: [], expectedLabelString: "", description: "without labels"),
             (labels: [("method", "get")], expectedLabelString: "{method=\"get\"}", description: "with one label"),
             (
                 labels: [("status", "200"), ("path", "/api/v1")],
