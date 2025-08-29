@@ -60,10 +60,18 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// For histograms, the buckets are immutable for a MetricFamily once initialized with the first
     /// metric. See also https://github.com/prometheus/OpenMetrics/issues/197.
     private struct MetricFamily<Metric: Sendable & AnyObject>: Sendable {
-        var metricsByLabelSets: [LabelsKey: Metric]
+        private enum State {
+            case labeled([LabelsKey: Metric])
+            case unlabeled(Metric)
+            case empty
+        }
+
+        let metricsByLabelSets: [LabelsKey: Metric]
         let buckets: HistogramBuckets?
         let help: String?
         let metricUnlabeled: Metric?
+
+        private let state: State
 
         init(
             metricsByLabelSets: [LabelsKey: Metric] = [:],
@@ -71,10 +79,53 @@ public final class PrometheusCollectorRegistry: Sendable {
             help: String? = nil,
             metricUnlabeled: Metric? = nil
         ) {
+            // Validate mutual exclusivity on creation.
+            if metricUnlabeled != nil && !metricsByLabelSets.isEmpty {
+                fatalError("Cannot have both labeled and unlabeled metrics in the same family.")
+            }
+
             self.metricsByLabelSets = metricsByLabelSets
             self.buckets = buckets
             self.help = help
             self.metricUnlabeled = metricUnlabeled
+
+            // Set internal state for validation.
+            if let unlabeled = metricUnlabeled {
+                self.state = .unlabeled(unlabeled)
+            } else if !metricsByLabelSets.isEmpty {
+                self.state = .labeled(metricsByLabelSets)
+            } else {
+                self.state = .empty
+            }
+        }
+
+        func add(metric: Metric, for labels: [(String, String)]) -> MetricFamily<Metric> {
+            // This method should only be called for labeled metrics.
+            guard !labels.isEmpty else {
+                fatalError("Use initializer for unlabeled metrics, not add method")
+            }
+
+            switch state {
+            case .unlabeled:
+                fatalError("Cannot register a labeled metric when an unlabeled metric already exists.")
+            case .labeled, .empty:
+                break
+            }
+
+            let labelsKey = LabelsKey(labels)
+            guard metricsByLabelSets[labelsKey] == nil else {
+                return self
+            }
+
+            var newMetricsByLabelSets = metricsByLabelSets
+            newMetricsByLabelSets[labelsKey] = metric
+
+            return MetricFamily(
+                metricsByLabelSets: newMetricsByLabelSets,
+                buckets: buckets,
+                help: help,
+                metricUnlabeled: metricUnlabeled
+            )
         }
     }
 
@@ -162,27 +213,7 @@ public final class PrometheusCollectorRegistry: Sendable {
             }
 
             switch entry {
-            case .counter(var existingCounterFamily):
-                // Check mutual exclusivity constraints. While Prometheus wouldn't break with sharing a
-                // metric name for labeled and unlabeled variants, the client enforces that each unique
-                // metric name must either be labeled (allowing multiple label sets) or unlabeled
-                // in order to support correct Prometheus aggregations.
-                if existingCounterFamily.metricUnlabeled != nil && !labels.isEmpty {
-                    fatalError(
-                        """
-                        Label conflict for metric '\(name)':
-                        Cannot register a labeled metric when an unlabeled metric already exists.
-                        """
-                    )
-                }
-                if labels.isEmpty && !existingCounterFamily.metricsByLabelSets.isEmpty {
-                    fatalError(
-                        """
-                        Label conflict for metric '\(name)':
-                        Cannot register an unlabeled metric when labeled metrics already exist.
-                        """
-                    )
-                }
+            case .counter(let existingCounterFamily):
 
                 // For unlabeled metrics, return the existing one if it exists.
                 if labels.isEmpty, let existingUnlabeled = existingCounterFamily.metricUnlabeled {
@@ -208,10 +239,10 @@ public final class PrometheusCollectorRegistry: Sendable {
 
                 // Even if the metric name is identical, each label set defines a unique time series.
                 let counter = Counter(name: name, labels: labels)
-                existingCounterFamily.metricsByLabelSets[key] = counter
+                let updatedFamily = existingCounterFamily.add(metric: counter, for: labels)
 
                 // Write the modified entry back to the store.
-                store[name] = .counter(existingCounterFamily)
+                store[name] = .counter(updatedFamily)
 
                 return counter
 
@@ -323,27 +354,7 @@ public final class PrometheusCollectorRegistry: Sendable {
             }
 
             switch entry {
-            case .gauge(var existingGaugeFamily):
-                // Check mutual exclusivity constraints. While Prometheus wouldn't break with sharing a
-                // metric name for labeled and unlabeled variants, the client enforces that each unique
-                // metric name must either be labeled (allowing multiple label sets) or unlabeled
-                // in order to support correct Prometheus aggregations.
-                if existingGaugeFamily.metricUnlabeled != nil && !labels.isEmpty {
-                    fatalError(
-                        """
-                        Label conflict for metric '\(name)':
-                        Cannot register a labeled metric when an unlabeled metric already exists.
-                        """
-                    )
-                }
-                if labels.isEmpty && !existingGaugeFamily.metricsByLabelSets.isEmpty {
-                    fatalError(
-                        """
-                        Label conflict for metric '\(name)':
-                        Cannot register an unlabeled metric when labeled metrics already exist.
-                        """
-                    )
-                }
+            case .gauge(let existingGaugeFamily):
 
                 // For unlabeled metrics, return the existing one if it exists.
                 if labels.isEmpty, let existingUnlabeled = existingGaugeFamily.metricUnlabeled {
@@ -369,10 +380,10 @@ public final class PrometheusCollectorRegistry: Sendable {
 
                 // Even if the metric name is identical, each label set defines a unique time series.
                 let gauge = Gauge(name: name, labels: labels)
-                existingGaugeFamily.metricsByLabelSets[key] = gauge
+                let updatedFamily = existingGaugeFamily.add(metric: gauge, for: labels)
 
                 // Write the modified entry back to the store.
-                store[name] = .gauge(existingGaugeFamily)
+                store[name] = .gauge(updatedFamily)
 
                 return gauge
 
@@ -499,28 +510,7 @@ public final class PrometheusCollectorRegistry: Sendable {
             }
 
             switch entry {
-            case .durationHistogram(var existingHistogramFamily):
-                // Check mutual exclusivity constraints. While Prometheus wouldn't break with sharing a
-                // metric name for labeled and unlabeled variants, the client enforces that each unique
-                // metric name must either be labeled (allowing multiple label sets) or unlabeled
-                // in order to support correct Prometheus aggregations.
-                if existingHistogramFamily.metricUnlabeled != nil && !labels.isEmpty {
-                    fatalError(
-                        """
-                        Label conflict for metric '\(name)':
-                        Cannot register a labeled metric when an unlabeled metric already exists.
-                        """
-                    )
-                }
-                if labels.isEmpty && !existingHistogramFamily.metricsByLabelSets.isEmpty {
-                    fatalError(
-                        """
-                        Label conflict for metric '\(name)':
-                        Cannot register an unlabeled metric when labeled metrics already exist.
-                        """
-                    )
-                }
-
+            case .durationHistogram(let existingHistogramFamily):
                 // Validate buckets match the stored ones.
                 if case .duration(let storedBuckets) = existingHistogramFamily.buckets {
                     guard storedBuckets == buckets else {
@@ -559,10 +549,10 @@ public final class PrometheusCollectorRegistry: Sendable {
 
                 // Even if the metric name is identical, each label set defines a unique time series.
                 let histogram = DurationHistogram(name: name, labels: labels, buckets: buckets)
-                existingHistogramFamily.metricsByLabelSets[key] = histogram
+                let updatedFamily = existingHistogramFamily.add(metric: histogram, for: labels)
 
                 // Write the modified entry back to the store.
-                store[name] = .durationHistogram(existingHistogramFamily)
+                store[name] = .durationHistogram(updatedFamily)
 
                 return histogram
 
@@ -709,28 +699,7 @@ public final class PrometheusCollectorRegistry: Sendable {
             }
 
             switch entry {
-            case .valueHistogram(var existingHistogramFamily):
-                // Check mutual exclusivity constraints. While Prometheus wouldn't break with sharing a
-                // metric name for labeled and unlabeled variants, the client enforces that each unique
-                // metric name must either be labeled (allowing multiple label sets) or unlabeled
-                // in order to support correct Prometheus aggregations.
-                if existingHistogramFamily.metricUnlabeled != nil && !labels.isEmpty {
-                    fatalError(
-                        """
-                        Label conflict for metric '\(name)':
-                        Cannot register a labeled metric when an unlabeled metric already exists.
-                        """
-                    )
-                }
-                if labels.isEmpty && !existingHistogramFamily.metricsByLabelSets.isEmpty {
-                    fatalError(
-                        """
-                        Label conflict for metric '\(name)':
-                        Cannot register an unlabeled metric when labeled metrics already exist.
-                        """
-                    )
-                }
-
+            case .valueHistogram(let existingHistogramFamily):
                 // Validate buckets match the stored ones.
                 if case .value(let storedBuckets) = existingHistogramFamily.buckets {
                     guard storedBuckets == buckets else {
@@ -769,10 +738,10 @@ public final class PrometheusCollectorRegistry: Sendable {
 
                 // Even if the metric name is identical, each label set defines a unique time series.
                 let histogram = ValueHistogram(name: name, labels: labels, buckets: buckets)
-                existingHistogramFamily.metricsByLabelSets[key] = histogram
+                let updatedFamily = existingHistogramFamily.add(metric: histogram, for: labels)
 
                 // Write the modified entry back to the store.
-                store[name] = .valueHistogram(existingHistogramFamily)
+                store[name] = .valueHistogram(updatedFamily)
 
                 return histogram
 
@@ -849,15 +818,14 @@ public final class PrometheusCollectorRegistry: Sendable {
     public func unregisterCounter(_ counter: Counter) {
         self.box.withLockedValue { store in
             switch store[counter.name] {
-            case .counter(var counterFamily):
-                // Check if it's the unlabeled metric
+            case .counter(let counterFamily):
+
                 if let unlabeledCounter = counterFamily.metricUnlabeled, unlabeledCounter === counter {
-                    // Remove the entirea family since unlabeled metrics are exclusive
+                    // Remove the entire family since unlabeled metrics are exclusive.
                     store.removeValue(forKey: counter.name)
                     return
                 }
 
-                // Check if it's a labeled metric
                 let key = LabelsKey(counter.labels)
                 guard let existingCounter = counterFamily.metricsByLabelSets[key],
                     existingCounter === counter
@@ -865,12 +833,19 @@ public final class PrometheusCollectorRegistry: Sendable {
                     return
                 }
 
-                counterFamily.metricsByLabelSets.removeValue(forKey: key)
+                var newMetricsByLabelSets = counterFamily.metricsByLabelSets
+                newMetricsByLabelSets.removeValue(forKey: key)
 
-                if counterFamily.metricsByLabelSets.isEmpty {
+                if newMetricsByLabelSets.isEmpty {
                     store.removeValue(forKey: counter.name)
                 } else {
-                    store[counter.name] = .counter(counterFamily)
+                    let updatedFamily = MetricFamily(
+                        metricsByLabelSets: newMetricsByLabelSets,
+                        buckets: counterFamily.buckets,
+                        help: counterFamily.help,
+                        metricUnlabeled: counterFamily.metricUnlabeled
+                    )
+                    store[counter.name] = .counter(updatedFamily)
                 }
             default:
                 return
@@ -886,15 +861,14 @@ public final class PrometheusCollectorRegistry: Sendable {
     public func unregisterGauge(_ gauge: Gauge) {
         self.box.withLockedValue { store in
             switch store[gauge.name] {
-            case .gauge(var gaugeFamily):
-                // Check if it's the unlabeled metric
+            case .gauge(let gaugeFamily):
+
                 if let unlabeledGauge = gaugeFamily.metricUnlabeled, unlabeledGauge === gauge {
-                    // Remove the entirea family since unlabeled metrics are exclusive
+                    // Remove the entire family since unlabeled metrics are exclusive.
                     store.removeValue(forKey: gauge.name)
                     return
                 }
 
-                // Check if it's a labeled metric
                 let key = LabelsKey(gauge.labels)
                 guard let existingGauge = gaugeFamily.metricsByLabelSets[key],
                     existingGauge === gauge
@@ -902,12 +876,19 @@ public final class PrometheusCollectorRegistry: Sendable {
                     return
                 }
 
-                gaugeFamily.metricsByLabelSets.removeValue(forKey: key)
+                var newMetricsByLabelSets = gaugeFamily.metricsByLabelSets
+                newMetricsByLabelSets.removeValue(forKey: key)
 
-                if gaugeFamily.metricsByLabelSets.isEmpty {
+                if newMetricsByLabelSets.isEmpty {
                     store.removeValue(forKey: gauge.name)
                 } else {
-                    store[gauge.name] = .gauge(gaugeFamily)
+                    let updatedFamily = MetricFamily(
+                        metricsByLabelSets: newMetricsByLabelSets,
+                        buckets: gaugeFamily.buckets,
+                        help: gaugeFamily.help,
+                        metricUnlabeled: gaugeFamily.metricUnlabeled
+                    )
+                    store[gauge.name] = .gauge(updatedFamily)
                 }
             default:
                 return
@@ -923,15 +904,14 @@ public final class PrometheusCollectorRegistry: Sendable {
     public func unregisterDurationHistogram(_ histogram: DurationHistogram) {
         self.box.withLockedValue { store in
             switch store[histogram.name] {
-            case .durationHistogram(var histogramFamily):
-                // Check if it's the unlabeled metric
+            case .durationHistogram(let histogramFamily):
+
                 if let unlabeledHistogram = histogramFamily.metricUnlabeled, unlabeledHistogram === histogram {
-                    // Remove the entirea family since unlabeled metrics are exclusive
+                    // Remove the entire family since unlabeled metrics are exclusive.
                     store.removeValue(forKey: histogram.name)
                     return
                 }
 
-                // Check if it's a labeled metric
                 let key = LabelsKey(histogram.labels)
                 guard let existingHistogram = histogramFamily.metricsByLabelSets[key],
                     existingHistogram === histogram
@@ -939,12 +919,19 @@ public final class PrometheusCollectorRegistry: Sendable {
                     return
                 }
 
-                histogramFamily.metricsByLabelSets.removeValue(forKey: key)
+                var newMetricsByLabelSets = histogramFamily.metricsByLabelSets
+                newMetricsByLabelSets.removeValue(forKey: key)
 
-                if histogramFamily.metricsByLabelSets.isEmpty {
+                if newMetricsByLabelSets.isEmpty {
                     store.removeValue(forKey: histogram.name)
                 } else {
-                    store[histogram.name] = .durationHistogram(histogramFamily)
+                    let updatedFamily = MetricFamily(
+                        metricsByLabelSets: newMetricsByLabelSets,
+                        buckets: histogramFamily.buckets,
+                        help: histogramFamily.help,
+                        metricUnlabeled: histogramFamily.metricUnlabeled
+                    )
+                    store[histogram.name] = .durationHistogram(updatedFamily)
                 }
             default:
                 return
@@ -960,15 +947,14 @@ public final class PrometheusCollectorRegistry: Sendable {
     public func unregisterValueHistogram(_ histogram: ValueHistogram) {
         self.box.withLockedValue { store in
             switch store[histogram.name] {
-            case .valueHistogram(var histogramFamily):
-                // Check if it's the unlabeled metric
+            case .valueHistogram(let histogramFamily):
+
                 if let unlabeledHistogram = histogramFamily.metricUnlabeled, unlabeledHistogram === histogram {
-                    // Remove the entirea family since unlabeled metrics are exclusive
+                    // Remove the entire family since unlabeled metrics are exclusive.
                     store.removeValue(forKey: histogram.name)
                     return
                 }
 
-                // Check if it's a labeled metric
                 let key = LabelsKey(histogram.labels)
                 guard let existingHistogram = histogramFamily.metricsByLabelSets[key],
                     existingHistogram === histogram
@@ -976,12 +962,19 @@ public final class PrometheusCollectorRegistry: Sendable {
                     return
                 }
 
-                histogramFamily.metricsByLabelSets.removeValue(forKey: key)
+                var newMetricsByLabelSets = histogramFamily.metricsByLabelSets
+                newMetricsByLabelSets.removeValue(forKey: key)
 
-                if histogramFamily.metricsByLabelSets.isEmpty {
+                if newMetricsByLabelSets.isEmpty {
                     store.removeValue(forKey: histogram.name)
                 } else {
-                    store[histogram.name] = .valueHistogram(histogramFamily)
+                    let updatedFamily = MetricFamily(
+                        metricsByLabelSets: newMetricsByLabelSets,
+                        buckets: histogramFamily.buckets,
+                        help: histogramFamily.help,
+                        metricUnlabeled: histogramFamily.metricUnlabeled
+                    )
+                    store[histogram.name] = .valueHistogram(updatedFamily)
                 }
             default:
                 return
