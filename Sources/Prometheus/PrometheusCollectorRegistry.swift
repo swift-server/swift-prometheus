@@ -66,11 +66,8 @@ public final class PrometheusCollectorRegistry: Sendable {
             case empty
         }
 
-        let metricsByLabelSets: [LabelsKey: Metric]
         let buckets: HistogramBuckets?
         let help: String?
-        let metricUnlabeled: Metric?
-
         private let state: State
 
         init(
@@ -84,12 +81,10 @@ public final class PrometheusCollectorRegistry: Sendable {
                 fatalError("Cannot have both labeled and unlabeled metrics in the same family.")
             }
 
-            self.metricsByLabelSets = metricsByLabelSets
             self.buckets = buckets
             self.help = help
-            self.metricUnlabeled = metricUnlabeled
 
-            // Set internal state for validation.
+            // Set internal state based on inputs.
             if let unlabeled = metricUnlabeled {
                 self.state = .unlabeled(unlabeled)
             } else if !metricsByLabelSets.isEmpty {
@@ -99,33 +94,96 @@ public final class PrometheusCollectorRegistry: Sendable {
             }
         }
 
-        func add(metric: Metric, for labels: [(String, String)]) -> MetricFamily<Metric> {
-            // This method should only be called for labeled metrics.
+        func adding(metric: Metric, for labels: [(String, String)]) -> MetricFamily<Metric> {
             guard !labels.isEmpty else {
-                fatalError("Use initializer for unlabeled metrics, not add method")
+                fatalError("Use initializer for unlabeled metrics, not adding method")
             }
 
             switch state {
             case .unlabeled:
                 fatalError("Cannot register a labeled metric when an unlabeled metric already exists.")
-            case .labeled, .empty:
+            case .labeled(let existingMetrics):
+                let labelsKey = LabelsKey(labels)
+                guard existingMetrics[labelsKey] == nil else {
+                    return self
+                }
+
+                var newMetricsByLabelSets = existingMetrics
+                newMetricsByLabelSets[labelsKey] = metric
+
+                return MetricFamily(
+                    metricsByLabelSets: newMetricsByLabelSets,
+                    buckets: buckets,
+                    help: help,
+                    metricUnlabeled: nil
+                )
+            case .empty:
+                let labelsKey = LabelsKey(labels)
+                return MetricFamily(
+                    metricsByLabelSets: [labelsKey: metric],
+                    buckets: buckets,
+                    help: help,
+                    metricUnlabeled: nil
+                )
+            }
+        }
+
+        func removing(metric: Metric, for labels: [(String, String)]) -> MetricFamily<Metric>? {
+            switch state {
+            case .unlabeled(let unlabeledMetric):
+                if labels.isEmpty && unlabeledMetric === metric {
+                    return nil  // Remove entire family.
+                }
+                return self  // Metric not found, return unchanged.
+
+            case .labeled(let labeledMetrics):
+                let key = LabelsKey(labels)
+                guard let existingMetric = labeledMetrics[key],
+                    existingMetric === metric
+                else {
+                    return self  // Metric not found, return unchanged.
+                }
+
+                var newMetricsByLabelSets = labeledMetrics
+                newMetricsByLabelSets.removeValue(forKey: key)
+
+                guard newMetricsByLabelSets.isEmpty else {
+                    return MetricFamily(
+                        metricsByLabelSets: newMetricsByLabelSets,
+                        buckets: buckets,
+                        help: help,
+                        metricUnlabeled: nil
+                    )
+                }
+                return nil  // Remove entire family.
+
+            case .empty:
+                return self  // Nothing to remove.
+            }
+        }
+
+        func getMetric(for labels: [(String, String)]) -> Metric? {
+            switch state {
+            case .labeled(let metrics):
+                return metrics[LabelsKey(labels)]
+            case .unlabeled(let metric):
+                return labels.isEmpty ? metric : nil
+            case .empty:
+                return nil
+            }
+        }
+
+        func forEachMetric(_ closure: (Metric) -> Void) {
+            switch state {
+            case .unlabeled(let metric):
+                closure(metric)
+            case .labeled(let metrics):
+                for metric in metrics.values {
+                    closure(metric)
+                }
+            case .empty:
                 break
             }
-
-            let labelsKey = LabelsKey(labels)
-            guard metricsByLabelSets[labelsKey] == nil else {
-                return self
-            }
-
-            var newMetricsByLabelSets = metricsByLabelSets
-            newMetricsByLabelSets[labelsKey] = metric
-
-            return MetricFamily(
-                metricsByLabelSets: newMetricsByLabelSets,
-                buckets: buckets,
-                help: help,
-                metricUnlabeled: metricUnlabeled
-            )
         }
     }
 
@@ -215,15 +273,6 @@ public final class PrometheusCollectorRegistry: Sendable {
             switch entry {
             case .counter(let existingCounterFamily):
 
-                // For unlabeled metrics, return the existing one if it exists.
-                if labels.isEmpty, let existingUnlabeled = existingCounterFamily.metricUnlabeled {
-                    return existingUnlabeled
-                }
-
-                if let existingCounter = existingCounterFamily.metricsByLabelSets[key] {
-                    return existingCounter
-                }
-
                 // Validate help text consistency. While Prometheus wouldn't break with duplicate and distinct
                 // HELP lines, the client enforces uniqueness and consistency.
                 if let existingHelp = existingCounterFamily.help, existingHelp != help {
@@ -237,9 +286,13 @@ public final class PrometheusCollectorRegistry: Sendable {
                     )
                 }
 
+                if let existingCounter = existingCounterFamily.getMetric(for: labels) {
+                    return existingCounter
+                }
+
                 // Even if the metric name is identical, each label set defines a unique time series.
                 let counter = Counter(name: name, labels: labels)
-                let updatedFamily = existingCounterFamily.add(metric: counter, for: labels)
+                let updatedFamily = existingCounterFamily.adding(metric: counter, for: labels)
 
                 // Write the modified entry back to the store.
                 store[name] = .counter(updatedFamily)
@@ -356,15 +409,6 @@ public final class PrometheusCollectorRegistry: Sendable {
             switch entry {
             case .gauge(let existingGaugeFamily):
 
-                // For unlabeled metrics, return the existing one if it exists.
-                if labels.isEmpty, let existingUnlabeled = existingGaugeFamily.metricUnlabeled {
-                    return existingUnlabeled
-                }
-
-                if let existingGauge = existingGaugeFamily.metricsByLabelSets[key] {
-                    return existingGauge
-                }
-
                 // Validate help text consistency. While Prometheus wouldn't break with duplicate and distinct
                 // HELP lines, the client enforces uniqueness and consistency.
                 if let existingHelp = existingGaugeFamily.help, existingHelp != help {
@@ -378,9 +422,13 @@ public final class PrometheusCollectorRegistry: Sendable {
                     )
                 }
 
+                if let existingGauge = existingGaugeFamily.getMetric(for: labels) {
+                    return existingGauge
+                }
+
                 // Even if the metric name is identical, each label set defines a unique time series.
                 let gauge = Gauge(name: name, labels: labels)
-                let updatedFamily = existingGaugeFamily.add(metric: gauge, for: labels)
+                let updatedFamily = existingGaugeFamily.adding(metric: gauge, for: labels)
 
                 // Write the modified entry back to the store.
                 store[name] = .gauge(updatedFamily)
@@ -511,28 +559,6 @@ public final class PrometheusCollectorRegistry: Sendable {
 
             switch entry {
             case .durationHistogram(let existingHistogramFamily):
-                // Validate buckets match the stored ones.
-                if case .duration(let storedBuckets) = existingHistogramFamily.buckets {
-                    guard storedBuckets == buckets else {
-                        fatalError(
-                            """
-                            Bucket mismatch for DurationHistogram '\(name)':
-                            Expected buckets: \(storedBuckets)
-                            Provided buckets: \(buckets)
-                            All metrics with the same name must use identical buckets.
-                            """
-                        )
-                    }
-                }
-
-                // For unlabeled metrics, return the existing one if it exists.
-                if labels.isEmpty, let existingUnlabeled = existingHistogramFamily.metricUnlabeled {
-                    return existingUnlabeled
-                }
-
-                if let existingHistogram = existingHistogramFamily.metricsByLabelSets[key] {
-                    return existingHistogram
-                }
 
                 // Validate help text consistency. While Prometheus wouldn't break with duplicate and distinct
                 // HELP lines, the client enforces uniqueness and consistency.
@@ -547,9 +573,27 @@ public final class PrometheusCollectorRegistry: Sendable {
                     )
                 }
 
+                // Validate buckets match the stored ones.
+                if case .duration(let storedBuckets) = existingHistogramFamily.buckets {
+                    guard storedBuckets == buckets else {
+                        fatalError(
+                            """
+                            Bucket mismatch for DurationHistogram '\(name)':
+                            Expected buckets: \(storedBuckets)
+                            Provided buckets: \(buckets)
+                            All metrics with the same name must use identical buckets.
+                            """
+                        )
+                    }
+                }
+
+                if let existingHistogram = existingHistogramFamily.getMetric(for: labels) {
+                    return existingHistogram
+                }
+
                 // Even if the metric name is identical, each label set defines a unique time series.
                 let histogram = DurationHistogram(name: name, labels: labels, buckets: buckets)
-                let updatedFamily = existingHistogramFamily.add(metric: histogram, for: labels)
+                let updatedFamily = existingHistogramFamily.adding(metric: histogram, for: labels)
 
                 // Write the modified entry back to the store.
                 store[name] = .durationHistogram(updatedFamily)
@@ -700,6 +744,19 @@ public final class PrometheusCollectorRegistry: Sendable {
 
             switch entry {
             case .valueHistogram(let existingHistogramFamily):
+
+                // Validate help text consistency. While Prometheus wouldn't break with duplicate and distinct
+                // HELP lines, the client enforces uniqueness and consistency.
+                if let existingHelp = existingHistogramFamily.help, existingHelp != help {
+                    fatalError(
+                        """
+                        Help text mismatch for metric '\(name)':
+                        Existing help: '\(existingHelp)'
+                        New help: '\(help)'
+                        All metrics with the same name must have identical help text.
+                        """
+                    )
+                }
                 // Validate buckets match the stored ones.
                 if case .value(let storedBuckets) = existingHistogramFamily.buckets {
                     guard storedBuckets == buckets else {
@@ -714,31 +771,13 @@ public final class PrometheusCollectorRegistry: Sendable {
                     }
                 }
 
-                // For unlabeled metrics, return the existing one if it exists.
-                if labels.isEmpty, let existingUnlabeled = existingHistogramFamily.metricUnlabeled {
-                    return existingUnlabeled
-                }
-
-                if let existingHistogram = existingHistogramFamily.metricsByLabelSets[key] {
+                if let existingHistogram = existingHistogramFamily.getMetric(for: labels) {
                     return existingHistogram
-                }
-
-                // Validate help text consistency. While Prometheus wouldn't break with duplicate and distinct
-                // HELP lines, the client enforces uniqueness and consistency.
-                if let existingHelp = existingHistogramFamily.help, existingHelp != help {
-                    fatalError(
-                        """
-                        Help text mismatch for metric '\(name)':
-                        Existing help: '\(existingHelp)'
-                        New help: '\(help)'
-                        All metrics with the same name must have identical help text.
-                        """
-                    )
                 }
 
                 // Even if the metric name is identical, each label set defines a unique time series.
                 let histogram = ValueHistogram(name: name, labels: labels, buckets: buckets)
-                let updatedFamily = existingHistogramFamily.add(metric: histogram, for: labels)
+                let updatedFamily = existingHistogramFamily.adding(metric: histogram, for: labels)
 
                 // Write the modified entry back to the store.
                 store[name] = .valueHistogram(updatedFamily)
@@ -819,33 +858,11 @@ public final class PrometheusCollectorRegistry: Sendable {
         self.box.withLockedValue { store in
             switch store[counter.name] {
             case .counter(let counterFamily):
-
-                if let unlabeledCounter = counterFamily.metricUnlabeled, unlabeledCounter === counter {
-                    // Remove the entire family since unlabeled metrics are exclusive.
-                    store.removeValue(forKey: counter.name)
-                    return
-                }
-
-                let key = LabelsKey(counter.labels)
-                guard let existingCounter = counterFamily.metricsByLabelSets[key],
-                    existingCounter === counter
-                else {
-                    return
-                }
-
-                var newMetricsByLabelSets = counterFamily.metricsByLabelSets
-                newMetricsByLabelSets.removeValue(forKey: key)
-
-                if newMetricsByLabelSets.isEmpty {
-                    store.removeValue(forKey: counter.name)
-                } else {
-                    let updatedFamily = MetricFamily(
-                        metricsByLabelSets: newMetricsByLabelSets,
-                        buckets: counterFamily.buckets,
-                        help: counterFamily.help,
-                        metricUnlabeled: counterFamily.metricUnlabeled
-                    )
+                if let updatedFamily = counterFamily.removing(metric: counter, for: counter.labels) {
                     store[counter.name] = .counter(updatedFamily)
+                } else {
+                    // Remove the entire family.
+                    store.removeValue(forKey: counter.name)
                 }
             default:
                 return
@@ -862,33 +879,11 @@ public final class PrometheusCollectorRegistry: Sendable {
         self.box.withLockedValue { store in
             switch store[gauge.name] {
             case .gauge(let gaugeFamily):
-
-                if let unlabeledGauge = gaugeFamily.metricUnlabeled, unlabeledGauge === gauge {
-                    // Remove the entire family since unlabeled metrics are exclusive.
-                    store.removeValue(forKey: gauge.name)
-                    return
-                }
-
-                let key = LabelsKey(gauge.labels)
-                guard let existingGauge = gaugeFamily.metricsByLabelSets[key],
-                    existingGauge === gauge
-                else {
-                    return
-                }
-
-                var newMetricsByLabelSets = gaugeFamily.metricsByLabelSets
-                newMetricsByLabelSets.removeValue(forKey: key)
-
-                if newMetricsByLabelSets.isEmpty {
-                    store.removeValue(forKey: gauge.name)
-                } else {
-                    let updatedFamily = MetricFamily(
-                        metricsByLabelSets: newMetricsByLabelSets,
-                        buckets: gaugeFamily.buckets,
-                        help: gaugeFamily.help,
-                        metricUnlabeled: gaugeFamily.metricUnlabeled
-                    )
+                if let updatedFamily = gaugeFamily.removing(metric: gauge, for: gauge.labels) {
                     store[gauge.name] = .gauge(updatedFamily)
+                } else {
+                    // Remove the entire family.
+                    store.removeValue(forKey: gauge.name)
                 }
             default:
                 return
@@ -905,33 +900,11 @@ public final class PrometheusCollectorRegistry: Sendable {
         self.box.withLockedValue { store in
             switch store[histogram.name] {
             case .durationHistogram(let histogramFamily):
-
-                if let unlabeledHistogram = histogramFamily.metricUnlabeled, unlabeledHistogram === histogram {
-                    // Remove the entire family since unlabeled metrics are exclusive.
-                    store.removeValue(forKey: histogram.name)
-                    return
-                }
-
-                let key = LabelsKey(histogram.labels)
-                guard let existingHistogram = histogramFamily.metricsByLabelSets[key],
-                    existingHistogram === histogram
-                else {
-                    return
-                }
-
-                var newMetricsByLabelSets = histogramFamily.metricsByLabelSets
-                newMetricsByLabelSets.removeValue(forKey: key)
-
-                if newMetricsByLabelSets.isEmpty {
-                    store.removeValue(forKey: histogram.name)
-                } else {
-                    let updatedFamily = MetricFamily(
-                        metricsByLabelSets: newMetricsByLabelSets,
-                        buckets: histogramFamily.buckets,
-                        help: histogramFamily.help,
-                        metricUnlabeled: histogramFamily.metricUnlabeled
-                    )
+                if let updatedFamily = histogramFamily.removing(metric: histogram, for: histogram.labels) {
                     store[histogram.name] = .durationHistogram(updatedFamily)
+                } else {
+                    // Remove the entire family.
+                    store.removeValue(forKey: histogram.name)
                 }
             default:
                 return
@@ -948,33 +921,11 @@ public final class PrometheusCollectorRegistry: Sendable {
         self.box.withLockedValue { store in
             switch store[histogram.name] {
             case .valueHistogram(let histogramFamily):
-
-                if let unlabeledHistogram = histogramFamily.metricUnlabeled, unlabeledHistogram === histogram {
-                    // Remove the entire family since unlabeled metrics are exclusive.
-                    store.removeValue(forKey: histogram.name)
-                    return
-                }
-
-                let key = LabelsKey(histogram.labels)
-                guard let existingHistogram = histogramFamily.metricsByLabelSets[key],
-                    existingHistogram === histogram
-                else {
-                    return
-                }
-
-                var newMetricsByLabelSets = histogramFamily.metricsByLabelSets
-                newMetricsByLabelSets.removeValue(forKey: key)
-
-                if newMetricsByLabelSets.isEmpty {
-                    store.removeValue(forKey: histogram.name)
-                } else {
-                    let updatedFamily = MetricFamily(
-                        metricsByLabelSets: newMetricsByLabelSets,
-                        buckets: histogramFamily.buckets,
-                        help: histogramFamily.help,
-                        metricUnlabeled: histogramFamily.metricUnlabeled
-                    )
+                if let updatedFamily = histogramFamily.removing(metric: histogram, for: histogram.labels) {
                     store[histogram.name] = .valueHistogram(updatedFamily)
+                } else {
+                    // Remove the entire family.
+                    store.removeValue(forKey: histogram.name)
                 }
             default:
                 return
@@ -1076,71 +1027,39 @@ public final class PrometheusCollectorRegistry: Sendable {
         for (name, metric) in metrics {
             switch metric {
             case .counter(let counterFamily):
-                if let unlabeledCounter = counterFamily.metricUnlabeled {
-                    if let help = counterFamily.help, !help.isEmpty {
-                        buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                    }
-                    buffer.addLine(prefix: prefixType, name: name, value: "counter")
-                    unlabeledCounter.emit(into: &buffer)
-                } else if !counterFamily.metricsByLabelSets.isEmpty {
-                    if let help = counterFamily.help, !help.isEmpty {
-                        buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                    }
-                    buffer.addLine(prefix: prefixType, name: name, value: "counter")
-                    for counter in counterFamily.metricsByLabelSets.values {
-                        counter.emit(into: &buffer)
-                    }
+                if let help = counterFamily.help, !help.isEmpty {
+                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                }
+                buffer.addLine(prefix: prefixType, name: name, value: "counter")
+                counterFamily.forEachMetric { counter in
+                    counter.emit(into: &buffer)
                 }
 
             case .gauge(let gaugeFamily):
-                if let unlabeledGauge = gaugeFamily.metricUnlabeled {
-                    if let help = gaugeFamily.help, !help.isEmpty {
-                        buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                    }
-                    buffer.addLine(prefix: prefixType, name: name, value: "gauge")
-                    unlabeledGauge.emit(into: &buffer)
-                } else if !gaugeFamily.metricsByLabelSets.isEmpty {
-                    if let help = gaugeFamily.help, !help.isEmpty {
-                        buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                    }
-                    buffer.addLine(prefix: prefixType, name: name, value: "gauge")
-                    for gauge in gaugeFamily.metricsByLabelSets.values {
-                        gauge.emit(into: &buffer)
-                    }
+                if let help = gaugeFamily.help, !help.isEmpty {
+                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                }
+                buffer.addLine(prefix: prefixType, name: name, value: "gauge")
+                gaugeFamily.forEachMetric { gauge in
+                    gauge.emit(into: &buffer)
                 }
 
             case .durationHistogram(let histogramFamily):
-                if let unlabeledHistogram = histogramFamily.metricUnlabeled {
-                    if let help = histogramFamily.help, !help.isEmpty {
-                        buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                    }
-                    buffer.addLine(prefix: prefixType, name: name, value: "histogram")
-                    unlabeledHistogram.emit(into: &buffer)
-                } else if !histogramFamily.metricsByLabelSets.isEmpty {
-                    if let help = histogramFamily.help, !help.isEmpty {
-                        buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                    }
-                    buffer.addLine(prefix: prefixType, name: name, value: "histogram")
-                    for histogram in histogramFamily.metricsByLabelSets.values {
-                        histogram.emit(into: &buffer)
-                    }
+                if let help = histogramFamily.help, !help.isEmpty {
+                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                }
+                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
+                histogramFamily.forEachMetric { histogram in
+                    histogram.emit(into: &buffer)
                 }
 
             case .valueHistogram(let histogramFamily):
-                if let unlabeledHistogram = histogramFamily.metricUnlabeled {
-                    if let help = histogramFamily.help, !help.isEmpty {
-                        buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                    }
-                    buffer.addLine(prefix: prefixType, name: name, value: "histogram")
-                    unlabeledHistogram.emit(into: &buffer)
-                } else if !histogramFamily.metricsByLabelSets.isEmpty {
-                    if let help = histogramFamily.help, !help.isEmpty {
-                        buffer.addLine(prefix: prefixHelp, name: name, value: help)
-                    }
-                    buffer.addLine(prefix: prefixType, name: name, value: "histogram")
-                    for histogram in histogramFamily.metricsByLabelSets.values {
-                        histogram.emit(into: &buffer)
-                    }
+                if let help = histogramFamily.help, !help.isEmpty {
+                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                }
+                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
+                histogramFamily.forEachMetric { histogram in
+                    histogram.emit(into: &buffer)
                 }
             }
         }
