@@ -381,50 +381,33 @@ final class HistogramTests: XCTestCase {
             .seconds(1),
         ]
 
-        let histogram0 = client.makeDurationHistogram(
-            name: "foo",
-            labels: [],
-            buckets: sharedBuckets,
-            help: "Base metric name with no labels"
-        )
-
         let histogram1 = client.makeDurationHistogram(
             name: "foo",
             labels: [("bar", "baz")],
             buckets: sharedBuckets,  // Must match the first registration
-            help: "Base metric name with one label set variant"
+            help: "Shared help text"
         )
 
         let histogram2 = client.makeDurationHistogram(
             name: "foo",
             labels: [("bar", "newBaz"), ("newKey1", "newValue1")],
             buckets: sharedBuckets,  // Must match the first registration
-            help: "Base metric name with a different label set variant"
+            help: "Shared help text"
         )
 
         var buffer = [UInt8]()
-        histogram0.recordNanoseconds(300_000_000)  // 300ms
         histogram1.recordNanoseconds(600_000_000)  // 600ms
         histogram2.recordNanoseconds(150_000_000)  // 150ms
         histogram1.recordNanoseconds(1_500_000_000)  // 1500ms
-        histogram0.recordNanoseconds(800_000_000)  // 800ms
         histogram2.recordNanoseconds(100_000_000)  // 100ms
 
         client.emit(into: &buffer)
         var outputString = String(decoding: buffer, as: Unicode.UTF8.self)
         var actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
         var expectedLines = Set([
-            "# HELP foo Base metric name with no labels",
+            "# HELP foo Shared help text",
             "# TYPE foo histogram",
-            "foo_bucket{le=\"0.1\"} 0",
-            "foo_bucket{le=\"0.5\"} 1",
-            "foo_bucket{le=\"1.0\"} 2",
-            "foo_bucket{le=\"+Inf\"} 2",
-            "foo_sum 1.1",
-            "foo_count 2",
 
-            "# HELP foo Base metric name with one label set variant",
-            "# TYPE foo histogram",
             #"foo_bucket{bar="baz",le="0.1"} 0"#,
             #"foo_bucket{bar="baz",le="0.5"} 0"#,
             #"foo_bucket{bar="baz",le="1.0"} 1"#,
@@ -432,8 +415,6 @@ final class HistogramTests: XCTestCase {
             #"foo_sum{bar="baz"} 2.1"#,
             #"foo_count{bar="baz"} 2"#,
 
-            "# HELP foo Base metric name with a different label set variant",
-            "# TYPE foo histogram",
             #"foo_bucket{bar="newBaz",newKey1="newValue1",le="0.1"} 1"#,
             #"foo_bucket{bar="newBaz",newKey1="newValue1",le="0.5"} 2"#,
             #"foo_bucket{bar="newBaz",newKey1="newValue1",le="1.0"} 2"#,
@@ -444,31 +425,6 @@ final class HistogramTests: XCTestCase {
         XCTAssertEqual(actualLines, expectedLines)
 
         // Histograms are unregistered in a cascade.
-        client.unregisterDurationHistogram(histogram0)
-        buffer.removeAll(keepingCapacity: true)
-        client.emit(into: &buffer)
-        outputString = String(decoding: buffer, as: Unicode.UTF8.self)
-        actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
-        expectedLines = Set([
-            "# HELP foo Base metric name with one label set variant",
-            "# TYPE foo histogram",
-            #"foo_bucket{bar="baz",le="0.1"} 0"#,
-            #"foo_bucket{bar="baz",le="0.5"} 0"#,
-            #"foo_bucket{bar="baz",le="1.0"} 1"#,
-            #"foo_bucket{bar="baz",le="+Inf"} 2"#,
-            #"foo_sum{bar="baz"} 2.1"#,
-            #"foo_count{bar="baz"} 2"#,
-
-            "# HELP foo Base metric name with a different label set variant",
-            "# TYPE foo histogram",
-            #"foo_bucket{bar="newBaz",newKey1="newValue1",le="0.1"} 1"#,
-            #"foo_bucket{bar="newBaz",newKey1="newValue1",le="0.5"} 2"#,
-            #"foo_bucket{bar="newBaz",newKey1="newValue1",le="1.0"} 2"#,
-            #"foo_bucket{bar="newBaz",newKey1="newValue1",le="+Inf"} 2"#,
-            #"foo_sum{bar="newBaz",newKey1="newValue1"} 0.25"#,
-            #"foo_count{bar="newBaz",newKey1="newValue1"} 2"#,
-        ])
-        XCTAssertEqual(actualLines, expectedLines)
 
         client.unregisterDurationHistogram(histogram1)
         buffer.removeAll(keepingCapacity: true)
@@ -476,7 +432,7 @@ final class HistogramTests: XCTestCase {
         outputString = String(decoding: buffer, as: Unicode.UTF8.self)
         actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
         expectedLines = Set([
-            "# HELP foo Base metric name with a different label set variant",
+            "# HELP foo Shared help text",
             "# TYPE foo histogram",
             #"foo_bucket{bar="newBaz",newKey1="newValue1",le="0.1"} 1"#,
             #"foo_bucket{bar="newBaz",newKey1="newValue1",le="0.5"} 2"#,
@@ -498,14 +454,14 @@ final class HistogramTests: XCTestCase {
         let _ = client.makeGauge(
             name: "foo",
             labels: [],
-            help: "Base metric name used for new metric of type gauge"
+            help: "Shared help text"
         )
         buffer.removeAll(keepingCapacity: true)
         client.emit(into: &buffer)
         XCTAssertEqual(
             String(decoding: buffer, as: Unicode.UTF8.self),
             """
-            # HELP foo Base metric name used for new metric of type gauge
+            # HELP foo Shared help text
             # TYPE foo gauge
             foo 0.0
 
@@ -521,50 +477,33 @@ final class HistogramTests: XCTestCase {
             1.0, 5.0, 10.0,
         ]
 
-        let histogram0 = client.makeValueHistogram(
-            name: "foo",
-            labels: [],
-            buckets: sharedBuckets,
-            help: "Base metric name with no labels"
-        )
-
         let histogram1 = client.makeValueHistogram(
             name: "foo",
             labels: [("bar", "baz")],
             buckets: sharedBuckets,  // Must match the first registration
-            help: "Base metric name with one label set variant"
+            help: "Shared help text"
         )
 
         let histogram2 = client.makeValueHistogram(
             name: "foo",
             labels: [("bar", "newBaz"), ("newKey1", "newValue1")],
             buckets: sharedBuckets,  // Must match the first registration
-            help: "Base metric name with a different label set variant"
+            help: "Shared help text"
         )
 
         var buffer = [UInt8]()
-        histogram0.record(3.0)
         histogram1.record(6.0)
         histogram2.record(2.0)
         histogram1.record(12.0)
-        histogram0.record(8.0)
         histogram2.record(1.5)
 
         client.emit(into: &buffer)
         var outputString = String(decoding: buffer, as: Unicode.UTF8.self)
         var actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
         var expectedLines = Set([
-            "# HELP foo Base metric name with no labels",
+            "# HELP foo Shared help text",
             "# TYPE foo histogram",
-            "foo_bucket{le=\"1.0\"} 0",
-            "foo_bucket{le=\"5.0\"} 1",
-            "foo_bucket{le=\"10.0\"} 2",
-            "foo_bucket{le=\"+Inf\"} 2",
-            "foo_sum 11.0",
-            "foo_count 2",
 
-            "# HELP foo Base metric name with one label set variant",
-            "# TYPE foo histogram",
             #"foo_bucket{bar="baz",le="1.0"} 0"#,
             #"foo_bucket{bar="baz",le="5.0"} 0"#,
             #"foo_bucket{bar="baz",le="10.0"} 1"#,
@@ -572,8 +511,6 @@ final class HistogramTests: XCTestCase {
             #"foo_sum{bar="baz"} 18.0"#,
             #"foo_count{bar="baz"} 2"#,
 
-            "# HELP foo Base metric name with a different label set variant",
-            "# TYPE foo histogram",
             #"foo_bucket{bar="newBaz",newKey1="newValue1",le="1.0"} 0"#,
             #"foo_bucket{bar="newBaz",newKey1="newValue1",le="5.0"} 2"#,
             #"foo_bucket{bar="newBaz",newKey1="newValue1",le="10.0"} 2"#,
@@ -584,39 +521,13 @@ final class HistogramTests: XCTestCase {
         XCTAssertEqual(actualLines, expectedLines)
 
         // Histograms are unregistered in a cascade.
-        client.unregisterValueHistogram(histogram0)
-        buffer.removeAll(keepingCapacity: true)
-        client.emit(into: &buffer)
-        outputString = String(decoding: buffer, as: Unicode.UTF8.self)
-        actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
-        expectedLines = Set([
-            "# HELP foo Base metric name with one label set variant",
-            "# TYPE foo histogram",
-            #"foo_bucket{bar="baz",le="1.0"} 0"#,
-            #"foo_bucket{bar="baz",le="5.0"} 0"#,
-            #"foo_bucket{bar="baz",le="10.0"} 1"#,
-            #"foo_bucket{bar="baz",le="+Inf"} 2"#,
-            #"foo_sum{bar="baz"} 18.0"#,
-            #"foo_count{bar="baz"} 2"#,
-
-            "# HELP foo Base metric name with a different label set variant",
-            "# TYPE foo histogram",
-            #"foo_bucket{bar="newBaz",newKey1="newValue1",le="1.0"} 0"#,
-            #"foo_bucket{bar="newBaz",newKey1="newValue1",le="5.0"} 2"#,
-            #"foo_bucket{bar="newBaz",newKey1="newValue1",le="10.0"} 2"#,
-            #"foo_bucket{bar="newBaz",newKey1="newValue1",le="+Inf"} 2"#,
-            #"foo_sum{bar="newBaz",newKey1="newValue1"} 3.5"#,
-            #"foo_count{bar="newBaz",newKey1="newValue1"} 2"#,
-        ])
-        XCTAssertEqual(actualLines, expectedLines)
-
         client.unregisterValueHistogram(histogram1)
         buffer.removeAll(keepingCapacity: true)
         client.emit(into: &buffer)
         outputString = String(decoding: buffer, as: Unicode.UTF8.self)
         actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
         expectedLines = Set([
-            "# HELP foo Base metric name with a different label set variant",
+            "# HELP foo Shared help text",
             "# TYPE foo histogram",
             #"foo_bucket{bar="newBaz",newKey1="newValue1",le="1.0"} 0"#,
             #"foo_bucket{bar="newBaz",newKey1="newValue1",le="5.0"} 2"#,
@@ -638,14 +549,14 @@ final class HistogramTests: XCTestCase {
         let _ = client.makeGauge(
             name: "foo",
             labels: [],
-            help: "Base metric name used for new metric of type gauge"
+            help: "Shared help text"
         )
         buffer.removeAll(keepingCapacity: true)
         client.emit(into: &buffer)
         XCTAssertEqual(
             String(decoding: buffer, as: Unicode.UTF8.self),
             """
-            # HELP foo Base metric name used for new metric of type gauge
+            # HELP foo Shared help text
             # TYPE foo gauge
             foo 0.0
 
@@ -757,7 +668,6 @@ final class HistogramTests: XCTestCase {
 
         // 2. Define the label combinations to test.
         let labelCases: [(labels: [(String, String)], expectedLabelString: String, description: String)] = [
-            (labels: [], expectedLabelString: "", description: "without labels"),
             (labels: [("method", "get")], expectedLabelString: "{method=\"get\"}", description: "with one label"),
             (
                 labels: [("status", "200"), ("path", "/api/v1")],
@@ -979,7 +889,6 @@ final class HistogramTests: XCTestCase {
 
         // 2. Define the label combinations to test.
         let labelCases: [(labels: [(String, String)], expectedLabelString: String, description: String)] = [
-            (labels: [], expectedLabelString: "", description: "without labels"),
             (labels: [("method", "get")], expectedLabelString: "{method=\"get\"}", description: "with one label"),
             (
                 labels: [("status", "200"), ("path", "/api/v1")],

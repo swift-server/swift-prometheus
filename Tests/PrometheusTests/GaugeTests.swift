@@ -155,65 +155,37 @@ final class GaugeTests: XCTestCase {
     func testGaugeWithSharedMetricNameDistinctLabelSets() {
         let client = PrometheusCollectorRegistry()
 
-        let gauge0 = client.makeGauge(
-            name: "foo",
-            labels: [],
-            help: "Base metric name with no labels"
-        )
-
         let gauge1 = client.makeGauge(
             name: "foo",
             labels: [("bar", "baz")],
-            help: "Base metric name with one label set variant"
+            help: "Shared help text"
         )
 
         let gauge2 = client.makeGauge(
             name: "foo",
             labels: [("bar", "newBaz"), ("newKey1", "newValue1")],
-            help: "Base metric name with a different label set variant"
+            help: "Shared help text"
         )
 
         var buffer = [UInt8]()
-        gauge0.set(to: 1.0)
         gauge1.set(to: 9.0)
         gauge2.set(to: 4.0)
         gauge1.decrement(by: 12.0)
-        gauge0.record(2.0)
         gauge2.increment(by: 24.0)
         client.emit(into: &buffer)
         var outputString = String(decoding: buffer, as: Unicode.UTF8.self)
         var actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
         var expectedLines = Set([
-            "# HELP foo Base metric name with no labels",
+            "# HELP foo Shared help text",
             "# TYPE foo gauge",
-            "foo 2.0",
 
-            "# HELP foo Base metric name with one label set variant",
-            "# TYPE foo gauge",
             #"foo{bar="baz"} -3.0"#,
 
-            "# HELP foo Base metric name with a different label set variant",
-            "# TYPE foo gauge",
             #"foo{bar="newBaz",newKey1="newValue1"} 28.0"#,
         ])
         XCTAssertEqual(actualLines, expectedLines)
 
         // Gauges are unregistered in a cascade.
-        client.unregisterGauge(gauge0)
-        buffer.removeAll(keepingCapacity: true)
-        client.emit(into: &buffer)
-        outputString = String(decoding: buffer, as: Unicode.UTF8.self)
-        actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
-        expectedLines = Set([
-            "# HELP foo Base metric name with one label set variant",
-            "# TYPE foo gauge",
-            #"foo{bar="baz"} -3.0"#,
-
-            "# HELP foo Base metric name with a different label set variant",
-            "# TYPE foo gauge",
-            #"foo{bar="newBaz",newKey1="newValue1"} 28.0"#,
-        ])
-        XCTAssertEqual(actualLines, expectedLines)
 
         client.unregisterGauge(gauge1)
         buffer.removeAll(keepingCapacity: true)
@@ -221,7 +193,7 @@ final class GaugeTests: XCTestCase {
         outputString = String(decoding: buffer, as: Unicode.UTF8.self)
         actualLines = Set(outputString.components(separatedBy: .newlines).filter { !$0.isEmpty })
         expectedLines = Set([
-            "# HELP foo Base metric name with a different label set variant",
+            "# HELP foo Shared help text",
             "# TYPE foo gauge",
             #"foo{bar="newBaz",newKey1="newValue1"} 28.0"#,
         ])
@@ -238,14 +210,14 @@ final class GaugeTests: XCTestCase {
         let _ = client.makeCounter(
             name: "foo",
             labels: [],
-            help: "Base metric name used for new metric of type counter"
+            help: "Shared help text"
         )
         buffer.removeAll(keepingCapacity: true)
         client.emit(into: &buffer)
         XCTAssertEqual(
             String(decoding: buffer, as: Unicode.UTF8.self),
             """
-            # HELP foo Base metric name used for new metric of type counter
+            # HELP foo Shared help text
             # TYPE foo counter
             foo 0
 
@@ -378,7 +350,6 @@ final class GaugeTests: XCTestCase {
 
         // 2. Define the label combinations to test.
         let labelCases: [(labels: [(String, String)], expectedLabelString: String, description: String)] = [
-            (labels: [], expectedLabelString: "", description: "without labels"),
             (labels: [("method", "get")], expectedLabelString: "{method=\"get\"}", description: "with one label"),
             (
                 labels: [("status", "200"), ("path", "/api/v1")],
