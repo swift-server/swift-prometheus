@@ -1,4 +1,4 @@
-# Emit metrics collected by Swift Metrics
+# Integrate with Swift Metrics
 
 Learn how Swift Prometheus integrates with Swift Metrics – an abstract API that is widely used in 
 the swift-server ecosystem.
