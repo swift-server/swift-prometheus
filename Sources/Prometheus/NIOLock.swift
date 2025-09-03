@@ -216,13 +216,13 @@ extension LockStorage: Sendable {}
 /// of lock is safe to use with `libpthread`-based threading models, such as the
 /// one used by NIO. On Windows, the lock is based on the substantially similar
 /// `SRWLOCK` type.
-public struct NIOLock {
+struct NIOLock {
     @usableFromInline
     internal let _storage: LockStorage<Void>
 
     /// Create a new lock.
     @inlinable
-    public init() {
+    init() {
         self._storage = .create(value: ())
     }
 
@@ -231,7 +231,7 @@ public struct NIOLock {
     /// Whenever possible, consider using `withLock` instead of this method and
     /// `unlock`, to simplify lock handling.
     @inlinable
-    public func lock() {
+    func lock() {
         self._storage.lock()
     }
 
@@ -240,7 +240,7 @@ public struct NIOLock {
     /// Whenever possible, consider using `withLock` instead of this method and
     /// `lock`, to simplify lock handling.
     @inlinable
-    public func unlock() {
+    func unlock() {
         self._storage.unlock()
     }
 
@@ -260,7 +260,7 @@ extension NIOLock {
     /// - Parameter body: The block to execute while holding the lock.
     /// - Returns: The value returned by the block.
     @inlinable
-    public func withLock<T>(_ body: () throws -> T) rethrows -> T {
+    func withLock<T>(_ body: () throws -> T) rethrows -> T {
         self.lock()
         defer {
             self.unlock()
@@ -269,7 +269,7 @@ extension NIOLock {
     }
 
     @inlinable
-    public func withLockVoid(_ body: () throws -> Void) rethrows {
+    func withLockVoid(_ body: () throws -> Void) rethrows {
         try self.withLock(body)
     }
 }
