@@ -1,6 +1,6 @@
 # ``Prometheus``
 
-A prometheus client library for Swift.
+A Swift client library for the Prometheus Monitoring System. 
 
 ## Overview
 
@@ -13,7 +13,7 @@ A prometheus client library for Swift.
 - *Thread Safe and Type-Safe*.
 - *Swift Metrics Compatible*: Use the native Prometheus client API implemented in this library or use [Swift Metrics](doc:swift-metrics) as a backend for this library.
 
-For general Prometheus guidance, see the [Prometheus Documentation][prometheus-docs].
+For general Prometheus guidance, see the [Prometheus Monitoring System Documentation][prometheus-docs].
 
 ## Installation
 
