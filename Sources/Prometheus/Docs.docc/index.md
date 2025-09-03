@@ -1,15 +1,19 @@
 # ``Prometheus``
 
-A prometheus client library for Swift.
+A Swift client library for the Prometheus Monitoring System. 
 
 ## Overview
 
-``Prometheus`` supports creating ``Counter``s, ``Gauge``s and ``Histogram``s and exporting their
-values in the Prometheus text format.
+``Prometheus`` supports creating ``Counter``s, ``Gauge``s and ``Histogram``s, updating metric values, and exposing their values in the Prometheus text format.
 
-``Prometheus`` integrates with [Swift Metrics](doc:swift-metrics).
+#### Key Features
 
-For general advice on how to use `Prometheus` make sure to also read the [Prometheus documentation][prometheus-docs].
+- *Standards Compliant*: Follows Prometheus naming conventions and exposition formats, enforces base guarantees.
+- *Flexible Metric Labeling*: Supports flexible metric label structures with consistency guarantees.
+- *Thread Safe and Type-Safe*.
+- *Swift Metrics Compatible*: Use the native Prometheus client API implemented in this library or use [Swift Metrics](doc:swift-metrics) as a backend for this library.
+
+For general Prometheus guidance, see the [Prometheus Monitoring System Documentation][prometheus-docs].
 
 ## Installation
 
@@ -40,40 +44,60 @@ In your Swift file you must first `import Prometheus`:
 import Prometheus
 ```
 
-Next you need to create a ``PrometheusCollectorRegistry``, which you use to create ``Counter``s, 
-``Gauge``s and ``Histogram``s.
+Create a ``PrometheusCollectorRegistry`` instance and register, for instance, a ``Counter``:
 
 ```swift
 let registry = PrometheusCollectorRegistry()
 
-let myCounter = registry.makeCounter(name: "my_counter")
-myCounter.increment()
+let httpRequestsDescriptor = MetricNameDescriptor(
+    namespace: "myapp",
+    subsystem: "http",
+    metricName: "requests",
+    unitName: "total",
+    helpText: "Total HTTP requests"
+)
 
-let myGauge = registry.makeGauge(name: "my_gauge")
-myGauge.increment()
-myGauge.decrement()
+let httpRequestsGet = registry.makeCounter(
+    descriptor: httpRequestsDescriptor,
+    labels: [("method", "GET"), ("status", "200")]
+)
+
+httpRequestsGet.increment(by: 5.0)
 ```
 
-Lastly, you can use your ``PrometheusCollectorRegistry`` to generate a Prometheus export in the 
-text representation:
+Emit all registered metrics to the Prometheus text exposition format:
 
 ```swift
-var buffer = [UInt8]()
-buffer.reserveCapacity(1024) // potentially smart moves to reduce the number of reallocations
-registry.emit(into: &buffer)
-
-print(String(decoding: buffer, as: Unicode.UTF8.self))
+let output = registry.emitToString()
+print(output)
 ```
+
+```sh
+# HELP myapp_http_requests_total Total HTTP requests
+# TYPE myapp_http_requests_total counter
+myapp_http_requests_total{method="GET",status="200"} 5.0
+```
+
+Unregister a ``Counter``:
+
+```swift
+registry.unregisterCounter(httpRequestsGet)
+```
+
+Explore a detailed usage guide at <doc:labels>.
+
 
 ## Topics
 
-### Getting started
+### Getting Started
 
-- <doc:swift-metrics>
 - <doc:labels>
+- <doc:swift-metrics>
+
+### Registry
+
 - ``PrometheusCollectorRegistry``
 - ``PrometheusMetricsFactory``
-
 
 ### Metrics
 
@@ -82,5 +106,9 @@ print(String(decoding: buffer, as: Unicode.UTF8.self))
 - ``Histogram``
 - ``DurationHistogram``
 - ``ValueHistogram``
+
+### Configuration
+
+- ``MetricNameDescriptor``
 
 [prometheus-docs]: https://prometheus.io/docs/introduction/overview/

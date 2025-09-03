@@ -943,7 +943,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// This is useful when the registry's metric composition has changed significantly and you want to
     /// optimize buffer size for the new workload.
     ///
-    /// - Note: Thread-safe. Does not affect ``emit(into:)`` calls which use external buffers
+    /// - Note: Does not affect ``emit(into:)`` calls which use external buffers
     public func resetInternalBuffer() {
         bufferBox.withLockedValue { buffer in
             // Resets capacity to 0, forcing re-calibration
@@ -958,7 +958,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// the registry's output requirements increase.
     ///
     /// - Returns: The current buffer capacity in bytes
-    /// - Note: Thread-safe. Primarily useful for testing and monitoring buffer behavior
+    /// - Note: Primarily useful for testing and monitoring buffer behavior
     public func internalBufferCapacity() -> Int {
         return bufferBox.withLockedValue { buffer in
             buffer.capacity
@@ -972,7 +972,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// established capacity, clearing content but preserving the initially allocated memory.
     ///
     /// - Returns: A String containing all registered metrics in Prometheus text format
-    /// - Note: Thread-safe. Use ``resetInternalBuffer()`` to force recalibration
+    /// - Note: Use ``resetInternalBuffer()`` to force recalibration
     /// - SeeAlso: ``emitToBuffer()`` for raw UTF-8 bytes, ``emit(into:)`` for custom buffer
     public func emitToString() -> String {
         return bufferBox.withLockedValue { buffer in
@@ -995,7 +995,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// established capacity, clearing content but preserving the initially allocated memory. Returns a copy.
     ///
     /// - Returns: A copy of the UTF-8 encoded byte array containing all registered metrics
-    /// - Note: Thread-safe. Use ``resetInternalBuffer()`` to force recalibration
+    /// - Note: Use ``resetInternalBuffer()`` to force recalibration
     /// - SeeAlso: ``emitToString()`` for String output, ``emit(into:)`` for custom buffer
     public func emitToBuffer() -> [UInt8] {
         return bufferBox.withLockedValue { buffer in
@@ -1016,8 +1016,6 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// performance and control but requires manual buffer lifecycle management.
     ///
     /// - Parameter buffer: The buffer to write metrics data into. Content will be appended to existing data
-    /// - Note: Not thread-safe. Caller must handle synchronization and may optimize buffer capacity for
-    ///         maximum performance by reducing reallocations
     /// - SeeAlso: ``emitToString()`` and ``emitToBuffer()`` for automatic buffer management
     public func emit(into buffer: inout [UInt8]) {
         let metrics = self.box.withLockedValue { $0 }
