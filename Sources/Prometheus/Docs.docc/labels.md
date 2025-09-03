@@ -2,7 +2,7 @@
 
 Create, register, update, and expose metrics for Prometheus.
 
-## Touring a Practical Example
+## Overview
 
 Create multiple collectors that are associated with a specific `PrometheusCollectorRegistry()` instance.
 
@@ -113,7 +113,7 @@ myapp_http_request_duration_seconds_count 1
 myapp_system_memory_usage_bytes 134217728.0
 ```
 
-Notice how:
+### Notice how:
 
 *Metadata Deduplication:*
 - Each metric name gets exactly one `# HELP` and `# TYPE` line (before the metric output), regardless of how many label variations exist.
@@ -137,12 +137,16 @@ Notice how:
 
 *Prometheus Compliance:*
 - Metric names, label names, and `# HELP` text are validated against Prometheus character allowlists.
-- Different label names and structures are allowed for the same metric name.
-- However, cannot mix labeled and unlabeled metrics with the same name.
+- Different label names and structures are allowed for the same metric name; however, cannot mix labeled and unlabeled metrics with the same metric name.
 - Must use consistent metric types, help text, and histogram buckets for the same metric name.
 
 *Known Limitations:*
 - Prometheus converts all metrics to floating-point types, which can cause precision loss. For example, Counters designed for `UInt64` values or Gauges capturing nanosecond timestamps will lose precision. In such cases, consider alternative frameworks or solutions.
+
+*Thread-safe through multiple mechanisms:*
+- Metric value updates are based on atomic operations.
+- Export functions like `emitToBuffer()` and `emitToString()` use internal locking and conform to Swift [Sendable](https://developer.apple.com/documentation/Swift/Sendable).
+- Lower-level export via `emit(into:)` is thread-safe due to Swift's `inout` [exclusivity](https://www.swift.org/blog/swift-5-exclusivity/) guarantees, with the compiler preventing concurrent access through warnings (Swift 5) or errors (Swift 6 [strict concurrency](https://developer.apple.com/documentation/swift/adoptingswift6) mode).
 
 ✅ *Correct Labels Usage:*
 
@@ -197,17 +201,11 @@ let goodCounter1 = registry.makeCounter(name: "requests_total", labels: [("metho
 let goodCounter2 = registry.makeCounter(name: "requests_total", labels: [("endpoint", "/api/users")]) // Meaningful dimensions
 ```
 
-## Thread Safety
+*Additional Notes*:
 
-All operations are thread-safe, with the exception of the lower-level ``emit(into:)`` overload variant (compared to the thread-safe ``emitToBuffer()`` or ``emitToString()``). The client uses internal locking to ensure consistency across concurrent access and conforms to Swift's `Sendable` protocol, meaning it can be safely passed between actors and used in concurrent contexts without additional synchronization.
+Above, we demonstrated the Prometheus’s proper approach. However, you can also use [Swift Metrics](doc:swift-metrics) as a backend for this library via `PrometheusMetricsFactory`.
 
-## Additional Notes
-
-Above, we demonstrated the Prometheus’s proper approach. However, you can also integrate with the `swift-metrics` ecosystem using `PrometheusMetricsFactory`.
-
-- <doc:swift-metrics>
-
-> Note: The naming between Prometheus and Swift-Metrics is a bit confusing. Swift Metrics calls a 
+> Note: The naming between Prometheus and Swift-Metrics may be confusing. Swift Metrics calls a 
 > metric's name its label and they call a metric's labels dimensions. In this article, when we 
 > refer to labels, we mean the additional properties that can be added to a metrics name.
 >
@@ -216,17 +214,18 @@ Above, we demonstrated the Prometheus’s proper approach. However, you can also
 > | swift-metrics | `label`     | `dimensions`     |
 > | Prometheus    | `name`      | `labels`         |
 
-
-## References
+### References
 
 - Prometheus [Docs - Overview][prometheus-docs]
 - Prometheus [Instrumentation Best Practices - Use Labels][prometheus-use-labels]
+- Prometheus [Naming Best Practices][prometheus-naming]
 - Prometheus [Client Library Guidelines][prometheus-client-libs]
 - Prometheus [Exporter Guidelines][prometheus-exporters]
 - Prometheus [Exposition Format][prometheus-exposition]
 
 [prometheus-docs]: https://prometheus.io/docs/introduction/overview/
 [prometheus-use-labels]: https://prometheus.io/docs/practices/instrumentation/#use-labels
+[prometheus-naming]: https://prometheus.io/docs/practices/naming/
 [prometheus-client-libs]: https://prometheus.io/docs/instrumenting/writing_clientlibs/
 [prometheus-exporters]: https://prometheus.io/docs/instrumenting/writing_exporters/
 [prometheus-exposition]: https://prometheus.io/docs/instrumenting/exposition_formats/

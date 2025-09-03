@@ -9,10 +9,9 @@ A prometheus client library for Swift.
 #### Key Features
 
 - *Standards Compliant*: Follows Prometheus naming conventions and exposition formats, enforces base guarantees.
-- *Type Safe*: Prevents common configuration errors through Swift's type system.
-- *Thread Safe*: Operations use internal locking and conform to `Sendable`.
 - *Flexible Metric Labeling*: Supports flexible metric label structures with consistency guarantees.
-- *Swift Metrics Compatible*: Use the native Prometheus client API implemented in this library or integrate with [Swift Metrics](doc:swift-metrics).
+- *Thread Safe and Type-Safe*.
+- *Swift Metrics Compatible*: Use the native Prometheus client API implemented in this library or use [Swift Metrics](doc:swift-metrics) as a backend for this library.
 
 For general Prometheus guidance, see the [Prometheus Documentation][prometheus-docs].
 

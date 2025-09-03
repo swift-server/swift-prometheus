@@ -1,7 +1,6 @@
-# Integrate with Swift Metrics
+# Swift Metrics as Backend
 
-Learn how Swift Prometheus integrates with Swift Metrics – an abstract API that is widely used in 
-the swift-server ecosystem.
+Learn how to use Swift Metrics as a backend for Swift Prometheus.
 
 ## Overview
 
@@ -51,12 +50,12 @@ func main() {
 }
 ```
 
-## Modifying the Prometheus Export
+### Modifying the Prometheus Export
 
 Now that we have setup the Prometheus export, lets discuss which configuration options there are to
 modify the Swift Metrics export.
 
-### Using a specific Collector Registry as the Export Target
+#### Using a specific Collector Registry as the Export Target
 
 If you create a `PrometheusMetricsFactory()` without specifying a ``PrometheusCollectorRegistry``,
 it will use ``PrometheusMetricsFactory/defaultRegistry`` as the underlying collector registry.
@@ -78,7 +77,7 @@ factory.registry = registry
 MetricsSystem.bootstrap(factory)
 ```
 
-### Modifying Swift metrics names and labels
+#### Modifying Swift metrics names and labels
 
 When you create a ``PrometheusMetricsFactory``, you can also set the 
 ``PrometheusMetricsFactory/nameAndLabelSanitizer`` to modify the metric names and labels:
@@ -107,9 +106,9 @@ generated in a third party library.
 > Use the ``PrometheusMetricsFactory/nameAndLabelSanitizer`` to ensure this remains true metrics 
 > that are created in third party libraries. See <doc:labels> for more information about this.
 
-### Defining Buckets for Histograms
+#### Defining Buckets for Histograms
 
-#### Default buckets
+Default buckets:
 
 Swift Metric `Timer`s are backed by a Prometheus ``DurationHistogram`` and Swift Metric 
 `Recorder`s that aggregate are backed by a Prometheus ``ValueHistogram``. As a user, you can 
@@ -141,7 +140,7 @@ Timer(label: "my_timer") // will use the buckets specified in `defaultDurationHi
 Recorder(label: "my_recorder", aggregate: true) // will use the buckets specified in `defaultValueHistogramBuckets`
 ```
 
-#### Buckets by name
+Buckets by name:
 
 You can also specify the buckets by metric name:
 
