@@ -31,10 +31,13 @@ git push origin "${tag}"
 
 Step 2) Make the GitHub Release and Release Notes.
 
-Release notes generation is automated and based on the enforced labelling of pull requests.
-As pull requests are merged, they are required to be tagged with `semver/*` tags (`semver/patch`, `semver/minor`, ...).
-When you navigate to the [New release](https://github.com/swift-server/swift-prometheus/releases/new) page on github and 
-select your release tag, and click **Generate release notes** release notes will automatically be generated.
+> Release notes generation is automated and based on the enforced labelling of pull requests.
+> As pull requests are merged, they are required to be tagged with `semver/*` tags (`semver/patch`, `semver/minor`, ...).
+
+Navigate to the [New release](https://github.com/swift-server/swift-prometheus/releases/new) page on github and 
+select your release tag.
+
+Click **Generate release notes** release notes will automatically be generated.
 
 Take a moment to read over the changes and make sure their assigned patch/minor/major categories are correct and match the release's assigned version.
 
