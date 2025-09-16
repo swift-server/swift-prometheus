@@ -40,7 +40,7 @@ Take a moment to read over the changes and make sure their assigned patch/minor/
 
 You may add some additional introduction, thanks or additional information which may be useful for anyone reading the release notes.
 
-Step 3) "There is not Step 3!"
+Step 3) "There is no Step 3!"
 
 ## Swift Versions
 
