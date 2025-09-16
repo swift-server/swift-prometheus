@@ -17,7 +17,7 @@ As usual with Swift packages, we use [Semantic Versioning](https://semver.org/).
 
 Development and releases are made from the `main` branch directly, therefore the branch should remain in releasable state at any time.
 
-Making a release is simple and boils down to making a git tag and pushing it to the upstream repository.
+Creating a release involves creating a Git tag and pushing it to the upstream repository.
 
 Tags should follow the simple `MAJOR.MINOR.PATCH` format, without any prefix (e.g. do not include the `v` prefix).
 
