@@ -5,6 +5,8 @@
 
 A Swift client library for [Prometheus Monitoring System](https://github.com/prometheus/prometheus).
 
+This can also be used a backend implementation for [Swift Metrics](https://github.com/apple/swift-metrics).
+
 `swift-prometheus` supports creating `Counter`s, `Gauge`s and `Histogram`s, updating metric values, and exposing their values in the Prometheus text format.
 
 ## Installation and Usage
