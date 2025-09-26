@@ -6,4 +6,3 @@ build/
 .swiftpm/
 .idea
 .vscode/
-Package.resolved
