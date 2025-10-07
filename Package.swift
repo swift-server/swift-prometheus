@@ -36,7 +36,7 @@ let package = Package(
                 .product(name: "CoreMetrics", package: "swift-metrics"),
             ],
             exclude: [
-                "RELEASE.md",
+                "RELEASE.md"
             ]
         ),
         .testTarget(
