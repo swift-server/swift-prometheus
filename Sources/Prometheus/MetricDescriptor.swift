@@ -27,27 +27,25 @@ public struct MetricNameDescriptor {
     /// The required, descriptive base name of the metric.
     public let metricName: String
 
-    /// An optional suffix describing the metric's unit (e.g., `total`).
-    public let unitName: String?
+    /// The required suffix describing the metric's unit (e.g., `total`).
+    public let unitName: String
 
-    /// Optional help text for the metric. If a non-empty string is provided, it will be emitted as a `# HELP` line in the exposition format.
-    /// If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
-    public let helpText: String?
+    /// The required help text for the metric. If a non-empty string is provided, it will be emitted as a `# HELP` line in the exposition format.
+    public let helpText: String
 
     /// Creates a new ``MetricNameDescriptor`` that defines the components of a fully qualified Prometheus metric name.
     ///
     /// - Parameter namespace: An optional top-level namespace for the metric.
     /// - Parameter subsystem: An optional subsystem to group related metrics within a namespace.
     /// - Parameter metricName: The required, descriptive base name of the metric.
-    /// - Parameter unitName: An optional suffix describing the metric's unit (e.g., `total`).
-    /// - Parameter helpText: Optional help text for the metric. If a non-empty string is provided, it will be emitted as a `# HELP` line in the exposition format.
-    ///                       If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
+    /// - Parameter unitName: The required suffix describing the metric's unit (e.g., `total`).
+    /// - Parameter helpText: The required help text for the metric. If a non-empty string is provided, it will be emitted as a `# HELP` line in the exposition format.
     public init(
         namespace: String? = nil,
         subsystem: String? = nil,
         metricName: String,
-        unitName: String? = nil,
-        helpText: String? = nil
+        unitName: String,
+        helpText: String
     ) {
         precondition(!metricName.isEmpty, "metricName must not be empty")
         self.namespace = namespace
@@ -62,5 +60,38 @@ public struct MetricNameDescriptor {
         [namespace, subsystem, metricName, unitName]
             .compactMap { $0?.isEmpty == false ? $0 : nil }
             .joined(separator: "_")
+    }
+}
+
+// MARK: - Deprecated
+
+extension MetricNameDescriptor {
+    /// Creates a new ``MetricNameDescriptor`` that defines the components of a fully qualified Prometheus metric name.
+    ///
+    /// - Parameter namespace: An optional top-level namespace for the metric.
+    /// - Parameter subsystem: An optional subsystem to group related metrics within a namespace.
+    /// - Parameter metricName: The required, descriptive base name of the metric.
+    /// - Parameter unitName: An optional suffix describing the metric's unit (e.g., `total`).
+    /// - Parameter helpText: Optional help text for the metric. If a non-empty string is provided, it will be emitted as a `# HELP` line in the exposition format.
+    ///                       If the parameter is omitted or an empty string is passed, the `# HELP` line will not be generated for this metric.
+    @available(
+        *,
+        deprecated,
+        message: "This initializer is deprecated; 'unitName' and 'helpText' are now required parameters."
+    )
+    public init(
+        namespace: String? = nil,
+        subsystem: String? = nil,
+        metricName: String,
+        unitName: String? = nil,
+        helpText: String? = nil
+    ) {
+        self.init(
+            namespace: namespace,
+            subsystem: subsystem,
+            metricName: metricName,
+            unitName: unitName ?? "",
+            helpText: helpText ?? ""
+        )
     }
 }
