@@ -5,22 +5,27 @@ your contribution to Apple and the community, and agree by submitting the patch
 that your contributions are licensed under the Apache 2.0 license (see
 `LICENSE.txt`).
 
-## How to submit a bug report
+## How to Contribute
 
-Please ensure to specify the following:
+Contributions to this project are welcome. You can help by opening an issue to report a bug or suggest a feature, or by submitting a pull request with code changes.
 
-* swift-prometheus commit hash
-* Contextual information (e.g. what you were trying to achieve with swift-prometheus)
-* Simplest possible steps to reproduce
-  * More complex the steps are, lower the priority will be.
-  * A pull request with failing test case is preferred, but it's just fine to paste the test case into the issue description.
-* Anything that might be relevant in your opinion, such as:
-  * Swift version or the output of `swift --version`
-  * OS version and the output of `uname -a`
-  * Network configuration
+For security concerns, please follow the private disclosure process outlined in the [SECURITY.md](SECURITY.md) file instead of opening a public issue.
 
+### Reporting Bugs or Requesting Features
 
-### Example
+A great bug report or feature request is specific and actionable. Before submitting a new issue, please check if a similar one already exists.
+
+When you create a bug report, please provide the following:
+
+- **swift-prometheus commit hash** you are using.
+- **Context**: What were you trying to achieve?
+- **Steps to Reproduce**: Provide the simplest possible steps. A pull request with a failing test case is ideal.
+- **Environment Details**:
+    - Swift version (`swift --version`)
+    - OS version (`uname -a`)
+    - Any other relevant configuration.
+
+#### Example
 
 ```
 swift-prometheus commit hash: 22ec043dc9d24bb011b47ece4f9ee97ee5be2757
@@ -47,19 +52,56 @@ Linux beefy.machine 4.4.0-101-generic #124-Ubuntu SMP Fri Nov 10 18:29:59 UTC 20
 My system has IPv6 disabled.
 ```
 
-## Writing a Patch
+### Submitting Code Contributions
 
-A good swift-prometheus patch is:
+#### The Development Workflow
 
-1. Concise, and contains as few changes as needed to achieve the end result.
-2. Tested, ensuring that any tests provided failed before the patch and pass after it.
-3. Documented, adding API documentation as needed to cover new functions and properties.
-4. Accompanied by a great commit message, using our commit message template.
+1.  **Fork & Clone**: Fork the repository and clone it to your local machine.
 
-### Run CI checks locally
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/swift-prometheus.git
+    cd swift-prometheus
+    ```
 
-You can run the GitHub Actions workflows locally using [act](https://github.com/nektos/act). For detailed steps on how to do this please see [https://github.com/swiftlang/github-workflows?tab=readme-ov-file#running-workflows-locally](https://github.com/swiftlang/github-workflows?tab=readme-ov-file#running-workflows-locally).
+2.  **Create a Branch**: Create a descriptive branch for your changes (e.g., `fix/counter-overflow` or `feature/new-exporter`).
 
-## How to contribute your work
+    ```bash
+    git checkout -b fix/counter-overflow
+    ```
 
-Please open a pull request at https://github.com/swift-server/swift-prometheus. Make sure the CI passes, and then wait for code review.
+3.  **Write Code & Tests**: Make your changes. All new code must be accompanied by tests to prevent regressions. For changes that are performance-critical or security-sensitive, we also strongly encourage adding new benchmarks or fuzz tests.
+
+4.  **Run Checks Locally**: Before pushing, validate your changes by running the project's automated checks on your local machine.
+    - **Run Unit Tests**: This is the most fundamental check to ensure your changes haven't broken existing functionality.
+
+        ```bash
+        swift test
+        ```
+
+    - **Check Code Formatting**: We use `swift-format` to maintain a consistent code style. Run the following command to verify your code is formatted correctly.
+
+        ```bash
+        curl -s --retry 3 https://raw.githubusercontent.com/swiftlang/github-workflows/refs/heads/main/.github/workflows/scripts/check-swift-format.sh | bash
+        ```
+
+    - **Simulate CI Workflows (Optional)**: For a more comprehensive check, you can run the full GitHub Actions workflows locally using [act](https://github.com/nektos/act). This is useful for catching issues that only appear in the CI environment.
+        - For detailed setup instructions, see the Swift project's guide on [Running Workflows Locally](https://github.com/swiftlang/github-workflows?tab=readme-ov-file#running-workflows-locally).
+        - You can run an entire workflow or target a specific job. For example, to run only the `soundness` check:
+            ```bash
+            act pull_request --job soundness
+            ```
+        - You can find the names of all available jobs to target in our [pull_request.yml](.github/workflows/pull_request.yml) file.
+
+5.  **Commit & Push**: Write a clear commit message following the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard, then push your branch to your fork.
+
+6.  **Open a Pull Request**: Open a PR against the `main` branch. Link any relevant issues in your PR description (e.g., `Fixes #123`).
+
+#### Pull Request Guidelines
+
+For a smooth review process, your PR should be:
+
+- **Atomic**: Address a single, focused issue or feature.
+- **Tested**: Include tests that prove your change works.
+- **Documented**: Add DocC comments for any new public APIs.
+
+Once submitted, a maintainer will review your code, provide feedback, and merge it once it's approved. Thank you for your contribution!
