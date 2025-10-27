@@ -239,7 +239,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
     /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeCounter(descriptor: MetricNameDescriptor) -> Counter {
-        return self._makeCounter(name: descriptor.name, labels: [], help: descriptor.helpText)
+        return self._makeCounter(name: descriptor.name, labels: [], help: descriptor.helpText ?? "")
     }
 
     /// Creates a new ``Counter`` collector or returns the already existing one with the same name.
@@ -283,7 +283,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///                     what’s actually being measured in a Prometheus metric.
     /// - Returns: A ``Counter`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeCounter(descriptor: MetricNameDescriptor, labels: [(String, String)]) -> Counter {
-        return self._makeCounter(name: descriptor.name, labels: labels, help: descriptor.helpText)
+        return self._makeCounter(name: descriptor.name, labels: labels, help: descriptor.helpText ?? "")
     }
 
     /// Creates a new ``Gauge`` collector or returns the already existing one with the same name.
@@ -321,7 +321,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - Parameter descriptor: An ``MetricNameDescriptor`` that provides the fully qualified name for the metric.
     /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeGauge(descriptor: MetricNameDescriptor) -> Gauge {
-        return self._makeGauge(name: descriptor.name, labels: [], help: descriptor.helpText)
+        return self._makeGauge(name: descriptor.name, labels: [], help: descriptor.helpText ?? "")
     }
 
     /// Creates a new ``Gauge`` collector or returns the already existing one with the same name.
@@ -365,7 +365,7 @@ public final class PrometheusCollectorRegistry: Sendable {
     ///                     what’s actually being measured in a Prometheus metric.
     /// - Returns: A ``Gauge`` that is registered with this ``PrometheusCollectorRegistry``
     public func makeGauge(descriptor: MetricNameDescriptor, labels: [(String, String)]) -> Gauge {
-        return self._makeGauge(name: descriptor.name, labels: labels, help: descriptor.helpText)
+        return self._makeGauge(name: descriptor.name, labels: labels, help: descriptor.helpText ?? "")
     }
 
     /// Creates a new ``DurationHistogram`` collector or returns the already existing one with the same name.
@@ -410,7 +410,7 @@ public final class PrometheusCollectorRegistry: Sendable {
             name: descriptor.name,
             labels: [],
             buckets: buckets,
-            help: descriptor.helpText
+            help: descriptor.helpText ?? ""
         )
     }
 
@@ -485,7 +485,7 @@ public final class PrometheusCollectorRegistry: Sendable {
             name: descriptor.name,
             labels: labels,
             buckets: buckets,
-            help: descriptor.helpText
+            help: descriptor.helpText ?? ""
         )
     }
 
@@ -531,7 +531,7 @@ public final class PrometheusCollectorRegistry: Sendable {
             name: descriptor.name,
             labels: [],
             buckets: buckets,
-            help: descriptor.helpText
+            help: descriptor.helpText ?? ""
         )
     }
 
@@ -606,7 +606,7 @@ public final class PrometheusCollectorRegistry: Sendable {
             name: descriptor.name,
             labels: labels,
             buckets: buckets,
-            help: descriptor.helpText
+            help: descriptor.helpText ?? ""
         )
     }
 

@@ -28,10 +28,10 @@ public struct MetricNameDescriptor {
     public let metricName: String
 
     /// The required suffix describing the metric's unit (e.g., `total`).
-    public let unitName: String
+    public let unitName: String?
 
     /// The required help text for the metric. If a non-empty string is provided, it will be emitted as a `# HELP` line in the exposition format.
-    public let helpText: String
+    public let helpText: String?
 
     /// Creates a new ``MetricNameDescriptor`` that defines the components of a fully qualified Prometheus metric name.
     ///
