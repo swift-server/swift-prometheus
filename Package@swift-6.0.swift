@@ -34,6 +34,9 @@ let package = Package(
             dependencies: [
                 .product(name: "Atomics", package: "swift-atomics"),
                 .product(name: "CoreMetrics", package: "swift-metrics"),
+            ],
+            exclude: [
+                "RELEASE.md"
             ]
         ),
         .testTarget(
