@@ -15,6 +15,11 @@
 import Prometheus
 import XCTest
 
+@available(
+    *,
+    deprecated,
+    message: "This test covers deprecated methods. These methods will be refactored in a future version."
+)
 final class PrometheusMetricsFactoryTests: XCTestCase {
     func testMakeTimers() {
         let registry = PrometheusCollectorRegistry()

@@ -17,6 +17,11 @@ import XCTest
 
 final class HistogramTests: XCTestCase {
 
+    @available(
+        *,
+        deprecated,
+        message: "This test covers deprecated methods. These methods will be refactored in a future version."
+    )
     func testFactoryDefaultValueHistogramBuckets() {
         var factory = PrometheusMetricsFactory()
         factory.defaultValueHistogramBuckets = [
@@ -45,7 +50,11 @@ final class HistogramTests: XCTestCase {
             String(decoding: buffer, as: Unicode.UTF8.self)
         )
     }
-
+    @available(
+        *,
+        deprecated,
+        message: "This test covers deprecated methods. These methods will be refactored in a future version."
+    )
     func testHistogramWithoutDimensions() {
         let client = PrometheusCollectorRegistry()
         let histogram = client.makeDurationHistogram(
@@ -156,7 +165,11 @@ final class HistogramTests: XCTestCase {
             """
         )
     }
-
+    @available(
+        *,
+        deprecated,
+        message: "This test covers deprecated methods. These methods will be refactored in a future version."
+    )
     func testHistogramWithOneDimension() {
         let client = PrometheusCollectorRegistry()
         let histogram = client.makeDurationHistogram(
@@ -263,7 +276,11 @@ final class HistogramTests: XCTestCase {
             """
         )
     }
-
+    @available(
+        *,
+        deprecated,
+        message: "This test covers deprecated methods. These methods will be refactored in a future version."
+    )
     func testHistogramWithTwoDimension() {
         let client = PrometheusCollectorRegistry()
         let histogram = client.makeDurationHistogram(
@@ -370,7 +387,11 @@ final class HistogramTests: XCTestCase {
             """
         )
     }
-
+    @available(
+        *,
+        deprecated,
+        message: "This test covers deprecated methods. These methods will be refactored in a future version."
+    )
     func testDurationHistogramWithSharedMetricNameDistinctLabelSets() {
         let client = PrometheusCollectorRegistry()
 
@@ -468,7 +489,11 @@ final class HistogramTests: XCTestCase {
             """
         )
     }
-
+    @available(
+        *,
+        deprecated,
+        message: "This test covers deprecated methods. These methods will be refactored in a future version."
+    )
     func testValueHistogramWithSharedMetricNameDistinctLabelSets() {
         let client = PrometheusCollectorRegistry()
 
@@ -565,7 +590,11 @@ final class HistogramTests: XCTestCase {
     }
 
     // MARK: - MetricNameDescriptor Histogram Tests
-
+    @available(
+        *,
+        deprecated,
+        message: "This test covers deprecated methods. These methods will be refactored in a future version."
+    )
     func testValueHistogramWithMetricNameDescriptorWithFullComponentMatrix() {
         // --- Test Constants ---
         let helpTextValue = "https://help.url/sub"
@@ -781,7 +810,11 @@ final class HistogramTests: XCTestCase {
             }
         }
     }
-
+    @available(
+        *,
+        deprecated,
+        message: "This test covers deprecated methods. These methods will be refactored in a future version."
+    )
     func testDurationHistogramWithMetricNameDescriptorWithFullComponentMatrix() {
         // --- Test Constants ---
         let helpTextValue = "https://help.url/sub"

@@ -15,7 +15,13 @@
 import Prometheus
 import XCTest
 
+@available(
+    *,
+    deprecated,
+    message: "This test covers deprecated methods. These methods will be refactored in a future version."
+)
 final class GaugeTests: XCTestCase {
+
     func testGaugeWithoutLabels() {
         let client = PrometheusCollectorRegistry()
         let gauge = client.makeGauge(name: "foo", labels: [])
