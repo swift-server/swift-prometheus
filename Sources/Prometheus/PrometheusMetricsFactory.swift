@@ -88,12 +88,12 @@ public struct PrometheusMetricsFactory: Sendable {
 extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
     public func makeCounter(label: String, dimensions: [(String, String)]) -> CoreMetrics.CounterHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
-        return self.registry.makeCounter(name: label, labels: dimensions)
+        return self.registry._makeCounter(name: label, labels: dimensions, help: "")
     }
 
     public func makeFloatingPointCounter(label: String, dimensions: [(String, String)]) -> FloatingPointCounterHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
-        return self.registry.makeCounter(name: label, labels: dimensions)
+        return self.registry._makeCounter(name: label, labels: dimensions, help: "")
     }
 
     public func makeRecorder(
@@ -103,21 +103,21 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
     ) -> CoreMetrics.RecorderHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         guard aggregate else {
-            return self.registry.makeGauge(name: label, labels: dimensions)
+            return self.registry._makeGauge(name: label, labels: dimensions, help: "")
         }
         let buckets = self.valueHistogramBuckets[label] ?? self.defaultValueHistogramBuckets
-        return self.registry.makeValueHistogram(name: label, labels: dimensions, buckets: buckets)
+        return self.registry._makeValueHistogram(name: label, labels: dimensions, buckets: buckets, help: "")
     }
 
     public func makeMeter(label: String, dimensions: [(String, String)]) -> CoreMetrics.MeterHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
-        return self.registry.makeGauge(name: label, labels: dimensions)
+        return self.registry._makeGauge(name: label, labels: dimensions, help: "")
     }
 
     public func makeTimer(label: String, dimensions: [(String, String)]) -> CoreMetrics.TimerHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         let buckets = self.durationHistogramBuckets[label] ?? self.defaultDurationHistogramBuckets
-        return self.registry.makeDurationHistogram(name: label, labels: dimensions, buckets: buckets)
+        return self.registry._makeDurationHistogram(name: label, labels: dimensions, buckets: buckets, help: "")
     }
 
     public func destroyCounter(_ handler: CoreMetrics.CounterHandler) {

@@ -612,7 +612,7 @@ public final class PrometheusCollectorRegistry: Sendable {
 
     // MARK: - Private Implementation
 
-    private func _makeCounter(name: String, labels: [(String, String)], help: String) -> Counter {
+    internal func _makeCounter(name: String, labels: [(String, String)], help: String) -> Counter {
         let name = name.ensureValidMetricName()
         let labels = labels.ensureValidLabelNames()
         let help = help.ensureValidHelpText()
@@ -674,7 +674,7 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
-    private func _makeGauge(name: String, labels: [(String, String)], help: String) -> Gauge {
+    internal func _makeGauge(name: String, labels: [(String, String)], help: String) -> Gauge {
         let name = name.ensureValidMetricName()
         let labels = labels.ensureValidLabelNames()
         let help = help.ensureValidHelpText()
@@ -736,7 +736,7 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
-    private func _makeDurationHistogram(
+    internal func _makeDurationHistogram(
         name: String,
         labels: [(String, String)],
         buckets: [Duration],
@@ -818,7 +818,7 @@ public final class PrometheusCollectorRegistry: Sendable {
         }
     }
 
-    private func _makeValueHistogram(
+    internal func _makeValueHistogram(
         name: String,
         labels: [(String, String)],
         buckets: [Double],
