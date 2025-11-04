@@ -15,7 +15,13 @@
 import Prometheus
 import XCTest
 
+@available(
+    *,
+    deprecated,
+    message: "This test covers deprecated methods. These methods will be refactored in a future version."
+)
 final class CounterTests: XCTestCase {
+
     func testCounterWithoutLabels() {
         let client = PrometheusCollectorRegistry()
         let counter = client.makeCounter(name: "foo", labels: [])
