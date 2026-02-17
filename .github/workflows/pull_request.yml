@@ -10,7 +10,7 @@ permissions:
 jobs:
   soundness:
     name: Soundness
-    uses: swiftlang/github-workflows/.github/workflows/soundness.yml@main
+    uses: swiftlang/github-workflows/.github/workflows/soundness.yml@0.0.6
 
   unit-tests:
     name: Unit tests
