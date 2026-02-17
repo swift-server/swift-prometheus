@@ -91,7 +91,10 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
         return self.registry._makeCounter(name: label, labels: dimensions, help: "")
     }
 
-    public func makeFloatingPointCounter(label: String, dimensions: [(String, String)]) -> any FloatingPointCounterHandler {
+    public func makeFloatingPointCounter(
+        label: String,
+        dimensions: [(String, String)]
+    ) -> any FloatingPointCounterHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         return self.registry._makeCounter(name: label, labels: dimensions, help: "")
     }
