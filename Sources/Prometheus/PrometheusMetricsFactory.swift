@@ -86,12 +86,12 @@ public struct PrometheusMetricsFactory: Sendable {
 }
 
 extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
-    public func makeCounter(label: String, dimensions: [(String, String)]) -> CoreMetrics.CounterHandler {
+    public func makeCounter(label: String, dimensions: [(String, String)]) -> any CoreMetrics.CounterHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         return self.registry._makeCounter(name: label, labels: dimensions, help: "")
     }
 
-    public func makeFloatingPointCounter(label: String, dimensions: [(String, String)]) -> FloatingPointCounterHandler {
+    public func makeFloatingPointCounter(label: String, dimensions: [(String, String)]) -> any FloatingPointCounterHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         return self.registry._makeCounter(name: label, labels: dimensions, help: "")
     }
@@ -100,7 +100,7 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
         label: String,
         dimensions: [(String, String)],
         aggregate: Bool
-    ) -> CoreMetrics.RecorderHandler {
+    ) -> any CoreMetrics.RecorderHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         guard aggregate else {
             return self.registry._makeGauge(name: label, labels: dimensions, help: "")
@@ -109,32 +109,32 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
         return self.registry._makeValueHistogram(name: label, labels: dimensions, buckets: buckets, help: "")
     }
 
-    public func makeMeter(label: String, dimensions: [(String, String)]) -> CoreMetrics.MeterHandler {
+    public func makeMeter(label: String, dimensions: [(String, String)]) -> any CoreMetrics.MeterHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         return self.registry._makeGauge(name: label, labels: dimensions, help: "")
     }
 
-    public func makeTimer(label: String, dimensions: [(String, String)]) -> CoreMetrics.TimerHandler {
+    public func makeTimer(label: String, dimensions: [(String, String)]) -> any CoreMetrics.TimerHandler {
         let (label, dimensions) = self.nameAndLabelSanitizer(label, dimensions)
         let buckets = self.durationHistogramBuckets[label] ?? self.defaultDurationHistogramBuckets
         return self.registry._makeDurationHistogram(name: label, labels: dimensions, buckets: buckets, help: "")
     }
 
-    public func destroyCounter(_ handler: CoreMetrics.CounterHandler) {
+    public func destroyCounter(_ handler: any CoreMetrics.CounterHandler) {
         guard let counter = handler as? Counter else {
             return
         }
         self.registry.unregisterCounter(counter)
     }
 
-    public func destroyFloatingPointCounter(_ handler: FloatingPointCounterHandler) {
+    public func destroyFloatingPointCounter(_ handler: any FloatingPointCounterHandler) {
         guard let counter = handler as? Counter else {
             return
         }
         self.registry.unregisterCounter(counter)
     }
 
-    public func destroyRecorder(_ handler: CoreMetrics.RecorderHandler) {
+    public func destroyRecorder(_ handler: any CoreMetrics.RecorderHandler) {
         switch handler {
         case let gauge as Gauge:
             self.registry.unregisterGauge(gauge)
@@ -145,14 +145,14 @@ extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
         }
     }
 
-    public func destroyMeter(_ handler: CoreMetrics.MeterHandler) {
+    public func destroyMeter(_ handler: any CoreMetrics.MeterHandler) {
         guard let gauge = handler as? Gauge else {
             return
         }
         self.registry.unregisterGauge(gauge)
     }
 
-    public func destroyTimer(_ handler: CoreMetrics.TimerHandler) {
+    public func destroyTimer(_ handler: any CoreMetrics.TimerHandler) {
         guard let histogram = handler as? Histogram<Duration> else {
             return
         }

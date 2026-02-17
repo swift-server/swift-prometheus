@@ -1,4 +1,4 @@
-// swift-tools-version:5.9
+// swift-tools-version:6.0
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftPrometheus open source project
@@ -50,6 +50,13 @@ let package = Package(
 
 for target in package.targets {
     var settings = target.swiftSettings ?? []
-    settings.append(.enableExperimentalFeature("StrictConcurrency=complete"))
+
+    // https://github.com/apple/swift-evolution/blob/main/proposals/0335-existential-any.md
+    // Require `any` for existential types.
+    settings.append(.enableUpcomingFeature("ExistentialAny"))
+
+    // https://docs.swift.org/compiler/documentation/diagnostics/nonisolated-nonsending-by-default/
+    settings.append(.enableUpcomingFeature("NonisolatedNonsendingByDefault"))
+
     target.swiftSettings = settings
 }
