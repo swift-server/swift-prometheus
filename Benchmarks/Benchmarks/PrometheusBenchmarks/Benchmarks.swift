@@ -27,7 +27,7 @@ public func makeLabels(_ idx: Int) -> [(String, String)] {
     ]
 }
 
-let benchmarks = {
+let benchmarks: @Sendable () -> Void = {
     let ciMetrics: [BenchmarkMetric] = [
         .mallocCountTotal
     ]
