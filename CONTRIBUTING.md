@@ -105,3 +105,7 @@ For a smooth review process, your PR should be:
 - **Documented**: Add DocC comments for any new public APIs.
 
 Once submitted, a maintainer will review your code, provide feedback, and merge it once it's approved. Thank you for your contribution!
+
+## Automated release process
+
+This repository uses automated releases based on semantic versioning labels. See the [Auto Release Workflow documentation](https://github.com/apple/swift-temporal-sdk/blob/main/.github/workflows/README.md) for details.
