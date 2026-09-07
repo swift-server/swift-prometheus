@@ -171,4 +171,31 @@ Now a `Timer` with the label "long" will use the buckets
 
 The same functionality is also available for ``ValueHistogram`` and aggregating `Recorder`s.
 
+Buckets from the environment:
+
+The default buckets can also be set with environment variables, allowing operators to tune the
+default histogram buckets without code changes:
+
+```bash
+export SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS=0.05,0.1,0.25,0.5,1,5
+```
+
+Values from `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS` are interpreted as seconds for duration
+histograms and as raw upper bounds for value histograms. Bucket upper bounds must be finite,
+strictly increasing numbers, and duration bucket upper bounds must additionally be zero or greater.
+If the variable is unset or its value is malformed, it is ignored and the built-in default buckets
+are used instead. Buckets that are configured explicitly in code, as shown in the examples above,
+take precedence over the environment.
+
+If duration and value histograms need different default buckets, use the more specific
+environment variables:
+
+```bash
+export SWIFT_PROMETHEUS_DEFAULT_DURATION_HISTOGRAM_BUCKETS=0.05,0.1,0.25,0.5,1,5
+export SWIFT_PROMETHEUS_DEFAULT_VALUE_HISTOGRAM_BUCKETS=5,25,100,500,1000
+```
+
+These specific variables take precedence over `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS`. A variable
+whose value is malformed is ignored, as if it were unset.
+
 [Swift Metrics]: https://github.com/apple/swift-metrics
