@@ -55,7 +55,7 @@ public struct MetricNameDescriptor {
         self.helpText = helpText
     }
 
-    /// The fully qualified metric name, joining non-empty components with underscores (e.g. `namespace_subsytem_metricName_unitName`).
+    /// The fully qualified metric name, joining non-empty components with underscores (e.g. `namespace_subsystem_metricName_unitName`).
     public var name: String {
         [namespace, subsystem, metricName, unitName]
             .compactMap { $0?.isEmpty == false ? $0 : nil }
