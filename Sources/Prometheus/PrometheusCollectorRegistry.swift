@@ -1071,43 +1071,41 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - SeeAlso: ``emitToString()`` and ``emitToBuffer()`` for automatic buffer management
     public func emit(into buffer: inout [UInt8]) {
         let metrics = self.box.withLockedValue { $0 }
-        let prefixHelp = "HELP"
-        let prefixType = "TYPE"
 
         for (name, metric) in metrics {
             switch metric {
             case .counter(let counterFamily):
                 if let help = counterFamily.help, !help.isEmpty {
-                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addHelpLine(name: name, help: help)
                 }
-                buffer.addLine(prefix: prefixType, name: name, value: "counter")
+                buffer.addTypeLine(name: name, type: "counter")
                 counterFamily.forEachMetric { counter in
                     counter.emit(into: &buffer)
                 }
 
             case .gauge(let gaugeFamily):
                 if let help = gaugeFamily.help, !help.isEmpty {
-                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addHelpLine(name: name, help: help)
                 }
-                buffer.addLine(prefix: prefixType, name: name, value: "gauge")
+                buffer.addTypeLine(name: name, type: "gauge")
                 gaugeFamily.forEachMetric { gauge in
                     gauge.emit(into: &buffer)
                 }
 
             case .durationHistogram(let histogramFamily):
                 if let help = histogramFamily.help, !help.isEmpty {
-                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addHelpLine(name: name, help: help)
                 }
-                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
+                buffer.addTypeLine(name: name, type: "histogram")
                 histogramFamily.forEachMetric { histogram in
                     histogram.emit(into: &buffer)
                 }
 
             case .valueHistogram(let histogramFamily):
                 if let help = histogramFamily.help, !help.isEmpty {
-                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addHelpLine(name: name, help: help)
                 }
-                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
+                buffer.addTypeLine(name: name, type: "histogram")
                 histogramFamily.forEachMetric { histogram in
                     histogram.emit(into: &buffer)
                 }
@@ -1137,14 +1135,46 @@ extension [(String, String)] {
 }
 
 extension [UInt8] {
-    fileprivate mutating func addLine(prefix: String, name: String, value: String) {
-        self.append(contentsOf: #"# "#.utf8)
-        self.append(contentsOf: prefix.utf8)
-        self.append(contentsOf: #" "#.utf8)
+    /// Appends a `# TYPE` line. The type is one of a fixed set of keywords, so it never needs escaping.
+    fileprivate mutating func addTypeLine(name: String, type: String) {
+        self.append(contentsOf: #"# TYPE "#.utf8)
         self.append(contentsOf: name.utf8)
-        self.append(contentsOf: #" "#.utf8)
-        self.append(contentsOf: value.utf8)
+        self.append(UInt8(ascii: " "))
+        self.append(contentsOf: type.utf8)
         self.append(contentsOf: #"\#n"#.utf8)
+    }
+
+    /// Appends a `# HELP` line, escaping backslash as required by the Prometheus text exposition format.
+    /// Line feeds never need escaping here, since `ensureValidHelpText()` already strips them.
+    fileprivate mutating func addHelpLine(name: String, help: String) {
+        self.append(contentsOf: #"# HELP "#.utf8)
+        self.append(contentsOf: name.utf8)
+        self.append(UInt8(ascii: " "))
+        for byte in help.utf8 {
+            if byte == UInt8(ascii: "\\") {
+                self.append(contentsOf: #"\\"#.utf8)
+            } else {
+                self.append(byte)
+            }
+        }
+        self.append(contentsOf: #"\#n"#.utf8)
+    }
+
+    /// Appends a label value, escaping backslash, double-quote and line feed as required by the
+    /// Prometheus text exposition format.
+    fileprivate mutating func appendEscapedLabelValue(_ value: String) {
+        for byte in value.utf8 {
+            switch byte {
+            case UInt8(ascii: "\\"):
+                self.append(contentsOf: #"\\"#.utf8)
+            case UInt8(ascii: "\""):
+                self.append(contentsOf: #"\""#.utf8)
+            case UInt8(ascii: "\n"):
+                self.append(contentsOf: #"\n"#.utf8)
+            default:
+                self.append(byte)
+            }
+        }
     }
 }
 
@@ -1162,7 +1192,7 @@ extension PrometheusMetric {
         for (i, (key, value)) in labels.enumerated() {
             prerendered.append(contentsOf: key.utf8)
             prerendered.append(contentsOf: #"=""#.utf8)
-            prerendered.append(contentsOf: value.utf8)
+            prerendered.appendEscapedLabelValue(value)
             prerendered.append(UInt8(ascii: #"""#))
             if i < labels.index(before: labels.endIndex) {
                 prerendered.append(UInt8(ascii: #","#))
