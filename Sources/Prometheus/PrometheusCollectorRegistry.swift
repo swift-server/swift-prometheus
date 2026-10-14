@@ -1071,7 +1071,6 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - SeeAlso: ``emitToString()`` and ``emitToBuffer()`` for automatic buffer management
     public func emit(into buffer: inout [UInt8]) {
         let metrics = self.box.withLockedValue { $0 }
-        let prefixType = "TYPE"
 
         for (name, metric) in metrics {
             switch metric {
@@ -1079,7 +1078,7 @@ public final class PrometheusCollectorRegistry: Sendable {
                 if let help = counterFamily.help, !help.isEmpty {
                     buffer.addHelpLine(name: name, help: help)
                 }
-                buffer.addLine(prefix: prefixType, name: name, value: "counter")
+                buffer.addTypeLine(name: name, type: "counter")
                 counterFamily.forEachMetric { counter in
                     counter.emit(into: &buffer)
                 }
@@ -1088,7 +1087,7 @@ public final class PrometheusCollectorRegistry: Sendable {
                 if let help = gaugeFamily.help, !help.isEmpty {
                     buffer.addHelpLine(name: name, help: help)
                 }
-                buffer.addLine(prefix: prefixType, name: name, value: "gauge")
+                buffer.addTypeLine(name: name, type: "gauge")
                 gaugeFamily.forEachMetric { gauge in
                     gauge.emit(into: &buffer)
                 }
@@ -1097,7 +1096,7 @@ public final class PrometheusCollectorRegistry: Sendable {
                 if let help = histogramFamily.help, !help.isEmpty {
                     buffer.addHelpLine(name: name, help: help)
                 }
-                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
+                buffer.addTypeLine(name: name, type: "histogram")
                 histogramFamily.forEachMetric { histogram in
                     histogram.emit(into: &buffer)
                 }
@@ -1106,7 +1105,7 @@ public final class PrometheusCollectorRegistry: Sendable {
                 if let help = histogramFamily.help, !help.isEmpty {
                     buffer.addHelpLine(name: name, help: help)
                 }
-                buffer.addLine(prefix: prefixType, name: name, value: "histogram")
+                buffer.addTypeLine(name: name, type: "histogram")
                 histogramFamily.forEachMetric { histogram in
                     histogram.emit(into: &buffer)
                 }
@@ -1136,13 +1135,12 @@ extension [(String, String)] {
 }
 
 extension [UInt8] {
-    fileprivate mutating func addLine(prefix: String, name: String, value: String) {
-        self.append(contentsOf: #"# "#.utf8)
-        self.append(contentsOf: prefix.utf8)
-        self.append(contentsOf: #" "#.utf8)
+    /// Appends a `# TYPE` line. The type is one of a fixed set of keywords, so it never needs escaping.
+    fileprivate mutating func addTypeLine(name: String, type: String) {
+        self.append(contentsOf: #"# TYPE "#.utf8)
         self.append(contentsOf: name.utf8)
-        self.append(contentsOf: #" "#.utf8)
-        self.append(contentsOf: value.utf8)
+        self.append(UInt8(ascii: " "))
+        self.append(contentsOf: type.utf8)
         self.append(contentsOf: #"\#n"#.utf8)
     }
 
