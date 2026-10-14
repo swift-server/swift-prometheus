@@ -497,4 +497,93 @@ final class PrometheusCollectorRegistryTests: XCTestCase {
         XCTAssertTrue(metricLines.contains(#"foo{bar="newBaz",newKey1="newValue1"} 4.0"#))
     }
 
+    func testCounterLabelValuesAreEscaped() {
+        let client = PrometheusCollectorRegistry()
+        let descriptor = MetricNameDescriptor(metricName: "requests", unitName: "total", helpText: "")
+        let counter = client.makeCounter(
+            descriptor: descriptor,
+            labels: [("path", "a\"b\\c\nd"), ("name", "café ☕")]
+        )
+        counter.increment()
+
+        var buffer = [UInt8]()
+        client.emit(into: &buffer)
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            #"""
+            # TYPE requests_total counter
+            requests_total{path="a\"b\\c\nd",name="café ☕"} 1
+
+            """#
+        )
+    }
+
+    func testGaugeLabelValuesAreEscaped() {
+        let client = PrometheusCollectorRegistry()
+        let descriptor = MetricNameDescriptor(metricName: "temperature", unitName: "celsius", helpText: "")
+        let gauge = client.makeGauge(descriptor: descriptor, labels: [("room", #"\"quoted\""#)])
+        gauge.set(to: 21.5)
+
+        var buffer = [UInt8]()
+        client.emit(into: &buffer)
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            #"""
+            # TYPE temperature_celsius gauge
+            temperature_celsius{room="\\\"quoted\\\""} 21.5
+
+            """#
+        )
+    }
+
+    func testHistogramLabelValuesAreEscaped() {
+        let client = PrometheusCollectorRegistry()
+        let descriptor = MetricNameDescriptor(metricName: "size", unitName: "bytes", helpText: "")
+        let histogram = client.makeValueHistogram(
+            descriptor: descriptor,
+            labels: [("file", "x\"y\n")],
+            buckets: [10]
+        )
+        histogram.record(5.0)
+
+        var buffer = [UInt8]()
+        client.emit(into: &buffer)
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            #"""
+            # TYPE size_bytes histogram
+            size_bytes_bucket{file="x\"y\n",le="10.0"} 1
+            size_bytes_bucket{file="x\"y\n",le="+Inf"} 1
+            size_bytes_sum{file="x\"y\n"} 5.0
+            size_bytes_count{file="x\"y\n"} 1
+
+            """#
+        )
+    }
+
+    func testHelpTextBackslashesAreEscaped() {
+        let client = PrometheusCollectorRegistry()
+        let descriptor = MetricNameDescriptor(
+            metricName: "files",
+            unitName: "total",
+            helpText: "Files read from C:\\DIR\nper \\\\host"
+        )
+        let counter = client.makeCounter(descriptor: descriptor, labels: [("drive", "c")])
+        // Registering again with the same help text must still match the stored (unescaped) help.
+        XCTAssert(counter === client.makeCounter(descriptor: descriptor, labels: [("drive", "c")]))
+        counter.increment()
+
+        var buffer = [UInt8]()
+        client.emit(into: &buffer)
+        XCTAssertEqual(
+            String(decoding: buffer, as: Unicode.UTF8.self),
+            #"""
+            # HELP files_total Files read from C:\\DIRper \\\\host
+            # TYPE files_total counter
+            files_total{drive="c"} 1
+
+            """#
+        )
+    }
+
 }

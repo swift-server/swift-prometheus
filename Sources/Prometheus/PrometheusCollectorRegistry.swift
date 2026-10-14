@@ -1071,14 +1071,13 @@ public final class PrometheusCollectorRegistry: Sendable {
     /// - SeeAlso: ``emitToString()`` and ``emitToBuffer()`` for automatic buffer management
     public func emit(into buffer: inout [UInt8]) {
         let metrics = self.box.withLockedValue { $0 }
-        let prefixHelp = "HELP"
         let prefixType = "TYPE"
 
         for (name, metric) in metrics {
             switch metric {
             case .counter(let counterFamily):
                 if let help = counterFamily.help, !help.isEmpty {
-                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addHelpLine(name: name, help: help)
                 }
                 buffer.addLine(prefix: prefixType, name: name, value: "counter")
                 counterFamily.forEachMetric { counter in
@@ -1087,7 +1086,7 @@ public final class PrometheusCollectorRegistry: Sendable {
 
             case .gauge(let gaugeFamily):
                 if let help = gaugeFamily.help, !help.isEmpty {
-                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addHelpLine(name: name, help: help)
                 }
                 buffer.addLine(prefix: prefixType, name: name, value: "gauge")
                 gaugeFamily.forEachMetric { gauge in
@@ -1096,7 +1095,7 @@ public final class PrometheusCollectorRegistry: Sendable {
 
             case .durationHistogram(let histogramFamily):
                 if let help = histogramFamily.help, !help.isEmpty {
-                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addHelpLine(name: name, help: help)
                 }
                 buffer.addLine(prefix: prefixType, name: name, value: "histogram")
                 histogramFamily.forEachMetric { histogram in
@@ -1105,7 +1104,7 @@ public final class PrometheusCollectorRegistry: Sendable {
 
             case .valueHistogram(let histogramFamily):
                 if let help = histogramFamily.help, !help.isEmpty {
-                    buffer.addLine(prefix: prefixHelp, name: name, value: help)
+                    buffer.addHelpLine(name: name, help: help)
                 }
                 buffer.addLine(prefix: prefixType, name: name, value: "histogram")
                 histogramFamily.forEachMetric { histogram in
@@ -1146,6 +1145,39 @@ extension [UInt8] {
         self.append(contentsOf: value.utf8)
         self.append(contentsOf: #"\#n"#.utf8)
     }
+
+    /// Appends a `# HELP` line, escaping backslash as required by the Prometheus text exposition format.
+    /// Line feeds never need escaping here, since `ensureValidHelpText()` already strips them.
+    fileprivate mutating func addHelpLine(name: String, help: String) {
+        self.append(contentsOf: #"# HELP "#.utf8)
+        self.append(contentsOf: name.utf8)
+        self.append(UInt8(ascii: " "))
+        for byte in help.utf8 {
+            if byte == UInt8(ascii: "\\") {
+                self.append(contentsOf: #"\\"#.utf8)
+            } else {
+                self.append(byte)
+            }
+        }
+        self.append(contentsOf: #"\#n"#.utf8)
+    }
+
+    /// Appends a label value, escaping backslash, double-quote and line feed as required by the
+    /// Prometheus text exposition format.
+    fileprivate mutating func appendEscapedLabelValue(_ value: String) {
+        for byte in value.utf8 {
+            switch byte {
+            case UInt8(ascii: "\\"):
+                self.append(contentsOf: #"\\"#.utf8)
+            case UInt8(ascii: "\""):
+                self.append(contentsOf: #"\""#.utf8)
+            case UInt8(ascii: "\n"):
+                self.append(contentsOf: #"\n"#.utf8)
+            default:
+                self.append(byte)
+            }
+        }
+    }
 }
 
 protocol PrometheusMetric {
@@ -1162,7 +1194,7 @@ extension PrometheusMetric {
         for (i, (key, value)) in labels.enumerated() {
             prerendered.append(contentsOf: key.utf8)
             prerendered.append(contentsOf: #"=""#.utf8)
-            prerendered.append(contentsOf: value.utf8)
+            prerendered.appendEscapedLabelValue(value)
             prerendered.append(UInt8(ascii: #"""#))
             if i < labels.index(before: labels.endIndex) {
                 prerendered.append(UInt8(ascii: #","#))
