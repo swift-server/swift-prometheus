@@ -14,10 +14,10 @@
 
 import CoreMetrics
 
-/// A promtheus collector registry to create and store collectors.
+/// A Prometheus collector registry to create and store collectors.
 ///
 /// It creates and stores collectors. Further you can use the ``PrometheusCollectorRegistry/emit(into:)``
-/// method to export the metrics form registered collectors into a Prometheus compatible format.
+/// method to export the metrics from registered collectors into a Prometheus compatible format.
 ///
 /// To use a ``PrometheusCollectorRegistry`` with `swift-metrics` use the ``PrometheusMetricsFactory``.
 public final class PrometheusCollectorRegistry: Sendable {
@@ -1247,7 +1247,7 @@ extension String {
         return true
     }
 
-    fileprivate func isDisallowedHelpTextUnicdeScalar(_ scalar: UnicodeScalar) -> Bool {
+    fileprivate func isDisallowedHelpTextUnicodeScalar(_ scalar: UnicodeScalar) -> Bool {
         switch scalar.value {
         case 0x00...0x1F,  // C0 Controls
             0x7F...0x9F,  // C1 Controls
@@ -1262,7 +1262,7 @@ extension String {
 
     fileprivate func isValidHelpText() -> Bool {
         guard !self.isEmpty else { return true }
-        let containsInvalidCharacter = self.unicodeScalars.contains(where: isDisallowedHelpTextUnicdeScalar)
+        let containsInvalidCharacter = self.unicodeScalars.contains(where: isDisallowedHelpTextUnicodeScalar)
         return !containsInvalidCharacter
     }
 
@@ -1320,7 +1320,7 @@ extension String {
     fileprivate mutating func fixPrometheusHelpText() {
         var result = self
         result.removeAll { character in
-            character.unicodeScalars.contains(where: isDisallowedHelpTextUnicdeScalar)
+            character.unicodeScalars.contains(where: isDisallowedHelpTextUnicodeScalar)
         }
         self = result
     }

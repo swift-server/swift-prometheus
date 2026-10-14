@@ -35,7 +35,7 @@ public final class Counter: Sendable {
         self.labels = labels
 
         var prerendered = [UInt8]()
-        // 64 bytes is a good tradeoff to prevent reallocs lots of reallocs when appending names
+        // 64 bytes is a good tradeoff to prevent lots of reallocs when appending names
         // and memory footprint.
         prerendered.reserveCapacity(64)
         prerendered.append(contentsOf: name.utf8)
@@ -62,7 +62,7 @@ public final class Counter: Sendable {
     public func increment(by amount: Double) {
         precondition(amount >= 0)
         // We busy loop here until we can update the atomic successfully.
-        // Using relaxed ordering here is sufficient, since the as-if rules guarantess that
+        // Using relaxed ordering here is sufficient, since the as-if rules guarantee that
         // the following operations are executed in the order presented here. Every statement
         // depends on the execution before.
         while true {
