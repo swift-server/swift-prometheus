@@ -27,6 +27,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-atomics.git", from: "1.0.2"),
         .package(url: "https://github.com/apple/swift-metrics.git", from: "2.4.1"),
+        .package(url: "https://github.com/apple/swift-configuration.git", from: "1.0.0", traits: []),
     ],
     targets: [
         .target(
@@ -34,6 +35,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Atomics", package: "swift-atomics"),
                 .product(name: "CoreMetrics", package: "swift-metrics"),
+                .product(name: "Configuration", package: "swift-configuration"),
             ],
             exclude: [
                 "RELEASE.md"
@@ -42,7 +44,8 @@ let package = Package(
         .testTarget(
             name: "PrometheusTests",
             dependencies: [
-                "Prometheus"
+                "Prometheus",
+                .product(name: "Configuration", package: "swift-configuration"),
             ]
         ),
     ]
