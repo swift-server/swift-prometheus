@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Configuration
 import CoreMetrics
-import Foundation
 
 /// A wrapper around ``PrometheusCollectorRegistry`` to implement the `swift-metrics` `MetricsFactory` protocol
 public struct PrometheusMetricsFactory: Sendable {
@@ -31,11 +31,6 @@ public struct PrometheusMetricsFactory: Sendable {
     /// The default histogram buckets for a ``DurationHistogram``. If there is no explicit overwrite
     /// via ``durationHistogramBuckets``, the buckets provided here will be used for any new
     /// Swift Metrics `Timer` type.
-    ///
-    /// ``init(registry:)`` reads the initial value of this property from the
-    /// `SWIFT_PROMETHEUS_DEFAULT_DURATION_HISTOGRAM_BUCKETS` or
-    /// `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS` environment variable, falling back to the built-in
-    /// default buckets if both variables are unset or their values are malformed.
     public var defaultDurationHistogramBuckets: [Duration]
 
     /// The histogram buckets for a ``DurationHistogram`` per Timer label
@@ -44,11 +39,6 @@ public struct PrometheusMetricsFactory: Sendable {
     /// The default histogram buckets for a ``ValueHistogram``. If there is no explicit overwrite
     /// via ``valueHistogramBuckets``, the buckets provided here will be used for any new
     /// Swift Metrics `Summary` type.
-    ///
-    /// ``init(registry:)`` reads the initial value of this property from the
-    /// `SWIFT_PROMETHEUS_DEFAULT_VALUE_HISTOGRAM_BUCKETS` or
-    /// `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS` environment variable, falling back to the built-in
-    /// default buckets if both variables are unset or their values are malformed.
     public var defaultValueHistogramBuckets: [Double]
 
     /// The histogram buckets for a ``ValueHistogram`` per label
@@ -59,61 +49,60 @@ public struct PrometheusMetricsFactory: Sendable {
     public var nameAndLabelSanitizer:
         @Sendable (_ name: String, _ labels: [(String, String)]) -> (String, [(String, String)])
 
-    /// Creates a new ``PrometheusMetricsFactory``.
+    /// Creates a factory with built-in default buckets, without reading configuration.
     ///
-    /// The initial values of ``defaultDurationHistogramBuckets`` and
-    /// ``defaultValueHistogramBuckets`` can be configured with environment variables, allowing
-    /// operators to tune the default histogram buckets without code changes:
-    ///
-    /// - `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS` is a comma-separated list of bucket upper bounds
-    ///   used for duration and value histograms, e.g. `0.05,0.1,0.25,0.5,1,5`. Values are
-    ///   interpreted as seconds for duration histograms and as raw values for value histograms.
-    /// - `SWIFT_PROMETHEUS_DEFAULT_DURATION_HISTOGRAM_BUCKETS` is a comma-separated list of bucket
-    ///   upper bounds in seconds, e.g. `0.05,0.1,0.25,0.5,1,5`. If set, it takes precedence over
-    ///   `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS` for duration histograms.
-    /// - `SWIFT_PROMETHEUS_DEFAULT_VALUE_HISTOGRAM_BUCKETS` is a comma-separated list of bucket
-    ///   upper bounds, e.g. `5,25,100,500,1000`. If set, it takes precedence over
-    ///   `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS` for value histograms.
-    ///
-    /// Bucket upper bounds must be finite, strictly increasing numbers. Duration bucket upper
-    /// bounds must additionally be zero or greater. A variable whose value is malformed is
-    /// ignored, as if it were unset. If no applicable variable provides valid buckets, the
-    /// built-in default buckets are used. Buckets that
-    /// are set explicitly in code, by assigning to ``defaultDurationHistogramBuckets``,
-    /// ``defaultValueHistogramBuckets``, ``durationHistogramBuckets`` or
-    /// ``valueHistogramBuckets``, always take precedence over the environment.
-    ///
-    /// - Parameter registry: The ``PrometheusCollectorRegistry`` that is used to generate the
-    ///   swift-metrics handlers
+    /// - Parameter registry: The registry used to generate the swift-metrics handlers.
     public init(registry: PrometheusCollectorRegistry = Self.defaultRegistry) {
-        self.init(registry: registry, environment: { ProcessInfo.processInfo.environment[$0] })
+        self.registry = registry
+        self.durationHistogramBuckets = [:]
+        self.defaultDurationHistogramBuckets = Self.builtInDurationHistogramBuckets
+        self.valueHistogramBuckets = [:]
+        self.defaultValueHistogramBuckets = Self.builtInValueHistogramBuckets
+        self.nameAndLabelSanitizer = { ($0, $1) }
     }
 
-    /// Creates a new ``PrometheusMetricsFactory``, reading the default histogram buckets from
-    /// the provided environment.
+    /// Creates a factory with default histogram buckets read from configuration.
+    ///
+    /// Configuration is read once during initialization. Values are comma-separated strings
+    /// of bucket upper bounds, interpreted as seconds for durations and raw values otherwise:
+    ///
+    /// - `swift.prometheus.default.histograms`: Shared defaults for both histogram kinds.
+    /// - `swift.prometheus.default.duration.histogram.buckets`: Duration-specific defaults.
+    /// - `swift.prometheus.default.value.histogram.buckets`: Value-specific defaults.
+    ///
+    /// With `EnvironmentVariablesProvider`, these keys map to
+    /// `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS`,
+    /// `SWIFT_PROMETHEUS_DEFAULT_DURATION_HISTOGRAM_BUCKETS`, and
+    /// `SWIFT_PROMETHEUS_DEFAULT_VALUE_HISTOGRAM_BUCKETS`, respectively.
+    ///
+    /// Bounds must be finite and strictly increasing. Duration bounds must also be nonnegative
+    /// and representable as `Duration`. Missing or malformed specific values fall back to the
+    /// shared value, then to built-in defaults. Values that cannot be read as strings are ignored.
+    /// Assignments to the default bucket properties or per-label bucket dictionaries after
+    /// initialization take precedence over configuration.
     ///
     /// - Parameters:
-    ///   - registry: The ``PrometheusCollectorRegistry`` that is used to generate the
-    ///     swift-metrics handlers
-    ///   - environment: Returns the value for the given environment variable name. This is a
-    ///     parameter so that tests can run without modifying the process environment.
-    init(registry: PrometheusCollectorRegistry, environment: (String) -> String?) {
-        self.registry = registry
-        let defaultHistogramBuckets = environment(Self.histogramBucketsEnvironmentVariable)
-
-        self.durationHistogramBuckets = [:]
-        self.defaultDurationHistogramBuckets = environment(Self.durationHistogramBucketsEnvironmentVariable)
-            .flatMap(Self.parseDurationHistogramBuckets)
-            ?? defaultHistogramBuckets.flatMap(Self.parseDurationHistogramBuckets)
+    ///   - registry: The registry used to generate the swift-metrics handlers.
+    ///   - configuration: The reader supplying configuration from application-selected providers.
+    @available(macOS 15, iOS 18, watchOS 11, tvOS 18, visionOS 2, *)
+    public init(
+        registry: PrometheusCollectorRegistry = Self.defaultRegistry,
+        configuration: ConfigReader
+    ) {
+        self.init(registry: registry)
+        let shared = configuration.string(forKey: "swift.prometheus.default.histograms")
+        self.defaultDurationHistogramBuckets =
+            configuration.string(
+                forKey: "swift.prometheus.default.duration.histogram.buckets"
+            ).flatMap(Self.parseDurationHistogramBuckets)
+            ?? shared.flatMap(Self.parseDurationHistogramBuckets)
             ?? Self.builtInDurationHistogramBuckets
-
-        self.valueHistogramBuckets = [:]
-        self.defaultValueHistogramBuckets = environment(Self.valueHistogramBucketsEnvironmentVariable)
-            .flatMap(Self.parseValueHistogramBuckets)
-            ?? defaultHistogramBuckets.flatMap(Self.parseValueHistogramBuckets)
+        self.defaultValueHistogramBuckets =
+            configuration.string(
+                forKey: "swift.prometheus.default.value.histogram.buckets"
+            ).flatMap(Self.parseValueHistogramBuckets)
+            ?? shared.flatMap(Self.parseValueHistogramBuckets)
             ?? Self.builtInValueHistogramBuckets
-
-        self.nameAndLabelSanitizer = { ($0, $1) }
     }
 }
 
@@ -133,21 +122,6 @@ extension PrometheusMetricsFactory {
     ]
 
     static let builtInValueHistogramBuckets: [Double] = [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]
-
-    /// The name of the environment variable that provides the initial value of all default
-    /// histogram buckets. See ``init(registry:)`` for details.
-    static let histogramBucketsEnvironmentVariable =
-        "SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS"
-
-    /// The name of the environment variable that provides the initial value of
-    /// ``defaultDurationHistogramBuckets``. See ``init(registry:)`` for details.
-    static let durationHistogramBucketsEnvironmentVariable =
-        "SWIFT_PROMETHEUS_DEFAULT_DURATION_HISTOGRAM_BUCKETS"
-
-    /// The name of the environment variable that provides the initial value of
-    /// ``defaultValueHistogramBuckets``. See ``init(registry:)`` for details.
-    static let valueHistogramBucketsEnvironmentVariable =
-        "SWIFT_PROMETHEUS_DEFAULT_VALUE_HISTOGRAM_BUCKETS"
 
     /// Parses a comma-separated list of histogram bucket upper bounds, e.g. `5,25,100,500`.
     ///

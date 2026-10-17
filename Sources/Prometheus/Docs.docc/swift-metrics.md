@@ -171,10 +171,25 @@ Now a `Timer` with the label "long" will use the buckets
 
 The same functionality is also available for ``ValueHistogram`` and aggregating `Recorder`s.
 
-Buckets from the environment:
+Buckets from configuration:
 
-The default buckets can also be set with environment variables, allowing operators to tune the
-default histogram buckets without code changes:
+Configuration is opt-in. The existing `PrometheusMetricsFactory(registry:)` initializer always
+uses built-in defaults. To let operators tune buckets through environment variables, pass an
+environment-backed reader:
+
+```swift
+import Configuration
+
+let configuration = ConfigReader(provider: EnvironmentVariablesProvider())
+var factory = PrometheusMetricsFactory(configuration: configuration)
+MetricsSystem.bootstrap(factory)
+```
+
+The configuration initializer requires macOS 15, iOS 18, watchOS 11, tvOS 18, or visionOS 2
+on Apple platforms. The existing initializer retains its original platform support.
+Configuration is read once when the factory is created; it does not reload automatically.
+
+Operators can then set:
 
 ```bash
 export SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS=0.05,0.1,0.25,0.5,1,5
@@ -197,5 +212,17 @@ export SWIFT_PROMETHEUS_DEFAULT_VALUE_HISTOGRAM_BUCKETS=5,25,100,500,1000
 
 These specific variables take precedence over `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS`. A variable
 whose value is malformed is ignored, as if it were unset.
+
+Applications can supply any Swift Configuration provider. The following keys expect
+comma-separated **string** values (including when using JSON or in-memory providers):
+
+| Configuration key | Environment variable |
+| --- | --- |
+| `swift.prometheus.default.histograms` | `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAMS` |
+| `swift.prometheus.default.duration.histogram.buckets` | `SWIFT_PROMETHEUS_DEFAULT_DURATION_HISTOGRAM_BUCKETS` |
+| `swift.prometheus.default.value.histogram.buckets` | `SWIFT_PROMETHEUS_DEFAULT_VALUE_HISTOGRAM_BUCKETS` |
+
+Values that cannot be read as strings are ignored. Duration bounds must also be representable
+as `Duration`. Assign bucket properties before creating metrics to override configuration.
 
 [Swift Metrics]: https://github.com/apple/swift-metrics
