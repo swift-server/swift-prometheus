@@ -23,6 +23,22 @@ jobs:
       linux_nightly_next_arguments_override: "--explicit-target-dependency-import-check error -Xswiftc -require-explicit-sendable"
       linux_nightly_main_arguments_override: "--explicit-target-dependency-import-check error -Xswiftc -require-explicit-sendable"
 
+  macos-tests:
+    name: macOS tests
+    uses: apple/swift-nio/.github/workflows/macos_tests.yml@main
+    with:
+      runner_pool: general
+      build_scheme: swift-prometheus
+      swift_6_1_enabled: false
+      swift_6_2_enabled: true
+      swift_6_3_enabled: true
+      swift_6_4_enabled: true
+      macos_xcode_test_enabled: true
+      ios_xcode_build_enabled: false
+      watchos_xcode_build_enabled: false
+      tvos_xcode_build_enabled: false
+      visionos_xcode_build_enabled: false
+
   benchmarks:
     name: Benchmarks
     uses: apple/swift-nio/.github/workflows/benchmarks.yml@main
