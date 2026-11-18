@@ -48,41 +48,47 @@ public struct PrometheusMetricsFactory: Sendable {
     public var nameAndLabelSanitizer:
         @Sendable (_ name: String, _ labels: [(String, String)]) -> (String, [(String, String)])
 
+    /// Creates a factory with built-in default buckets, without reading configuration.
+    ///
+    /// - Parameter registry: The registry used to generate the swift-metrics handlers.
     public init(registry: PrometheusCollectorRegistry = Self.defaultRegistry) {
+        self.init(registry: registry, configuration: Configuration())
+    }
+
+    /// Creates a factory with the specified configuration.
+    ///
+    /// - Parameters:
+    ///   - registry: The registry used to generate the swift-metrics handlers.
+    ///   - configuration: The default histogram buckets to use when creating metrics.
+    public init(
+        registry: PrometheusCollectorRegistry = Self.defaultRegistry,
+        configuration: Configuration
+    ) {
         self.registry = registry
-
         self.durationHistogramBuckets = [:]
-        self.defaultDurationHistogramBuckets = [
-            .milliseconds(5),
-            .milliseconds(10),
-            .milliseconds(25),
-            .milliseconds(50),
-            .milliseconds(100),
-            .milliseconds(250),
-            .milliseconds(500),
-            .seconds(1),
-            .milliseconds(2500),
-            .seconds(5),
-            .seconds(10),
-        ]
-
+        self.defaultDurationHistogramBuckets = configuration.defaultDurationHistogramBuckets
         self.valueHistogramBuckets = [:]
-        self.defaultValueHistogramBuckets = [
-            5,
-            10,
-            25,
-            50,
-            100,
-            250,
-            500,
-            1000,
-            2500,
-            5000,
-            10000,
-        ]
-
+        self.defaultValueHistogramBuckets = configuration.defaultValueHistogramBuckets
         self.nameAndLabelSanitizer = { ($0, $1) }
     }
+}
+
+extension PrometheusMetricsFactory {
+    static let builtInDurationHistogramBuckets: [Duration] = [
+        .milliseconds(5),
+        .milliseconds(10),
+        .milliseconds(25),
+        .milliseconds(50),
+        .milliseconds(100),
+        .milliseconds(250),
+        .milliseconds(500),
+        .seconds(1),
+        .milliseconds(2500),
+        .seconds(5),
+        .seconds(10),
+    ]
+
+    static let builtInValueHistogramBuckets: [Double] = [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]
 }
 
 extension PrometheusMetricsFactory: CoreMetrics.MetricsFactory {
