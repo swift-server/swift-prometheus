@@ -48,6 +48,9 @@ import wasi_pthread
 #if os(Windows)
 @usableFromInline
 typealias LockPrimitive = SRWLOCK
+#elseif os(FreeBSD) || os(OpenBSD)
+@usableFromInline
+typealias LockPrimitive = pthread_mutex_t?
 #else
 @usableFromInline
 typealias LockPrimitive = pthread_mutex_t
@@ -63,12 +66,20 @@ extension LockOperations {
 
         #if os(Windows)
         InitializeSRWLock(mutex)
-        #elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
+        #elseif _runtime(_multithreaded)
+        #if os(FreeBSD) || os(OpenBSD)
+        var attr = pthread_mutexattr_t(bitPattern: 0)
+        #else
         var attr = pthread_mutexattr_t()
+        #endif
         pthread_mutexattr_init(&attr)
         assert(
             {
+                #if os(FreeBSD) || os(OpenBSD)
+                pthread_mutexattr_settype(&attr, .init(PTHREAD_MUTEX_ERRORCHECK.rawValue))
+                #else
                 pthread_mutexattr_settype(&attr, .init(PTHREAD_MUTEX_ERRORCHECK))
+                #endif
                 return true
             }()
         )
@@ -84,7 +95,7 @@ extension LockOperations {
 
         #if os(Windows)
         // SRWLOCK does not need to be free'd
-        #elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
+        #elseif _runtime(_multithreaded)
         let err = pthread_mutex_destroy(mutex)
         precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
         #endif
@@ -96,7 +107,7 @@ extension LockOperations {
 
         #if os(Windows)
         AcquireSRWLockExclusive(mutex)
-        #elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
+        #elseif _runtime(_multithreaded)
         let err = pthread_mutex_lock(mutex)
         precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
         #endif
@@ -108,7 +119,7 @@ extension LockOperations {
 
         #if os(Windows)
         ReleaseSRWLockExclusive(mutex)
-        #elseif (compiler(<6.1) && !os(WASI)) || (compiler(>=6.1) && _runtime(_multithreaded))
+        #elseif _runtime(_multithreaded)
         let err = pthread_mutex_unlock(mutex)
         precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
         #endif
@@ -200,13 +211,6 @@ final class LockStorage<Value>: ManagedBuffer<Value, LockPrimitive> {
         }
     }
 }
-
-// This compiler guard is here becaue `ManagedBuffer` is already declaring
-// Sendable unavailability after 6.1, which `LockStorage` inherits.
-#if compiler(<6.2)
-@available(*, unavailable)
-extension LockStorage: Sendable {}
-#endif
 
 /// A threading lock based on `libpthread` instead of `libdispatch`.
 ///

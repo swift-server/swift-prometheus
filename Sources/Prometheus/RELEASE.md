@@ -49,5 +49,5 @@ Step 3) "There is no Step 3!"
 
 Generally this project supports three most recent minor versions of Swift.
 
-For example, at time of writing this document Swift 6.2 is the current release, so this project also supports 6.1 and 6.0.
+For example, at time of writing this document Swift 6.4 is the current release, so this project also supports 6.3 and 6.2.
 And this list of versions changes whenever a new minor Swift version is released.
