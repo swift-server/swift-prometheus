@@ -10,17 +10,22 @@ permissions:
   contents: read
 
 jobs:
-  unit-tests:
-    name: Unit tests
-    uses: apple/swift-nio/.github/workflows/unit_tests.yml@main
+  tests:
+    name: Tests
+    uses: swiftlang/github-workflows/.github/workflows/package_test.yml@0.0.19
     with:
-      linux_6_1_enabled: false
-      linux_6_2_arguments_override: "--explicit-target-dependency-import-check error -Xswiftc -require-explicit-sendable"
-      linux_6_3_arguments_override: "--explicit-target-dependency-import-check error -Xswiftc -require-explicit-sendable"
-      linux_6_4_arguments_override: "--explicit-target-dependency-import-check error -Xswiftc -require-explicit-sendable"
-      linux_nightly_next_arguments_override: "--explicit-target-dependency-import-check error -Xswiftc -require-explicit-sendable"
-      linux_nightly_main_arguments_override: "--explicit-target-dependency-import-check error -Xswiftc -require-explicit-sendable"
-
-  release-builds:
-    name: Release builds
-    uses: apple/swift-nio/.github/workflows/release_builds.yml@main
+      # Linux only, on current-2, current-1, current, nightly-release and nightly-main (the default version list).
+      # The strict flags apply to the tests only; the release builds take none, as before.
+      linux_command: |
+        Debug-Test: swift test --explicit-target-dependency-import-check error -Xswiftc -require-explicit-sendable
+        Release-Build: swift build -c release
+      enable_macos: false
+      enable_macos_swiftly: false
+      enable_windows: false
+      enable_linux_static_sdk_build: false
+      enable_wasm_sdk_build: false
+      enable_embedded_wasm_sdk_build: false
+      enable_android_sdk_build: false
+      enable_freebsd: false
+      # The Cxx interop check runs on PRs only, as before.
+      enable_cxx_interop: false
