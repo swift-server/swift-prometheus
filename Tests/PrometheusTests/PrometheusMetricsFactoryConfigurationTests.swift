@@ -152,7 +152,7 @@ final class PrometheusMetricsFactoryConfigurationTests: XCTestCase {
     }
 
     func testInitRejectsEmptyEnvironmentElements() async {
-        for input in ["", ",", ",1", "1,", "1,,2"] {
+        for input in ["", " \t", ",", ",1", "1,", "1,,2"] {
             do {
                 _ = try await self.makeFactory([Self.defaultBucketsVariable: input])
                 XCTFail("Expected empty environment array elements to throw")
@@ -241,6 +241,10 @@ final class PrometheusMetricsFactoryConfigurationTests: XCTestCase {
             PrometheusMetricsFactory.Configuration.parseDurationHistogramBuckets(["0", "1", "60"]),
             [.seconds(0), .seconds(1), .seconds(60)]
         )
+        XCTAssertEqual(
+            PrometheusMetricsFactory.Configuration.parseDurationHistogramBuckets(["0", "1e-18"]),
+            [.zero, Duration(secondsComponent: 0, attosecondsComponent: 1)]
+        )
     }
 
     func testParseDurationHistogramBucketsRejectsNegativeAndUnrepresentableValues() {
@@ -291,7 +295,22 @@ final class PrometheusMetricsFactoryConfigurationTests: XCTestCase {
                 "representable as Duration"
             ),
             (
+                [Self.defaultBucketsVariable: "0,1e-20"],
+                "swift.prometheus.default.histogram.buckets",
+                "strictly increasing"
+            ),
+            (
+                [Self.durationBucketsVariable: "1,0x1p63"],
+                "swift.prometheus.default.duration.histogram.buckets",
+                "representable as Duration"
+            ),
+            (
                 [Self.defaultBucketsVariable: "0.5,1,5", Self.valueBucketsVariable: "1,,2"],
+                "swift.prometheus.default.value.histogram.buckets",
+                "strictly increasing"
+            ),
+            (
+                [Self.defaultBucketsVariable: "0.5,1,5", Self.valueBucketsVariable: ""],
                 "swift.prometheus.default.value.histogram.buckets",
                 "strictly increasing"
             ),

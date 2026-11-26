@@ -42,9 +42,11 @@ extension PrometheusMetricsFactory.Configuration {
     ///
     /// With `EnvironmentVariablesProvider`, the keys map to the corresponding uppercase names
     /// separated by underscores. The provider reads comma-separated values as string arrays.
+    /// Empty or whitespace-only environment variables are invalid. Leave a variable unset to use defaults.
     /// Missing specific values fall back to the shared value, then to the built-in defaults.
     /// Supplied values that cannot be read as string arrays throw an error.
-    /// Bounds used for durations must also be nonnegative and representable as `Duration`.
+    /// Duration bounds must be nonnegative, fit in `Duration`'s `Int64` seconds component,
+    /// and remain strictly increasing after conversion to `Duration`.
     /// Values are read once; the configuration does not reload automatically.
     ///
     /// - Parameter config: The reader supplying values from application-selected providers.
@@ -73,7 +75,7 @@ extension PrometheusMetricsFactory.Configuration {
             try Self.validateBuckets(
                 duration ?? shared,
                 forKey: duration == nil ? sharedKey : durationKey,
-                expected: "\(expectedBounds) in seconds, nonnegative and representable as Duration",
+                expected: "\(expectedBounds) in seconds, nonnegative and representable as Duration with Int64 seconds",
                 parse: Self.parseDurationHistogramBuckets
             ) ?? self.defaultDurationHistogramBuckets
         self.defaultValueHistogramBuckets =
@@ -134,19 +136,23 @@ extension PrometheusMetricsFactory.Configuration {
 
     /// Parses duration histogram bucket upper bounds in seconds.
     ///
-    /// In addition to the rules of ``parseValueHistogramBuckets(_:)``, every value must be zero
-    /// or greater and representable as a `Duration`.
+    /// Bounds must fit in `Duration`'s nonnegative `Int64` seconds component and remain
+    /// strictly increasing at attosecond precision.
     static func parseDurationHistogramBuckets(_ strings: [String]) -> [Duration]? {
         guard let seconds = self.parseValueHistogramBuckets(strings) else {
             return nil
         }
         var buckets = [Duration]()
         for value in seconds {
-            // `Duration` counts attoseconds in an Int128; converting a `Double` beyond its range traps.
-            guard value >= 0, value * 1e18 < 0x1p127 else {
+            // Histogram export reads Duration.components, whose seconds field is an Int64.
+            guard value >= 0, value < 0x1p63 else {
                 return nil
             }
-            buckets.append(.seconds(value))
+            let bucket = Duration.seconds(value)
+            if let last = buckets.last, bucket <= last {
+                return nil
+            }
+            buckets.append(bucket)
         }
         return buckets
     }

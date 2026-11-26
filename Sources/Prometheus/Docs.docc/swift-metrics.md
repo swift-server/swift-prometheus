@@ -199,8 +199,9 @@ export SWIFT_PROMETHEUS_DEFAULT_HISTOGRAM_BUCKETS=0.05,0.1,0.25,0.5,1,5
 ```
 
 Values from `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAM_BUCKETS` are interpreted as seconds for duration
-histograms and as raw upper bounds for value histograms. Bucket upper bounds must be finite,
-strictly increasing numbers, and duration bucket upper bounds must additionally be zero or greater.
+histograms and as raw upper bounds for value histograms. Bucket upper bounds must be finite and
+strictly increasing. Duration bounds must also be nonnegative, fit in `Duration`'s `Int64` seconds
+component, and remain strictly increasing at attosecond precision.
 If the variable is unset, the built-in default buckets are used unless a more specific value is set.
 Buckets that are configured explicitly in code, as shown in the examples above, take precedence
 over the environment.
@@ -215,7 +216,8 @@ export SWIFT_PROMETHEUS_DEFAULT_VALUE_HISTOGRAM_BUCKETS=5,25,100,500,1000
 
 These specific variables take precedence over `SWIFT_PROMETHEUS_DEFAULT_HISTOGRAM_BUCKETS`.
 The configuration initializer throws if it cannot read a supplied value as a string array
-or if an array contains invalid bounds. Only missing values fall back to shared or built-in defaults.
+or if an array contains invalid bounds. This includes empty or whitespace-only environment variables.
+Unset the variable to fall back to shared or built-in defaults.
 Shared bounds must meet the duration requirements when used for duration histograms.
 
 Applications can supply any Swift Configuration provider. The following keys expect **arrays of strings**.
@@ -251,7 +253,7 @@ configuration.defaultValueHistogramBuckets = [10, 100, 1000]
 let factory = PrometheusMetricsFactory(configuration: configuration)
 ```
 
-Duration bounds must also be representable as `Duration`. Assign factory bucket properties before
-creating metrics to override the configuration, or use the per-label dictionaries shown above.
+Assign factory bucket properties before creating metrics to override the configuration,
+or use the per-label dictionaries shown above.
 
 [Swift Metrics]: https://github.com/apple/swift-metrics
