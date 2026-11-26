@@ -21,6 +21,25 @@ import XCTest
     message: "This test covers deprecated methods. These methods will be refactored in a future version."
 )
 final class PrometheusMetricsFactoryTests: XCTestCase {
+    func testExplicitConfiguration() {
+        let registry = PrometheusCollectorRegistry()
+        var configuration = PrometheusMetricsFactory.Configuration()
+        configuration.defaultDurationHistogramBuckets = [.milliseconds(100), .seconds(1)]
+        configuration.defaultValueHistogramBuckets = [10, 100]
+        let factory = PrometheusMetricsFactory(registry: registry, configuration: configuration)
+
+        configuration.defaultValueHistogramBuckets = [1000]
+        factory.makeTimer(label: "configured_timer", dimensions: []).recordNanoseconds(500_000_000)
+        factory.makeRecorder(label: "configured_value", dimensions: [], aggregate: true).record(Int64(50))
+
+        let output = registry.emitToString()
+        XCTAssertTrue(output.contains(#"configured_timer_bucket{le="0.1"} 0"#))
+        XCTAssertTrue(output.contains(#"configured_timer_bucket{le="1.0"} 1"#))
+        XCTAssertTrue(output.contains(#"configured_value_bucket{le="10.0"} 0"#))
+        XCTAssertTrue(output.contains(#"configured_value_bucket{le="100.0"} 1"#))
+        XCTAssertFalse(output.contains(#"le="1000.0""#))
+    }
+
     func testMakeTimers() {
         let registry = PrometheusCollectorRegistry()
         let factory = PrometheusMetricsFactory(registry: registry)
